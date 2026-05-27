@@ -1,0 +1,3 @@
+# add the given examples for libraries and projects here, as we dont want to push 2k files with no rights on them!
+examples/* 
+.vscode/*
