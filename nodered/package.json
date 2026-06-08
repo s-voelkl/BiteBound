@@ -1,0 +1,17 @@
+{
+  "name": "nodered",
+  "version": "1.0.1",
+  "description": "NodeRED Dashboard and MQTT communication for BiteBound project",
+  "main": "flows.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "run": "node-red --settings settings.js flows.json"
+  },
+  "keywords": [],
+  "author": "Simon Völkl, Johannes Schieder",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "node-red": "^4.1.11"
+  }
+}
