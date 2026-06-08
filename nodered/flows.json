@@ -105,7 +105,7 @@
         "rh": 0,
         "inputs": 0,
         "x": 240,
-        "y": 520,
+        "y": 500,
         "wires": [
             [
                 "52b308c72214c93a"
@@ -126,7 +126,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 570,
-        "y": 520,
+        "y": 500,
         "wires": []
     },
     {
@@ -143,8 +143,8 @@
         "correl": "",
         "expiry": "",
         "broker": "d30ffaafeae9efa0",
-        "x": 540,
-        "y": 680,
+        "x": 440,
+        "y": 640,
         "wires": []
     },
     {
@@ -167,9 +167,87 @@
         "x": 500,
         "y": 380,
         "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7d351fd738ba37d0",
+        "type": "inject",
+        "z": "d55d12a9a75a0bcb",
+        "name": "Start Game 1",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"command\":\"start\",\"meta\":{\"source_ui\":\"NODE_RED\",\"request_id\":\"id1\",\"timestamp\":\"2024-06-08T11:50:00Z\"},\"player\":{\"name\":\"Player1\"},\"game\":{\"game_id\":1},\"parameters\":{\"cookies_count\":10,\"wall_thickness_px\":6},\"physics\":{\"imu_sensitivity_multiplier\":1.25,\"bounce_restitution\":0.75,\"ema_alpha\":0.25,\"deadzone_threshold\":0.04}}",
+        "payloadType": "json",
+        "x": 190,
+        "y": 620,
+        "wires": [
             [
-                "5d0c8b0a93c5fd70"
+                "d10ce6af3fa27dd0"
             ]
         ]
+    },
+    {
+        "id": "f5690c248c6f290a",
+        "type": "comment",
+        "z": "d55d12a9a75a0bcb",
+        "name": "Manual signal for game state change",
+        "info": "",
+        "x": 260,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "c75cf87bd14abcf7",
+        "type": "inject",
+        "z": "d55d12a9a75a0bcb",
+        "name": "Stop Game 1",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"command\":\"stop\",\"meta\":{\"source_ui\":\"NODE_RED\",\"request_id\":\"id1\",\"timestamp\":\"2024-06-08T11:50:00Z\"},\"player\":{\"name\":\"Player1\"},\"game\":{\"game_id\":1},\"parameters\":{\"cookies_count\":10,\"wall_thickness_px\":6},\"physics\":{\"imu_sensitivity_multiplier\":1.25,\"bounce_restitution\":0.75,\"ema_alpha\":0.25,\"deadzone_threshold\":0.04}}",
+        "payloadType": "json",
+        "x": 190,
+        "y": 660,
+        "wires": [
+            [
+                "d10ce6af3fa27dd0"
+            ]
+        ]
+    },
+    {
+        "id": "aceae63c887d1baf",
+        "type": "comment",
+        "z": "d55d12a9a75a0bcb",
+        "name": "ESP32 --> Dashboard",
+        "info": "",
+        "x": 220,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "33e9c0cbc0ef43e0",
+        "type": "comment",
+        "z": "d55d12a9a75a0bcb",
+        "name": "Dashboard --> ESP32 ",
+        "info": "",
+        "x": 220,
+        "y": 460,
+        "wires": []
     }
 ]
