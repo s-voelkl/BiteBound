@@ -26,6 +26,8 @@ See: [Running Node-RED locally](https://nodered.org/docs/getting-started/local)
 Verify that ``node-red-contrib-uibuilder`` is installed as a dependency in the NodeRED installed nodes.
 Import the project flow from `nodered/flow.json` into the Node-RED editor to set up the dashboard and MQTT communication.
 
+For further information regarding the UI Builder Dashboard creation, see the [UI Builder documentation](https://totallyinformation.github.io/node-red-contrib-uibuilder/#/).
+
 ### Docker setup for Node-RED
 
 See: [Running Node-RED with Docker](https://nodered.org/docs/getting-started/docker)
