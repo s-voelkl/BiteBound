@@ -118,7 +118,6 @@
 % These packages were proposed by Tobias Bauer in the lecture "LaTeX fürs Studium" in 2026.
 % Many adjustments were made to the template for fitting a potential publication of the technical report with Prof. Neumann.
 \usepackage[shortlabels]{enumitem} % Verbesserte Einstellungsmöglichkeiten von Listen. Nicht bei Beamer anwendbar
-\usepackage{csquotes} % Korrekte Anführungszeichen setzen. Sprachspezifisch möglich. mit \setquotestyle{style} und \enquote{}.
 \usepackage[capitalise,nameinlink,noabbrev]{cleveref} % Referenzen besser machen. z.B. mit \cref{}. needs hyperref defined before it.
 \usepackage{multirow} % Mehrere Zeilen in eine zusammenfassen. für Spalten einfach \multicolumn benutzen
 \usepackage{booktabs} % Hübschere Tabellen mit \top/mid/cmid/bottomrule
@@ -127,6 +126,8 @@
 \usepackage{siunitx}
 \usepackage{array}
 \usepackage{tabularx}
+\usepackage{csquotes} % Korrekte Anführungszeichen setzen. Sprachspezifisch möglich. mit \setquotestyle{style} und \enquote{}.
+
 
 \begin{document}
 \thispagestyle{empty}
@@ -146,175 +147,20 @@
 \tableofcontents
 
 \clearpage
-
-\section*{Abstract}
-\label{sec:abstract}
-% should include keywords.
-
-\section{Introduction}
-\label{sec:introduction}
-
-\subsection{Intro}
-\label{subsec:intro}
-% TODO: write Intro
-% Give a brief overview of the project, mission statement, and background.
-
-\subsection{Mission Statement}
-\label{subsec:mission_statement}
-% TODO: write Mission Statement
-% Detail the goal and purpose of the project.
-
-\subsection{Motivation}
-\label{subsec:motivation}
-% TODO: write Motivation
-% Describe why the project is important and the motivation behind it.
-
-\subsection{Document Structure}
-\label{subsec:document_structure}
-% TODO: write Document Structure
-% Give an overview of how the rest of the document is structured.
-
-\section{Related Work}
-\label{sec:related_work}
-% TODO: write Related Work
-% Discuss existing similar projects, solutions and relevant literature.
-
-\section{Project Management}
-\label{sec:project_management}
-
-\subsection{SMART}
-\label{subsec:smart}
-% TODO: write SMART
-% Outline the SMART goals (Specific, Measurable, Achievable, Relevant, Time-bound).
-
-\subsection{User Stories (Requirements)}
-\label{subsec:user_stories}
-% TODO: write User Stories (Requirements)
-% Detail the requirements and user stories for the project.
-
-\subsection{MVP}
-\label{subsec:mvp}
-% TODO: write MVP
-% Describe the Minimum Viable Product.
-
-\subsection{Extensions}
-\label{subsec:extensions}
-% TODO: write Extensions
-% Discuss potential extensions or features beyond the MVP.
-
-\subsection{Task Distribution}
-\label{subsec:task_distribution}
-% TODO: write Task Distribution
-% Provide a breakdown of tasks among group members and list guidelines (PRs, Code Coverage, Git).
-
-\section{Technical Concept}
-\label{sec:technical_concept}
-
-\subsection{High-Level Architecture}
-\label{subsec:high_level_architecture}
-% TODO: write High-Level Architecture
-% Explain the high-level architecture with a diagram.
-
-\subsection{Components}
-\label{subsec:components_concept}
-% TODO: write Components
-% Give an overview of the main components (Hardware, Node-RED, Android).
-
-\section{Hardware}
-\label{sec:hardware}
-
-\subsection{Components (ESP32) in Detail}
-\label{subsec:components_hardware}
-% TODO: write Components (ESP32) in Detail
-% Describe the hardware components in detail, especially the ESP32.
-
-\subsection{Sensor Data Acquisition}
-\label{subsec:sensor_data_acquisition}
-% TODO: write Sensor Data Acquisition
-% Detail the data acquisition from the sensors and filtering.
-
-\subsection{Physics Simulation}
-\label{subsec:physics_simulation}
-% TODO: write Physics Simulation
-% Explain the physics simulation with its mathematical formulas.
-
-\subsection{Display}
-\label{subsec:display}
-% TODO: write Display
-% Detail the display logic and game mechanics with screenshots.
-
-\subsection{MQTT Topics \& Payloads}
-\label{subsec:mqtt_topics}
-% TODO: write MQTT Topics & Payloads
-% List the MQTT topics used and their respective JSON payloads.
-
-\section{Node-RED}
-\label{sec:nodered}
-
-\subsection{Workflow}
-\label{subsec:workflow}
-% TODO: write Workflow
-% Explain the Node-RED workflow and add a screenshot.
-
-\subsection{Dashboard \& User Input}
-\label{subsec:dashboard_nodered}
-% TODO: write Dashboard & User Input
-% Detail the Node-RED dashboard logic and forms with a screenshot.
-
-\section{Android App}
-\label{sec:android_app}
-
-\subsection{Software Components, Classes, Views}
-\label{subsec:software_android}
-% TODO: write Software Components, Classes, Views
-% Document the Android app's architecture, key classes and UI views.
-
-\subsection{Dashboard \& User Input}
-\label{subsec:dashboard_android}
-% TODO: write Dashboard & User Input
-% Explain the dashboard and user input on Android with a screenshot.
-
-\section{Evaluation}
-\label{sec:evaluation}
-
-\subsection{Problems \& Solutions}
-\label{subsec:problems_solutions}
-% TODO: write Problems & Solutions
-% Discuss any difficulties encountered and how they were solved.
-
-% TODO: formulate
-\cite{node-red-dashboard-deprecated} should not be used anymore.
-So we decided on using \cite{Knight_node-red-contrib-uibuilder} instead for our dashboard.
-
-\subsection{Code Coverage}
-\label{subsec:code_coverage}
-% TODO: write Code Coverage
-% Report on the code coverage of the tests.
-
-\subsection{Cost Estimation}
-\label{subsec:cost_estimation}
-% TODO: write Cost Estimation
-% Provide a cost estimation for the project hardware and setup.
-
-\section{Summary}
-\label{sec:summary}
-
-\subsection{Summary \& Future Work}
-\label{subsec:summary_future_work}
-% TODO: write Summary & Future Work
-% Summarize the project and outline ideas for future improvements.
+\input{sec_abstract}
+\input{sec_introduction}
+\input{sec_related_work}
+\input{sec_project_management}
+\input{sec_technical_concept}
+\input{sec_hardware}
+\input{sec_nodered}
+\input{sec_android_app}
+\input{sec_evaluation}
+\input{sec_summary}
 
 \appendix
-
-\section{Prompts}
-\label{sec:prompts}
-% TODO: write Prompts
-% Attach AI tool prompts used during the development phase.
-
-\section{ESP32 Code}
-\label{sec:esp32_code}
-% TODO: write ESP32 Code
-% Include relevant parts of the ESP32 implementation source code.
+\input{sec_prompts}
+\input{sec_esp32_code}
 
 % -------------------------
 % \begin{figure}[h]
