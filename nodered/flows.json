@@ -8,6 +8,44 @@
         "env": []
     },
     {
+        "id": "549416542d31dd12",
+        "type": "junction",
+        "z": "d55d12a9a75a0bcb",
+        "x": 560,
+        "y": 180,
+        "wires": [
+            [
+                "b39fe4811b39263b"
+            ]
+        ]
+    },
+    {
+        "id": "b39fe4811b39263b",
+        "type": "junction",
+        "z": "d55d12a9a75a0bcb",
+        "x": 1000,
+        "y": 180,
+        "wires": [
+            [
+                "8a9bf2bdc5491977"
+            ]
+        ]
+    },
+    {
+        "id": "06ce52e4a0ba9f4e",
+        "type": "tls-config",
+        "name": "",
+        "cert": "",
+        "key": "",
+        "ca": "",
+        "certname": "",
+        "keyname": "",
+        "caname": "",
+        "servername": "",
+        "verifyservercert": true,
+        "alpnprotocol": ""
+    },
+    {
         "id": "d30ffaafeae9efa0",
         "type": "mqtt-broker",
         "name": "HiveMQ Broker for BiteBound",
@@ -40,20 +78,6 @@
         "sessionExpiry": ""
     },
     {
-        "id": "06ce52e4a0ba9f4e",
-        "type": "tls-config",
-        "name": "",
-        "cert": "",
-        "key": "",
-        "ca": "",
-        "certname": "",
-        "keyname": "",
-        "caname": "",
-        "servername": "",
-        "verifyservercert": true,
-        "alpnprotocol": ""
-    },
-    {
         "id": "298a5c9648ce8e66",
         "type": "mqtt in",
         "z": "d55d12a9a75a0bcb",
@@ -66,11 +90,12 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 240,
-        "y": 380,
+        "x": 220,
+        "y": 80,
         "wires": [
             [
-                "626e3b94958d8a34"
+                "626e3b94958d8a34",
+                "549416542d31dd12"
             ]
         ]
     },
@@ -87,8 +112,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 790,
-        "y": 380,
+        "x": 770,
+        "y": 80,
         "wires": []
     },
     {
@@ -104,8 +129,8 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 240,
-        "y": 500,
+        "x": 220,
+        "y": 240,
         "wires": [
             [
                 "52b308c72214c93a"
@@ -125,8 +150,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 570,
-        "y": 500,
+        "x": 550,
+        "y": 240,
         "wires": []
     },
     {
@@ -143,8 +168,8 @@
         "correl": "",
         "expiry": "",
         "broker": "d30ffaafeae9efa0",
-        "x": 440,
-        "y": 640,
+        "x": 560,
+        "y": 380,
         "wires": []
     },
     {
@@ -164,8 +189,8 @@
         "drop": true,
         "allowrate": false,
         "outputs": 1,
-        "x": 500,
-        "y": 380,
+        "x": 480,
+        "y": 80,
         "wires": [
             []
         ]
@@ -187,8 +212,8 @@
         "topic": "",
         "payload": "{\"command\":\"start\",\"meta\":{\"source_ui\":\"NODE_RED\",\"request_id\":\"id1\",\"timestamp\":\"2024-06-08T11:50:00Z\"},\"player\":{\"name\":\"Player1\"},\"game\":{\"game_id\":1},\"parameters\":{\"cookies_count\":10,\"wall_thickness_px\":6},\"physics\":{\"imu_sensitivity_multiplier\":1.25,\"bounce_restitution\":0.75,\"ema_alpha\":0.25,\"deadzone_threshold\":0.04}}",
         "payloadType": "json",
-        "x": 190,
-        "y": 620,
+        "x": 170,
+        "y": 360,
         "wires": [
             [
                 "d10ce6af3fa27dd0"
@@ -201,8 +226,8 @@
         "z": "d55d12a9a75a0bcb",
         "name": "Manual signal for game state change",
         "info": "",
-        "x": 260,
-        "y": 580,
+        "x": 240,
+        "y": 320,
         "wires": []
     },
     {
@@ -222,8 +247,8 @@
         "topic": "",
         "payload": "{\"command\":\"stop\",\"meta\":{\"source_ui\":\"NODE_RED\",\"request_id\":\"id1\",\"timestamp\":\"2024-06-08T11:50:00Z\"},\"player\":{\"name\":\"Player1\"},\"game\":{\"game_id\":1},\"parameters\":{\"cookies_count\":10,\"wall_thickness_px\":6},\"physics\":{\"imu_sensitivity_multiplier\":1.25,\"bounce_restitution\":0.75,\"ema_alpha\":0.25,\"deadzone_threshold\":0.04}}",
         "payloadType": "json",
-        "x": 190,
-        "y": 660,
+        "x": 170,
+        "y": 400,
         "wires": [
             [
                 "d10ce6af3fa27dd0"
@@ -236,8 +261,8 @@
         "z": "d55d12a9a75a0bcb",
         "name": "ESP32 --> Dashboard",
         "info": "",
-        "x": 220,
-        "y": 340,
+        "x": 200,
+        "y": 40,
         "wires": []
     },
     {
@@ -246,8 +271,38 @@
         "z": "d55d12a9a75a0bcb",
         "name": "Dashboard --> ESP32 ",
         "info": "",
-        "x": 220,
-        "y": 460,
+        "x": 200,
+        "y": 200,
         "wires": []
+    },
+    {
+        "id": "8a9bf2bdc5491977",
+        "type": "uibuilder",
+        "z": "d55d12a9a75a0bcb",
+        "name": "BiteBound Dashboard",
+        "topic": "",
+        "url": "dashboard",
+        "instancePath": "",
+        "okToGo": true,
+        "fwdInMessages": false,
+        "allowScripts": false,
+        "allowStyles": false,
+        "copyIndex": true,
+        "templateFolder": "blank",
+        "extTemplate": "",
+        "showfolder": false,
+        "reload": false,
+        "sourceFolder": "src",
+        "deployedVersion": "7.7.3",
+        "showMsgUib": false,
+        "title": "",
+        "descr": "",
+        "editurl": "vscode://file/Users\\Völkl\\.node-red\\uibuilder/dashboard/?windowId=_blank",
+        "x": 1180,
+        "y": 320,
+        "wires": [
+            [],
+            []
+        ]
     }
 ]
