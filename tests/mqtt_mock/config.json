@@ -1,0 +1,8 @@
+{
+  "broker": "",
+  "port": 8883,
+  "username": "",
+  "password": "",
+  "topic": "",
+  "client_id": ""
+}
