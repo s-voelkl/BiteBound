@@ -60,6 +60,9 @@ try:
                 "hardware": "Waveshare ESP32-S3 1.69inch",
                 "firmware_version": "1.0.0",
                 "uptime_ms": int(elapsed * 1000),
+                "uptime_since": time.strftime(
+                    "%Y-%m-%dT%H:%M:%SZ", time.gmtime(start_time)
+                ),
                 "wifi_ssid": "MyWiFiNetwork",
             },
             "config": {
