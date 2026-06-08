@@ -8,6 +8,10 @@ Before making this repository public, the following steps have to be done:
 - Restructure folders and files: Make ``src`` with each Subproject and ``docs`` with extensive documentation and tex-files.
 - Delete prompts folder
 
+## GitHub Repository
+
+The GitHub repository for this project is located at: [https://github.com/s-voelkl/BiteBound](https://github.com/s-voelkl/BiteBound).
+
 ## License
 
 MIT License
