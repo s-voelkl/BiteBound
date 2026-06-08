@@ -55,11 +55,14 @@ Queue: für Game Command von Dashboard für "START, STOP, ..."
 
 ### MQTT Topics
 
-Base Topic: mauc2026/group_xx/
-.../game/command: Spiel auswählen, starten, Parameter (Labyrinth Wandstärke, Anzahl Kekse, Spielername) an ESP32
-Bsp: {"game_id": 1, "status": "RUNNING", "player_name": "Alex", "score": 4, "total_cookies": 10, "round": 1}
-.../game/telemetry: Spielstandsanzeige (Bewegungssensorwerte, Physiksimulationswerte, Zeit, Spielstand (Punkte, Runden), etc.) an Dashboard
-Bsp: {"ball_x": 112, "ball_y": 145, "tilt_x": 0.15, "tilt_y": -0.34}
+- Base Topic: mauc2026/group_03/
+- .../game/command: Spiel auswählen, starten, Parameter (Labyrinth Wandstärke, Anzahl Kekse, Spielername) an ESP32
+  Bsp: {"game_id": 1, "status": "RUNNING", "player_name": "Alex", "score": 4, "total_cookies": 10, "round": 1}
+- .../game/telemetry: Spielstandsanzeige (Bewegungssensorwerte, Physiksimulationswerte, Zeit, Spielstand (Punkte, Runden), etc.) an Dashboard
+  Bsp: {"ball_x": 112, "ball_y": 145, "tilt_x": 0.15, "tilt_y": -0.34}
+- ...test: Für Testzwecke und Debugging, z.B. bei Connection.
+
+Im Allgemeinen mit QoS 1 und Retain Flag auf False senden.
 
 ## Folder Structure
 

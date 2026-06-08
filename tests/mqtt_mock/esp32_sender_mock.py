@@ -99,7 +99,7 @@ try:
         }
 
         # Publish
-        result = client.publish(topic, json.dumps(payload))
+        result = client.publish(topic, json.dumps(payload), qos=1, retain=False)
         status = result[0]
         if status == 0:
             print(
