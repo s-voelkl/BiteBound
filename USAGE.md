@@ -12,8 +12,9 @@ See: [Running Node-RED locally](https://nodered.org/docs/getting-started/local)
 
 - NPM install: ``sudo npm install -g node-red``
 - Change directory: ``cd nodered``
-- Run: ``node-red``
+- Run: ``node-red --settings settings.js flows.json``
 - Open browser: [http://localhost:1880](http://localhost:1880)
+- Edit the flow, then deploy for saving the changes to `flows.json`
 
 Import the project flow from `nodered/flow.json` into the Node-RED editor to set up the dashboard and MQTT communication.
 

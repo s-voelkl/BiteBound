@@ -1,0 +1,64 @@
+[
+    {
+        "id": "d55d12a9a75a0bcb",
+        "type": "tab",
+        "label": "NodeRED",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "db38282e9e641073",
+        "type": "complete",
+        "z": "d55d12a9a75a0bcb",
+        "name": "",
+        "scope": [],
+        "uncaught": false,
+        "x": 390,
+        "y": 220,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "cb342702f00e4cda",
+        "type": "link in",
+        "z": "d55d12a9a75a0bcb",
+        "name": "link in 1",
+        "links": [],
+        "x": 445,
+        "y": 380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ea1b48669202d4ce",
+        "type": "debug",
+        "z": "d55d12a9a75a0bcb",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 360,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "99a70b059e346b01",
+        "type": "catch",
+        "z": "d55d12a9a75a0bcb",
+        "name": "",
+        "scope": null,
+        "uncaught": false,
+        "x": 160,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    }
+]
