@@ -1,5 +1,6 @@
-#include "WifiConnection.h"
-#include "wifi_mqtt_secrets.h"
+#include "../WifiConnection.h"
+#include "../wifi_mqtt_secrets.h"
+
 #include <AUnit.h>
 
 test(WifiConnection_connectToWiFi_connectsToWiFiAndReturnsTrue)

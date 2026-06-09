@@ -1,5 +1,6 @@
-#include "SensorHelper.h"
-#include "../config.h"
+#include "../SensorHelper.h"
+#include "../../config.h"
+
 #include <ArduinoJson.h>
 #include <AUnit.h>
 

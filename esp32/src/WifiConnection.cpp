@@ -1,6 +1,7 @@
 #include "WifiConnection.h"
-#include <WiFi.h>
 #include "wifi_mqtt_secrets.h"
+
+#include <WiFi.h>
 
 /**
  * @brief Connect to the WiFi network using credentials from wifi_mqtt_secrets.h.

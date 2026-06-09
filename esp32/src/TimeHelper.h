@@ -1,9 +1,10 @@
 #ifndef TIME_HELPER_H
 #define TIME_HELPER_H
 
+#include "../config.h"
+
 #include <Arduino.h>
 #include <time.h>
-#include "../config.h"
 
 /**
  * @brief Synchronizes the MCU's internal clock with an NTP server.

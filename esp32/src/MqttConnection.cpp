@@ -1,8 +1,9 @@
 // required for enabling SSL/TLS support in AsyncMqttClient, before including the library header
 #define ASYNC_TCP_SSL_ENABLED 1
 
-#include "MqttConnection.h"
 #include "wifi_mqtt_secrets.h"
+#include "MqttConnection.h"
+
 #include <AsyncMqtt_Generic.h>
 #include <WiFiClientSecure.h>
 

@@ -1,6 +1,8 @@
 #ifndef WIFI_CONNECTION_H
 #define WIFI_CONNECTION_H
 
+#include <Arduino.h>
+
 /**
  * @brief Connect to the WiFi network using credentials from wifi_mqtt_secrets.h.
  * This function attempts to connect to the specified WiFi network and blocks until a connection is established.
@@ -16,4 +18,4 @@
  */
 bool connectToWiFi();
 
-#endif
+#endif // WIFI_CONNECTION_H

@@ -1,9 +1,10 @@
-#include "TimeHelper.h"
+#include "../TimeHelper.h"
+#include "../../config.h"
+#include "../WifiConnection.h"
+
 #include <time.h>
 #include <WiFi.h>
-#include "WifiConnection.h"
 #include <AUnit.h>
-#include "../config.h"
 
 test(TimeHelper_TimeIsSynchronized)
 {
