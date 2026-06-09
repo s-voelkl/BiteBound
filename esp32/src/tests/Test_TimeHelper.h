@@ -1,6 +1,6 @@
 #include "../TimeHelper.h"
-#include "../../config.h"
 #include "../WifiConnection.h"
+#include "../../config.h"
 
 #include <time.h>
 #include <WiFi.h>
