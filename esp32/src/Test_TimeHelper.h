@@ -3,7 +3,7 @@
 #include <WiFi.h>
 #include "WifiConnection.h"
 #include <AUnit.h>
-#include "config.h"
+#include "../config.h"
 
 test(TimeHelper_TimeIsSynchronized)
 {

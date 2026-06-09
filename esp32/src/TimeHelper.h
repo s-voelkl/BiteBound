@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <time.h>
-#include "config.h"
+#include "../config.h"
 
 /**
  * @brief Synchronizes the MCU's internal clock with an NTP server.

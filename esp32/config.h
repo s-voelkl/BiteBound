@@ -1,3 +1,6 @@
+#IFNDEF CONFIG_H
+#define CONFIG_H
+
 /**
  * Further configuration options for the ESP32.
  */
@@ -63,3 +66,5 @@ const long gmt_offset_sec = 0;
 const int daylight_offset_sec = 0;
 /** Unix epoch time for January 1, 2020 (used as a threshold for time synchronization). */
 const int time_epoch_2020_Jan_1 = 1577836800;
+
+#endif // CONFIG_H

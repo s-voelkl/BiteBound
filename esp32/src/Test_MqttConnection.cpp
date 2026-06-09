@@ -1,5 +1,5 @@
-#include "config.h"
-#include <ArduinoJson.h>
+#include "../config.h"
+#include < ArduinoJson.h>
 #include "MqttConnection.h"
 #include <AsyncMqtt_Generic.h>
 #include <AUnit.h>

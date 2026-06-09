@@ -1,7 +1,5 @@
 #include "SensorReader.h"
-#include "config.h"
-
-// define pins: none
+#include "../config.h"
 
 /**
  * @brief Initialize all sensors.
