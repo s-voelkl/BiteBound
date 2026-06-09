@@ -4,7 +4,7 @@
 
 ### Arduino Setup
 
-Initial Setup:
+#### Initial Setup
 
 - Follow the [Getting Started with Arduino](https://docs.arduino.cc/learn/starting-guide/getting-started-arduino/)
     guide to set up the Arduino IDE and configure it for ESP32 development.
@@ -14,7 +14,7 @@ Initial Setup:
 - Connect the ESP32 to your computer via USB and select the appropriate board and port in the Arduino IDE. The board is named "ESP32-S3-Touch-LCD-1.69" in the board manager.
 - Start the [esp32/esp32.ino](esp32/esp32.ino) sketch in the Arduino IDE and upload it to the ESP32.
 
-Required Libraries:
+#### Required Libraries
 
 - ArduinoHttpClient (Arduino)
 - ArduinoJson (Benoit Blanchon)
@@ -28,7 +28,7 @@ Required Libraries:
   - SensorLib
   - lvgl
 
-Required Board Managers:
+#### Required Board Managers
 
 - esp32 by Espressif Systems with Version 3.3.2 for Waveshare compatability.
 
