@@ -2,7 +2,35 @@
 
 ## Hardware Setup (ESP32)
 
-tbd
+### Arduino Setup
+
+Initial Setup:
+
+- Follow the [Getting Started with Arduino](https://docs.arduino.cc/learn/starting-guide/getting-started-arduino/)
+    guide to set up the Arduino IDE and configure it for ESP32 development.
+    Use an Arduino IDE Version 12.3.7 or later.
+- Install the required board managers (see below).
+- Install the required libraries (see below).
+- Connect the ESP32 to your computer via USB and select the appropriate board and port in the Arduino IDE. The board is named "ESP32-S3-Touch-LCD-1.69" in the board manager.
+- Start the [esp32/esp32.ino](esp32/esp32.ino) sketch in the Arduino IDE and upload it to the ESP32.
+
+Required Libraries:
+
+- ArduinoHttpClient (Arduino)
+- ArduinoJson (Benoit Blanchon)
+- WiFi (Arduino)
+- AUnit (Brian T. Park)
+- PubSubClient (Nick O'Leary)
+- Waveshare Libraries (Waveshare) from
+    [GitHub under ESP32-S3-Touch-LCD-1.69](https://github.com/waveshareteam/ESP32-S3-Touch-LCD-1.69/tree/main/examples/Arduino/libraries). Do not update by Arduino Library Manager!
+  - GFX_Library_for_Arduino
+  - Mylibrary
+  - SensorLib
+  - lvgl
+
+Required Board Managers:
+
+- esp32 by Espressif Systems with Version 3.3.2 for Waveshare compatability.
 
 ### Hardware MQTT Mock
 
