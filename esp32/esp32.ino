@@ -46,7 +46,7 @@ void loop() {
   connectToMQTT();
 
   // Handle MQTT communication and keep alive
-  loopMQTT();
+  mqttClient.loop();
 
   // Read sensor values. 
   SensorData sensorData = readSensors();

@@ -5,18 +5,40 @@
  * Further configuration options for the ESP32.
  */
 
-/** Network settings */
+/** ----- Network settings ----- */
 /** Device ID for identifying the ESP32 device on the network. */
 const char *device_id = "BiteBound-ESP32-S3-001";
 
-/** Game settings */
+/** ----- MQTT settings ----- */
+/** HiveMQ Cloud broker port. */
+const int mqtt_port = 8883;
+
+/** MQTT keep alive interval in seconds. */
+const int mqtt_keep_alive_sec = 60;
+
+/** MQTT topic for sending commands to the ESP32 device. */
+const char *mqtt_command_topic = "mauc2026/group_03/game/command";
+
+/** MQTT topic for sending telemetry data from the ESP32 device. */
+const char *mqtt_telemetry_topic = "mauc2026/group_03/game/telemetry";
+
+/** MQTT topic for sending telemetry data from the ESP32 device. */
+const char *mqtt_test_topic = "mauc2026/group_03/test";
+
+/** Quality of Service level for MQTT messages. */
+const int mqtt_qos = 1;
+
+/** Retain flag for MQTT messages. */
+const bool mqtt_retain = false;
+
+/** ----- Game settings ----- */
 /** Default game duration in seconds. */
 const int default_game_duration_sec = 120;
 
 /** Default maximum number of cookies in the game. */
 const int default_cookies_count = 10;
 
-/** Display settings */
+/** ----- Display settings ----- */
 /** Display width in pixels. */
 const int display_width = 240;
 
@@ -26,7 +48,7 @@ const int display_height = 280;
 /** Default wall thickness in pixels. */
 const int default_wall_thickness_px = 6;
 
-/** Physics settings */
+/** ----- Physics settings ----- */
 /** IMU sensitivity multiplier (IMU = Inertial Measurement Units) */
 const float default_imu_sensitivity_multiplier = 1.25;
 
@@ -55,7 +77,7 @@ const float default_ema_alpha = 0.25;
  */
 const float default_deadzone_threshold = 0.05;
 
-/** Time settings */
+/** ----- Time settings ----- */
 /** NTP server address 1 for time synchronization. */
 const char *ntp_server_1 = "pool.ntp.org";
 /** NTP server address 2 for time synchronization. */
