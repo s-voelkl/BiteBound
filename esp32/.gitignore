@@ -68,3 +68,7 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# config file
+wifi_mqtt_secrets.h
+*_secrets.h
