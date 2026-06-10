@@ -1,0 +1,42 @@
+{
+  "device": {
+    "client_id": "BiteBound_ESP32_G03",
+    "hardware": "Waveshare ESP32-S3 1.69inch",
+    "firmware_version": "1.0.0",
+    "uptime_ms": 745200,
+    "uptime_since": "2024-06-08T11:50:00Z",
+    "wifi_ssid": "MyWiFiNetwork"
+  },
+  "config": {
+    "game_id": 1,
+    "player_name": "Player 1",
+    "target_cookies": 15,
+    "screen_width": 240,
+    "screen_height": 280,
+    "wall_thickness_px": 6
+  },
+  "state": {
+    "status": "running",
+    "cookies_collected": 4,
+    "cookies_remaining": 11,
+    "current_round": 2,
+    "elapsed_time_sec": 42.8
+  },
+  "physics": {
+    "ball_pos_x": 112.45,
+    "ball_pos_y": 145.2,
+    "velocity_x": 1.85,
+    "velocity_y": -0.92,
+    "acc_x": 0.15,
+    "acc_y": -0.34,
+    "collision_detected": false
+  },
+  "sensors": {
+    "accel_x": 0.12,
+    "accel_y": -0.08,
+    "accel_z": 9.81,
+    "gyro_x": 0.02,
+    "gyro_y": -0.01,
+    "gyro_z": 0.005
+  }
+}

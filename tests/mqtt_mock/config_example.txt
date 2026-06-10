@@ -1,0 +1,10 @@
+Create a new file config.json in the tests/mqtt_mock/ directory with the following content:
+
+{
+  "broker": "",
+  "port": 8883,
+  "username": "BiteBound",
+  "password": "",
+  "topic": "mauc2026/group_03/game/telemetry",
+  "client_id": "BiteBound-Local-Python-Mock"
+}
