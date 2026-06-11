@@ -1,4 +1,4 @@
-# MAUC
+# BiteBound
 
 ## Before making this repo public
 
