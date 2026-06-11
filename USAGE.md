@@ -1,4 +1,4 @@
-# Usage instructions for the project
+# BiteBound Usage Guide
 
 ## Hardware Setup (ESP32)
 

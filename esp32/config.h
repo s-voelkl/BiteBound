@@ -7,7 +7,7 @@
 
 /** ----- Network settings ----- */
 /** Device ID for identifying the ESP32 device on the network. */
-const char *device_id = "BiteBound-ESP32-S3-001";
+const char *const device_id = "BiteBound-ESP32-S3-001";
 
 /** ----- MQTT settings ----- */
 /** HiveMQ Cloud broker port. */
@@ -17,13 +17,13 @@ const int mqtt_port = 8883;
 const int mqtt_keep_alive_sec = 60;
 
 /** MQTT topic for sending commands to the ESP32 device. */
-const char *mqtt_command_topic = "mauc2026/group_03/game/command";
+const char *const mqtt_command_topic = "mauc2026/group_03/game/command";
 
 /** MQTT topic for sending telemetry data from the ESP32 device. */
-const char *mqtt_telemetry_topic = "mauc2026/group_03/game/telemetry";
+const char *const mqtt_telemetry_topic = "mauc2026/group_03/game/telemetry";
 
 /** MQTT topic for sending telemetry data from the ESP32 device. */
-const char *mqtt_test_topic = "mauc2026/group_03/test";
+const char *const mqtt_test_topic = "mauc2026/group_03/test";
 
 /** Quality of Service level for MQTT messages. */
 const int mqtt_qos = 1;
@@ -79,9 +79,9 @@ const float default_deadzone_threshold = 0.05;
 
 /** ----- Time settings ----- */
 /** NTP server address 1 for time synchronization. */
-const char *ntp_server_1 = "pool.ntp.org";
+const char *const ntp_server_1 = "pool.ntp.org";
 /** NTP server address 2 for time synchronization. */
-const char *ntp_server_2 = "time.nist.gov";
+const char *const ntp_server_2 = "time.nist.gov";
 /** GMT offset in seconds (0 for UTC). */
 const long gmt_offset_sec = 0;
 /** Daylight saving time offset in seconds (0 if not used). */
