@@ -13,7 +13,7 @@
  * This function initializes the serial communication, connects to WiFi and MQTT.
  */
 void setup() {
-  Serial.begin(115200, SERIAL_8N1);
+  Serial.begin(115200);
   Serial.println("ESP32 BiteBound Hardware starting...");
   
 #if RUN_TESTS 
