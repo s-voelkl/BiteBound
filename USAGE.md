@@ -2,6 +2,8 @@
 
 ## Hardware Setup (ESP32)
 
+Create a `esp32/wifi_mqtt_secrets.h` file based on the provided `esp32/wifi_mqtt_secrets_template.txt` template to store the WiFi and MQTT credentials for the ESP32 device. Fill in the actual values for WiFi and MQTT credentials in the `wifi_mqtt_secrets.h` file. **Do not push actual credentials to version control.**
+
 ### Arduino Setup
 
 #### Initial Setup
