@@ -1,6 +1,6 @@
 #include "MqttManager.h"
-#include "../wifi_mqtt_secrets.h"
-#include "../config.h"
+#include "../../../wifi_mqtt_secrets.h"
+#include "../../../config.h"
 
 /**
  * @brief Pointer to the instance whose member callback should receive

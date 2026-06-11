@@ -1,7 +1,7 @@
-#include "src/WifiManager.h"
-#include "src/MqttManager.h"
-#include "src/SensorManager.h"
-#include "src/TimeManager.h"
+#include "src/network/time/TimeManager.h"
+#include "src/network/wifi/WifiManager.h"
+#include "src/network/mqtt/MqttManager.h"
+#include "src/sensors/SensorManager.h"
 #include "config.h"
 #include <AUnit.h>
 

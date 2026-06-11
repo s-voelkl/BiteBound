@@ -1,4 +1,4 @@
-#include "../SensorManager.h"
+#include "SensorManager.h"
 #include "../../config.h"
 
 #include <ArduinoJson.h>

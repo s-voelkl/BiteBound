@@ -1,5 +1,5 @@
 #include "SensorManager.h"
-#include "../config.h"
+#include "../../config.h"
 
 /**
  * @brief Shared SensorManager instance used by the main sketch and tests.

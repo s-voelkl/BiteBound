@@ -1,5 +1,5 @@
 #include "WifiManager.h"
-#include "../wifi_mqtt_secrets.h"
+#include "../../../wifi_mqtt_secrets.h"
 
 #include <WiFi.h>
 

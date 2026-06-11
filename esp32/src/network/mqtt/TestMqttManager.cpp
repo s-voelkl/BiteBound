@@ -1,5 +1,5 @@
-#include "../MqttManager.h"
-#include "../../config.h"
+#include "MqttManager.h"
+#include "../../../config.h"
 
 #include <ArduinoJson.h>
 #include <AUnit.h>
