@@ -1,0 +1,140 @@
+@startuml architecture
+' skinparam classAttributeIconSize 0
+' skinparam monochrome true
+' skinparam shadowing false
+
+package "Entry Point (Core 1)" {
+    class "esp32.ino" as Main {
+        + setup() : void
+        + loop() : void
+        - configMutex : SemaphoreHandle_t
+    }
+}
+
+package "Network (Core 0)" {
+    class MqttManager {
+        + begin() : void
+        + connect() : bool
+        + loop() : void
+        + isConnected() : bool
+        + publish(topic : const char*, payload : String&, retain : bool) : bool
+        + subscribe(topic : const char*, qos : uint8_t) : bool
+        + disconnect() : void
+    }
+
+    class WifiManager {
+        + connect() : bool
+        + isConnected() : bool
+        + localIP() : String
+    }
+
+    class TimeManager {
+        + sync() : void
+        + now() : time_t
+        + isSynchronized() : bool
+    }
+}
+
+package "Sensors (Core 1)" {
+    struct SensorData {
+        + timestamp : String
+        + accelerometerX : float
+        + accelerometerY : float
+        + accelerometerZ : float
+        + gyroscopeX : float
+        + gyroscopeY : float
+        + gyroscopeZ : float
+        + button : bool
+    }
+
+    class SensorManager {
+        + begin() : void
+        + read() : SensorData
+        + isInitialized() : bool
+    }
+}
+
+package "Shared Data (Thread-Safe)" {
+    struct GameConfig {
+        + playerSpeed : uint8_t
+        + wallThickness : uint8_t
+        + mazeRows : uint8_t
+        + mazeCols : uint8_t
+        + isGravityEnabled : bool
+    }
+}
+
+package "Engine Core (Core 1)" {
+    class GameEngine {
+        - activeGame : IGame*
+        - config : GameConfig*
+        - mutex : SemaphoreHandle_t
+        + init() : void
+        + update(dt : float) : void
+        + render() : void
+        + switchGame(gameId : uint8_t) : void
+    }
+
+    class PhysicsEngine {
+        + checkWallCollision(posX : float, posY : float, radius : uint8_t, maze : uint8_t*) : bool
+    }
+
+    class MazeGenerator {
+        - stack : uint16_t*
+        + generate() : uint8_t*
+    }
+
+    class DisplayManager {
+        - tft : TFT_eSPI
+        + clear() : void
+        + draw(x: uint16_6, y: uint16_6, width: uint16_6, height: uint16_6) : void
+    }
+}
+
+package "Games (Core 1)" {
+    interface IGame {
+        + init(config : GameConfig*, maze : uint8_t*) : void
+        + update(dt : float, sensorData : SensorData) : void
+        + render(display : DisplayManager*) : void
+    }
+
+    class Game1Labyrinth {
+        - playerX : float
+        - playerY : float
+        - score : uint16_t
+        + init() : void
+        + update() : void
+        + render() : void
+    }
+
+    class Game2Flatland {
+        - ghostX : float
+        - ghostY : float
+        - timer : float
+        + init() : void
+        + update() : void
+        + render() : void
+    }
+}
+
+' Connections and dependencies
+Main --> GameEngine : "owns and controls"
+Main ..> MqttManager : "starts via FreeRTOS on Core 0"
+
+MqttManager o--> GameConfig : "writes updates (Thread-Safe)"
+GameEngine o--> GameConfig : "reads settings"
+GameEngine *--> IGame : "holds pointer to active game"
+GameEngine *--> DisplayManager : "uses for rendering"
+GameEngine *--> SensorManager : "uses for input"
+GameEngine *--> MazeGenerator : "generates maze data"
+
+Game1Labyrinth ..|> IGame : "implements"
+Game2Flatland ..|> IGame : "implements"
+
+IGame ..> PhysicsEngine : "uses for movement"
+SensorManager ..> SensorData : "creates"
+MqttManager ..> WifiManager : "requires"
+MqttManager ..> TimeManager : "requires"
+
+@endum()
+@enduml

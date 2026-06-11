@@ -68,3 +68,16 @@ See: [Docker Hub Node-RED image](https://hub.docker.com/r/nodered/node-red/)
 ## Android Setup
 
 tbd
+
+## Documentation
+
+### LaTeX Documentation
+
+The documentation is written in LaTeX and can be found in the `tex/` directory.
+
+### PlantUML Diagrams
+
+For generating diagrams, `PlantUML` is used.
+The `.vscode/settings.json` file contains the configuration for the PlantUML extension in Visual Studio Code, which allows you to generate diagrams from the `.puml` files in the `diagrams/src/` directory and output them to the `diagrams/out/` directory.
+
+For exporting, type ``CTRL + SHIFT + P` and select "PlantUML: Export Current Diagram" or "PlantUML: Export All Diagrams" to generate the diagrams in the specified output directory.
