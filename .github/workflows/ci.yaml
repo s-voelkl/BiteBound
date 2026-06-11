@@ -9,6 +9,16 @@ jobs:
   compile-esp32-sketch:
     name: Compile ESP32 Sketch
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # production build with no test code included
+          - name: production
+            compile-flags: ""
+          # test build with test code included; this compiles the AUnit tests, but does not run them
+          - name: tests
+            compile-flags: "-DRUN_TESTS=1"
 
     steps:
       - name: Checkout repository
@@ -22,7 +32,7 @@ jobs:
             cp esp32/wifi_mqtt_secrets_template.txt esp32/wifi_mqtt_secrets.h
           fi
 
-      - name: Compile Arduino Sketches
+      - name: Compile Arduino Sketch (${{ matrix.name }})
         uses: arduino/compile-sketches@v1.1.2
         with:
           fqbn: "esp32:esp32:esp32s3"
@@ -49,6 +59,9 @@ jobs:
             #   name: lvgl
           sketch-paths: |
             - esp32/esp32.ino
+          cli-compile-flags: |
+            - --build-property
+            - compiler.cpp.extra_flags=${{ matrix.compile-flags }}
           # posts memory usage change reports to the PR
           enable-deltas-report: false
           verbose: false
