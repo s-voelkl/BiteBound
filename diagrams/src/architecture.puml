@@ -121,18 +121,19 @@ package "Games (Core 1)" {
 Main --> GameEngine : "owns and controls"
 Main ..> MqttManager : "starts via FreeRTOS on Core 0"
 
-MqttManager o--> GameConfig : "writes updates (Thread-Safe)"
 GameEngine o--> GameConfig : "reads settings"
 GameEngine *--> IGame : "holds pointer to active game"
-GameEngine *--> DisplayManager : "uses for rendering"
+GameEngine o--> DisplayManager : "uses for rendering"
 GameEngine *--> SensorManager : "uses for input"
 GameEngine *--> MazeGenerator : "generates maze data"
 
+IGame ..> PhysicsEngine : "uses for movement"
 Game1Labyrinth ..|> IGame : "implements"
 Game2Flatland ..|> IGame : "implements"
 
-IGame ..> PhysicsEngine : "uses for movement"
 SensorManager ..> SensorData : "creates"
+
+MqttManager o--> GameConfig : "writes updates (Thread-Safe)"
 MqttManager ..> WifiManager : "requires"
 MqttManager ..> TimeManager : "requires"
 

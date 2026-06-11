@@ -81,3 +81,5 @@ For generating diagrams, `PlantUML` is used.
 The `.vscode/settings.json` file contains the configuration for the PlantUML extension in Visual Studio Code, which allows you to generate diagrams from the `.puml` files in the `diagrams/src/` directory and output them to the `diagrams/out/` directory.
 
 For exporting, type ``CTRL + SHIFT + P` and select "PlantUML: Export Current Diagram" or "PlantUML: Export All Diagrams" to generate the diagrams in the specified output directory.
+
+Press ``ALT + D`` to open the preview of the current diagram in Visual Studio Code.
