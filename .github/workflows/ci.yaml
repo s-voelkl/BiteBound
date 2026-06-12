@@ -45,23 +45,23 @@ jobs:
             - name: ArduinoJson
             - name: AUnit
             - name: PubSubClient
-            # - source-url: https://github.com/waveshareteam/ESP32-S3-Touch-LCD-1.69.git
-            #   source-path: examples/Arduino/libraries/GFX_Library_for_Arduino
-            #   name: GFX_Library_for_Arduino
-            # - source-url: https://github.com/waveshareteam/ESP32-S3-Touch-LCD-1.69.git
-            #   source-path: examples/Arduino/libraries/Mylibrary
-            #   name: Mylibrary
-            # - source-url: https://github.com/waveshareteam/ESP32-S3-Touch-LCD-1.69.git
-            #   source-path: examples/Arduino/libraries/SensorLib
-            #   name: SensorLib
-            # - source-url: https://github.com/waveshareteam/ESP32-S3-Touch-LCD-1.69.git
-            #   source-path: examples/Arduino/libraries/lvgl
-            #   name: lvgl
+            - source-url: https://github.com/waveshareteam/ESP32-S3-Touch-LCD-1.69.git
+              source-path: examples/Arduino/libraries/GFX_Library_for_Arduino
+              name: GFX_Library_for_Arduino
+            - source-url: https://github.com/waveshareteam/ESP32-S3-Touch-LCD-1.69.git
+              source-path: examples/Arduino/libraries/Mylibrary
+              name: Mylibrary
+            - source-url: https://github.com/waveshareteam/ESP32-S3-Touch-LCD-1.69.git
+              source-path: examples/Arduino/libraries/SensorLib
+              name: SensorLib
+            - source-url: https://github.com/waveshareteam/ESP32-S3-Touch-LCD-1.69.git
+              source-path: examples/Arduino/libraries/lvgl
+              name: lvgl
           sketch-paths: |
             - esp32/esp32.ino
           cli-compile-flags: |
             - --build-property
-            - compiler.cpp.extra_flags=${{ matrix.compile-flags }}
+            - build.extra_flags=${{ matrix.compile-flags }}
           # posts memory usage change reports to the PR
           enable-deltas-report: false
           verbose: false
