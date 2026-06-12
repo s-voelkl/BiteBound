@@ -1,6 +1,6 @@
-#include "../TimeManager.h"
-#include "../WifiManager.h"
-#include "../../config.h"
+#include "TimeManager.h"
+#include "../wifi/WifiManager.h"
+#include "../../../config.h"
 
 #include <time.h>
 #include <WiFi.h>

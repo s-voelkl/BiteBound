@@ -1,5 +1,5 @@
 #include "TimeManager.h"
-#include "../config.h"
+#include "../../../config.h"
 
 /**
  * @brief Shared TimeManager instance configured from config.h.

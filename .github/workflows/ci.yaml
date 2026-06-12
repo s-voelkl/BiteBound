@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  compile-esp32-sketch:
+    name: Compile ESP32 Sketch
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # production build with no test code included
+          - name: production
+            compile-flags: ""
+          # test build with test code included; this compiles the AUnit tests, but does not run them
+          - name: tests
+            compile-flags: "-DRUN_TESTS=1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # ensures the secret manager to be available for the next step, even if
+      # the credentials are not set up
+      - name: Provide WiFi/MQTT secrets header
+        run: |
+          if [ ! -f esp32/wifi_mqtt_secrets.h ]; then
+            cp esp32/wifi_mqtt_secrets_template.txt esp32/wifi_mqtt_secrets.h
+          fi
+
+      - name: Compile Arduino Sketch (${{ matrix.name }})
+        uses: arduino/compile-sketches@v1.1.2
+        with:
+          fqbn: "esp32:esp32:esp32s3"
+          platforms: |
+            - name: esp32:esp32
+              source-url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+              version: 3.3.2
+          libraries: |
+            - name: ArduinoHttpClient
+            - name: ArduinoJson
+            - name: AUnit
+            - name: PubSubClient
+            # - source-url: https://github.com/waveshareteam/ESP32-S3-Touch-LCD-1.69.git
+            #   source-path: examples/Arduino/libraries/GFX_Library_for_Arduino
+            #   name: GFX_Library_for_Arduino
+            # - source-url: https://github.com/waveshareteam/ESP32-S3-Touch-LCD-1.69.git
+            #   source-path: examples/Arduino/libraries/Mylibrary
+            #   name: Mylibrary
+            # - source-url: https://github.com/waveshareteam/ESP32-S3-Touch-LCD-1.69.git
+            #   source-path: examples/Arduino/libraries/SensorLib
+            #   name: SensorLib
+            # - source-url: https://github.com/waveshareteam/ESP32-S3-Touch-LCD-1.69.git
+            #   source-path: examples/Arduino/libraries/lvgl
+            #   name: lvgl
+          sketch-paths: |
+            - esp32/esp32.ino
+          cli-compile-flags: |
+            - --build-property
+            - compiler.cpp.extra_flags=${{ matrix.compile-flags }}
+          # posts memory usage change reports to the PR
+          enable-deltas-report: false
+          verbose: false

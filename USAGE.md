@@ -2,6 +2,8 @@
 
 ## Hardware Setup (ESP32)
 
+Create a `esp32/wifi_mqtt_secrets.h` file based on the provided `esp32/wifi_mqtt_secrets_template.txt` template to store the WiFi and MQTT credentials for the ESP32 device. Fill in the actual values for WiFi and MQTT credentials in the `wifi_mqtt_secrets.h` file. **Do not push actual credentials to version control.**
+
 ### Arduino Setup
 
 #### Initial Setup
@@ -12,7 +14,9 @@
 - Install the required board managers (see below).
 - Install the required libraries (see below).
 - Connect the ESP32 to your computer via USB and select the appropriate board and port in the Arduino IDE. The board is named "ESP32-S3-Touch-LCD-1.69" in the board manager.
+- In the Arduino IDE, go to `Tools > USB CDC On Boot > Enabled` to enable USB CDC for serial communication (see [ESP32-S3](https://esp32s3.com/getting-started.html))
 - Start the [esp32/esp32.ino](esp32/esp32.ino) sketch in the Arduino IDE and upload it to the ESP32.
+- Press the reset button ``RST`` on the ESP32 after uploading to start the program.
 
 #### Required Libraries
 
@@ -66,3 +70,18 @@ See: [Docker Hub Node-RED image](https://hub.docker.com/r/nodered/node-red/)
 ## Android Setup
 
 tbd
+
+## Documentation
+
+### LaTeX Documentation
+
+The documentation is written in LaTeX and can be found in the `tex/` directory.
+
+### PlantUML Diagrams
+
+For generating diagrams, `PlantUML` is used.
+The `.vscode/settings.json` file contains the configuration for the PlantUML extension in Visual Studio Code, which allows you to generate diagrams from the `.puml` files in the `diagrams/src/` directory and output them to the `diagrams/out/` directory.
+
+For exporting, type ``CTRL + SHIFT + P` and select "PlantUML: Export Current Diagram" or "PlantUML: Export All Diagrams" to generate the diagrams in the specified output directory.
+
+Press ``ALT + D`` to open the preview of the current diagram in Visual Studio Code.

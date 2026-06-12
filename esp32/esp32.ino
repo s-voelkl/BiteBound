@@ -1,19 +1,22 @@
-#include "src/WifiManager.h"
-#include "src/MqttManager.h"
-#include "src/SensorManager.h"
-#include "src/TimeManager.h"
+#include "src/network/time/TimeManager.h"
+#include "src/network/wifi/WifiManager.h"
+#include "src/network/mqtt/MqttManager.h"
+#include "src/sensors/SensorManager.h"
 #include "config.h"
 #include <AUnit.h>
 
 // Set to 1 to run AUnit tests; set 0 for main functionality.
+// Can be overridden at compile time via -DRUN_TESTS=1 (used by CI).
+#ifndef RUN_TESTS
 #define RUN_TESTS 0
+#endif
 
 /**
  * @brief Main setup function for the MCU controller.
  * This function initializes the serial communication, connects to WiFi and MQTT.
  */
 void setup() {
-  Serial.begin(115200, SERIAL_8N1);
+  Serial.begin(115200);
   Serial.println("ESP32 BiteBound Hardware starting...");
   
 #if RUN_TESTS 
