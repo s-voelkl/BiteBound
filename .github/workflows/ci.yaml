@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-  pull_request:
+  # pull_request: # disabled to avoid running the workflow twice for PRs
   workflow_dispatch:
 
 jobs:
