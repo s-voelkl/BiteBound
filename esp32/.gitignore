@@ -72,3 +72,6 @@ Testing/
 # config file
 wifi_mqtt_secrets.h
 *_secrets.h
+
+# tests
+test_output.*
