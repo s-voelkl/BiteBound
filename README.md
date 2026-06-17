@@ -209,3 +209,66 @@ Schieder: Setup
 
 - Test Coverage: ESP32 ohne Display 80%, Android 40% max., NodeRed nichts.
 - main Branch Protection, mit PRs
+
+## Documentation
+
+### Sensor Handling
+
+The ESP32 reads multiple values from the onboard IMU and inputs, processing them to produce stable and usable data for the game logic.
+
+#### Read Sensor Values
+
+The sensors are continuously polled and packed into a `SensorData` struct. For MQTT telemetry transmission, this struct is mapped into a standard JSON payload. An example payload looks like this:
+
+```json
+{
+  "timestamp": "2026-06-17T12:00:00Z",
+  "accX": 0.0,
+  "accY": 0.11,
+  "accZ": 9.81,
+  "gyrX": 0.0,
+  "gyrY": 0.0,
+  "gyrZ": 3.4,
+  "touchX": 12,
+  "touchY": 200,
+  "touchPressed": false,
+  "batteryVoltage": 3.8,
+  "button": false
+}
+```
+
+#### Filters
+
+To ensure a smooth gaming experience, raw sensor inputs are filtered:
+
+1. **Deadzone Filter**: Nullifies variations below a defined threshold to discard hardware noise and hand micromovements.
+2. **Low-Pass Filter (EMA)**: Applies an Exponential Moving Average to smooth out values over time, calculating the new value with: `new_value = alpha * new_measurement + (1 - alpha) * old_value`.
+
+#### Configuration Options
+
+The default filter parameters are centralized in `config.h` so they can be easily adjusted across the project:
+
+- `default_ema_alpha`: Determines how much weight the new values have against the previous values (e.g., `0.25`).
+- `default_acceleration_deadzone_threshold`: Threshold for the accelerometer against standard gravity.
+- `default_gyro_deadzone_threshold`: Threshold for the gyroscope noise in degrees/s.
+- `default_earth_gravity`: Calibrated rest standard for the Z-axis (e.g., `9.81` m/s²).
+
+#### Basic Usage
+
+The `SensorManager` handles hardware abstraction and provides filtered values directly to the main loop:
+
+```cpp
+#include "src/sensors/SensorManager.h"
+
+// 1. Initialize sensor hardware and assign config parameters
+sensorManager.begin();
+sensorManager.setEmaAlpha(default_ema_alpha);
+sensorManager.setAccDeadzoneThreshold(default_acceleration_deadzone_threshold);
+sensorManager.setGyroDeadzoneThreshold(default_gyro_deadzone_threshold);
+
+// 2. Continually read values inside loop()
+SensorData sensorData = sensorManager.read();
+
+// Or use the testing mock without physical hardware
+// SensorData sensorData = sensorManager.readMock();
+```
