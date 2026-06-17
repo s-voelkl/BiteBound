@@ -75,7 +75,13 @@ const float default_ema_alpha = 0.25;
  * This helps to create a more stable and enjoyable gaming experience by filtering out small, insignificant
  * movements of the device, e.g. when the player is holding the device still or making very slight movements.
  */
-const float default_deadzone_threshold = 0.05;
+const float default_acceleration_deadzone_threshold = 0.05;
+
+/** Gyroscope deadzone threshold for sensor measurements. */
+const float default_gyro_deadzone_threshold = 2.0f;
+
+/** Standard earth gravity in m/s^2. */
+const float default_earth_gravity = 9.81f;
 
 /** ----- Time settings ----- */
 /** NTP server address 1 for time synchronization. */
