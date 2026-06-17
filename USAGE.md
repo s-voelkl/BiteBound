@@ -32,6 +32,8 @@ Create a `esp32/wifi_mqtt_secrets.h` file based on the provided `esp32/wifi_mqtt
   - SensorLib
   - lvgl
 
+Note: Installation of the Waveshare libraries is explained in [this article](https://roboticsbackend.com/install-arduino-library-from-github/). Just download the ZIP file (from the Repo, or preferably from the project task description from Moodle), find you local libraries folder and paste the raw libraries there.
+
 #### Required Board Managers
 
 - esp32 by Espressif Systems with Version 3.3.2 for Waveshare compatability.
