@@ -3,6 +3,9 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <SensorQMI8658.hpp>
+#include <SensorCST816x.hpp>
+#include "../../config.h"
 
 /**
  * @brief Aggregates a single snapshot of all sensor readings.
@@ -22,6 +25,10 @@ struct SensorData
     float gyroscopeX;
     float gyroscopeY;
     float gyroscopeZ;
+    uint16_t touchX;
+    uint16_t touchY;
+    bool touchPressed;
+    float batteryVoltage;
     bool button;
 };
 
@@ -58,19 +65,59 @@ public:
     SensorData read();
 
     /**
+     * @brief Mock implementation of read() for testing purposes.
+     *
+     * @return Random/Mocked SensorData snapshot after applying filters.
+     */
+    SensorData readMock();
+
+    /**
+     * @brief Applies Exponential Moving Average (EMA) low-pass filter.
+     */
+    SensorData applyLowPassFilter(const SensorData &last, const SensorData &current, float emaAlpha);
+
+    /**
+     * @brief Nullifies values below minimum thresholds to avoid sensor noise.
+     * Default for acceleration Z is Earth gravity.
+     */
+    SensorData applyDeadzone(const SensorData &data, float accThreshold, float gyroThreshold);
+
+    /**
      * @brief Indicates whether begin() has completed successfully.
      *
      * @return true once the sensors have been initialised, false otherwise.
      */
     bool isInitialized() const;
 
+    /**
+     * @brief Set the EMA Alpha value for the low-pass filter
+     */
+    void setEmaAlpha(float alpha);
+
+    /**
+     * @brief Set the accelerometer deadzone threshold
+     */
+    void setAccDeadzoneThreshold(float threshold);
+
+    /**
+     * @brief Set the gyroscope deadzone threshold
+     */
+    void setGyroDeadzoneThreshold(float threshold);
+
 private:
     bool _initialized;
+    SensorData _lastData;
+
+    // Hardware components
+    SensorQMI8658 _qmi;
+    SensorCST816x _touch;
+
+    // Configuration parameters for the filters
+    float _emaAlpha = default_ema_alpha;
+    float _accDeadzoneThreshold = default_acceleration_deadzone_threshold;
+    float _gyroDeadzoneThreshold = default_gyro_deadzone_threshold;
 };
 
-/**
- * @brief Shared SensorManager instance used by the main sketch and tests.
- */
 extern SensorManager sensorManager;
 
 #endif // SENSOR_MANAGER_H

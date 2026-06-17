@@ -4,11 +4,17 @@
 #include "src/sensors/SensorManager.h"
 #include "config.h"
 #include <AUnit.h>
+#include <ArduinoJson.h>
+
+// Set to 1 to use mock sensor data instead of real hardware
+#ifndef MOCK_SENSORS
+#define MOCK_SENSORS 0
+#endif
 
 // Set to 1 to run AUnit tests; set 0 for main functionality.
 // Can be overridden at compile time via -DRUN_TESTS=1 (used by CI).
 #ifndef RUN_TESTS
-#define RUN_TESTS 0
+#define RUN_TESTS 1
 #endif
 
 /**
@@ -32,6 +38,11 @@ void setup() {
 
   // Initialize sensors 
   sensorManager.begin();
+  
+  // Set configuration parameters for the low-pass filter and deadzones dynamically
+  sensorManager.setEmaAlpha(default_ema_alpha);
+  sensorManager.setAccDeadzoneThreshold(default_acceleration_deadzone_threshold);
+  sensorManager.setGyroDeadzoneThreshold(default_gyro_deadzone_threshold);
 
   // Setup MQTT client
   mqttManager.begin();
@@ -53,11 +64,37 @@ void loop() {
   // Handle MQTT communication and keep alive
   mqttManager.loop();
 
-  // Read sensor values. 
+  // Read sensor values (mock or real based on definition)
+#if MOCK_SENSORS
+  SensorData sensorData = sensorManager.readMock();
+#else
   SensorData sensorData = sensorManager.read();
+#endif
+
+  // Create JSON payload
+  JsonDocument doc; 
+  doc["timestamp"] = sensorData.timestamp;
+  doc["accX"] = sensorData.accelerometerX;
+  doc["accY"] = sensorData.accelerometerY;
+  doc["accZ"] = sensorData.accelerometerZ;
+  doc["gyrX"] = sensorData.gyroscopeX;
+  doc["gyrY"] = sensorData.gyroscopeY;
+  doc["gyrZ"] = sensorData.gyroscopeZ;
+  doc["touchX"] = sensorData.touchX;
+  doc["touchY"] = sensorData.touchY;
+  doc["touchPressed"] = sensorData.touchPressed;
+  doc["batteryVoltage"] = sensorData.batteryVoltage;
+  doc["button"] = sensorData.button;
+
+  String payload;
+  serializeJson(doc, payload);
+
+  // Log to Serial output
+  Serial.print("Telemetry Payload: ");
+  Serial.println(payload);
 
   // Publish to MQTT Broker
-  mqttManager.publish(mqtt_telemetry_topic, "payload_placeholder", mqtt_retain); // TODO: json payload
+  mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
   
   delay(1000);
 #endif

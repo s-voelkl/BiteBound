@@ -218,7 +218,7 @@ The ESP32 reads multiple values from the onboard IMU and inputs, processing them
 
 #### Read Sensor Values
 
-The sensors are continuously polled and packed into a `SensorData` struct. For MQTT telemetry transmission, this struct is mapped into a standard JSON payload. An example payload looks like this:
+The sensors are continuously polled and packed into a `SensorData` struct utilizing Waveshare's `SensorQMI8658` (IMU) and `SensorCST816x` (TouchController) on the internal I2C pins. Hardware constants and battery calculations are tied directly through analog pins onto a 12-bit ADC. For MQTT telemetry transmission, this struct is mapped into a standard JSON payload. An example payload looks like this:
 
 ```json
 {

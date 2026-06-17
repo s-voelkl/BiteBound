@@ -95,4 +95,30 @@ const int daylight_offset_sec = 0;
 /** Unix epoch time for January 1, 2020 (used as a threshold for time synchronization). */
 const int time_epoch_2020_Jan_1 = 1577836800;
 
+/** ----- Hardware Pins ----- */
+/** I2C SDA Pin for IMU and Touch. */
+const int pin_i2c_sda = 6;
+/** I2C SCL Pin for IMU and Touch. */
+const int pin_i2c_scl = 7;
+/** Touch Interrupt Pin. */
+const int pin_touch_interrupt = 5;
+/** Touch hardware reset Pin. */
+const int pin_touch_reset = 13;
+/** ADC Pin for Battery reading. */
+const int pin_battery_adc = 1;
+/** Boot Button Pin. */
+const int pin_boot_button = 0;
+
+/** ----- Analog & Battery Settings ----- */
+/** MCU ADC Reference Voltage. */
+const float adc_voltage_reference = 3.3f;
+/** ESP32-S3 12-bit ADC max value (2^12 - 1). */
+const float adc_max_resolution = 4095.0f;
+/** Voltage divider multiplier for battery reading (1:1 resistor configuration gives 2.0f). */
+const float battery_voltage_multiplier = 2.0f;
+/** Minimal simulated battery voltage. */
+const float battery_min_voltage_mock = 3.0f;
+/** Maximal simulated battery voltage. */
+const float battery_max_voltage_mock = 4.2f;
+
 #endif // CONFIG_H
