@@ -2,10 +2,8 @@
 #define SENSOR_MANAGER_H
 
 #include <Arduino.h>
-#include <ArduinoJson.h>
-#include <SensorQMI8658.hpp>
-#include <SensorCST816x.hpp>
 #include "../../config.h"
+#include "SensorQMI8658.hpp"
 
 /**
  * @brief Aggregates a single snapshot of all sensor readings.
@@ -25,9 +23,6 @@ struct SensorData
     float gyroscopeX;
     float gyroscopeY;
     float gyroscopeZ;
-    uint16_t touchX;
-    uint16_t touchY;
-    bool touchPressed;
     float batteryVoltage;
     bool button;
 };
@@ -52,6 +47,10 @@ public:
      *
      * Configures pin modes and performs any sensor-specific setup
      * (for example calibration) required before the first read().
+     *
+     * The manager is considered initialised after core GPIO/ADC setup, even when
+     * the IMU is temporarily unavailable. In that case read() will safely fall
+     * back to the previously known IMU values until the device provides data.
      */
     void begin();
 
@@ -67,55 +66,24 @@ public:
     /**
      * @brief Mock implementation of read() for testing purposes.
      *
-     * @return Random/Mocked SensorData snapshot after applying filters.
+     * @return Random/Mocked SensorData snapshot.
      */
     SensorData readMock();
 
     /**
-     * @brief Applies Exponential Moving Average (EMA) low-pass filter.
-     */
-    SensorData applyLowPassFilter(const SensorData &last, const SensorData &current, float emaAlpha);
-
-    /**
-     * @brief Nullifies values below minimum thresholds to avoid sensor noise.
-     * Default for acceleration Z is Earth gravity.
-     */
-    SensorData applyDeadzone(const SensorData &data, float accThreshold, float gyroThreshold);
-
-    /**
-     * @brief Indicates whether begin() has completed successfully.
+     * @brief Indicates whether begin() completed manager setup.
      *
-     * @return true once the sensors have been initialised, false otherwise.
+     * @return true once basic sensor manager setup has run, false otherwise.
      */
     bool isInitialized() const;
 
-    /**
-     * @brief Set the EMA Alpha value for the low-pass filter
-     */
-    void setEmaAlpha(float alpha);
-
-    /**
-     * @brief Set the accelerometer deadzone threshold
-     */
-    void setAccDeadzoneThreshold(float threshold);
-
-    /**
-     * @brief Set the gyroscope deadzone threshold
-     */
-    void setGyroDeadzoneThreshold(float threshold);
-
 private:
     bool _initialized;
+    bool _imuAvailable;
     SensorData _lastData;
 
     // Hardware components
     SensorQMI8658 _qmi;
-    SensorCST816x _touch;
-
-    // Configuration parameters for the filters
-    float _emaAlpha = default_ema_alpha;
-    float _accDeadzoneThreshold = default_acceleration_deadzone_threshold;
-    float _gyroDeadzoneThreshold = default_gyro_deadzone_threshold;
 };
 
 extern SensorManager sensorManager;

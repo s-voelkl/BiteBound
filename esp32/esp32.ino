@@ -1,5 +1,5 @@
 #include "src/network/time/TimeManager.h"
-#include "src/network/wifi/WifiManager.h"
+#include "src/network/wifi-connection/WifiManager.h" 
 #include "src/network/mqtt/MqttManager.h"
 #include "src/sensors/SensorManager.h"
 #include "config.h"
@@ -14,7 +14,7 @@
 // Set to 1 to run AUnit tests; set 0 for main functionality.
 // Can be overridden at compile time via -DRUN_TESTS=1 (used by CI).
 #ifndef RUN_TESTS
-#define RUN_TESTS 1
+#define RUN_TESTS 0
 #endif
 
 /**
@@ -38,11 +38,6 @@ void setup() {
 
   // Initialize sensors 
   sensorManager.begin();
-  
-  // Set configuration parameters for the low-pass filter and deadzones dynamically
-  sensorManager.setEmaAlpha(default_ema_alpha);
-  sensorManager.setAccDeadzoneThreshold(default_acceleration_deadzone_threshold);
-  sensorManager.setGyroDeadzoneThreshold(default_gyro_deadzone_threshold);
 
   // Setup MQTT client
   mqttManager.begin();
@@ -66,8 +61,10 @@ void loop() {
 
   // Read sensor values (mock or real based on definition)
 #if MOCK_SENSORS
+  Serial.println("Reading mock sensor data...");
   SensorData sensorData = sensorManager.readMock();
 #else
+  Serial.println("Reading real sensor data...");
   SensorData sensorData = sensorManager.read();
 #endif
 
@@ -80,9 +77,6 @@ void loop() {
   doc["gyrX"] = sensorData.gyroscopeX;
   doc["gyrY"] = sensorData.gyroscopeY;
   doc["gyrZ"] = sensorData.gyroscopeZ;
-  doc["touchX"] = sensorData.touchX;
-  doc["touchY"] = sensorData.touchY;
-  doc["touchPressed"] = sensorData.touchPressed;
   doc["batteryVoltage"] = sensorData.batteryVoltage;
   doc["button"] = sensorData.button;
 
