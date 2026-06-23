@@ -27,6 +27,7 @@ void SensorManager::begin()
     if (_initialized)
     {
         // Prevent accidental reconfiguration of I2C/IMU if begin() is called twice.
+        Serial.println("[-] SensorManager already initialized, skipping begin().");
         return;
     }
 
@@ -35,6 +36,7 @@ void SensorManager::begin()
 
     // Initialize and configure the QMI8658 using the same sequence as the vendor sample.
     if (!_qmi.begin(Wire, QMI8658_L_SLAVE_ADDRESS, pin_i2c_sda, pin_i2c_scl))
+    // if (!_qmi.begin(Wire, QMI8658_L_SLAVE_ADDRESS, IIC_SDA, IIC_SCL))
     {
         Serial.println("[-] QMI8658 IMU not found!");
         _imuAvailable = false;
@@ -80,6 +82,8 @@ SensorData SensorManager::read()
     rawData.timestamp = String(timeStr);
 
     // Fetch IMU values (accelerometer + gyroscope) only when the driver reports fresh data.
+    Serial.print("IMU data ready: ");
+    Serial.println(_imuAvailable && _qmi.getDataReady() ? "YES" : "NO");
     if (_imuAvailable && _qmi.getDataReady())
     {
         float accX = rawData.accelerometerX;
@@ -92,6 +96,14 @@ SensorData SensorManager::read()
 
         if (_qmi.getAccelerometer(accX, accY, accZ))
         {
+            Serial.print("Accelerometer: ");
+            Serial.print("X=");
+            Serial.print(accX);
+            Serial.print(" Y=");
+            Serial.print(accY);
+            Serial.print(" Z=");
+            Serial.println(accZ);
+
             rawData.accelerometerX = accX;
             rawData.accelerometerY = accY;
             rawData.accelerometerZ = accZ;
@@ -99,6 +111,14 @@ SensorData SensorManager::read()
 
         if (_qmi.getGyroscope(gyrX, gyrY, gyrZ))
         {
+            Serial.print("Gyroscope: ");
+            Serial.print("X=");
+            Serial.print(gyrX);
+            Serial.print(" Y=");
+            Serial.print(gyrY);
+            Serial.print(" Z=");
+            Serial.println(gyrZ);
+
             rawData.gyroscopeX = gyrX;
             rawData.gyroscopeY = gyrY;
             rawData.gyroscopeZ = gyrZ;
