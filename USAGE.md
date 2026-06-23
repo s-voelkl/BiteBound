@@ -13,7 +13,7 @@ Create a `esp32/wifi_mqtt_secrets.h` file based on the provided `esp32/wifi_mqtt
     Use an Arduino IDE Version 12.3.7 or later.
 - Install the required board managers (see below).
 - Install the required libraries (see below).
-- Connect the ESP32 to your computer via USB and select the appropriate board and port in the Arduino IDE. The board is named "ESP32-S3-Touch-LCD-1.69" in the board manager.
+- Connect the ESP32 to your computer via USB and select the appropriate board and port in the Arduino IDE. The [board](https://docs.waveshare.com/ESP32-S3-Touch-LCD-1.69) is named "ESP32-S3-LCD-1.69" in the board manager.
 - In the Arduino IDE, go to `Tools > USB CDC On Boot > Enabled` to enable USB CDC for serial communication (see [ESP32-S3](https://esp32s3.com/getting-started.html))
 - Start the [esp32/esp32.ino](esp32/esp32.ino) sketch in the Arduino IDE and upload it to the ESP32.
 - Press the reset button ``RST`` on the ESP32 after uploading to start the program.
