@@ -212,6 +212,24 @@ Schieder: Setup
 
 ## Documentation
 
+### ESP32-S3-Touch-LCD-1.69 Features
+
+See: <https://docs.waveshare.com/ESP32-S3-Touch-LCD-1.69>
+
+- ESP32-S3R8 Wi-Fi and Bluetooth SoC, 240 MHz, 8MB stacked PSRAM
+- W25Q128JVSIQ 16MB NOR Flash
+- PCF85063 RTC clock chip
+- QMI8658 6-axis IMU (3-axis gyroscope + 3-axis accelerometer)
+- ETA6098 high-efficiency Li-battery charging chip
+- MX1.25 Li-battery connector MX1.25 2P connector for 3.7V Li-battery, supports charging/discharging
+- Type-C port ESP32-S3 USB, for program uploading and log printing
+- Buzzer audible peripheral
+- RTC battery connector for rechargeable RTC battery, supports charging/discharging
+- Onboard chip antenna supports 2.4 GHz Wi-Fi (802.11 b/g/n) and Bluetooth® 5 (LE)
+- Power function button supports power-on detection, single-click, double-click, multi-click and long-press
+- BOOT button
+- RST reset button
+
 ### Sensor Handling
 
 The ESP32 reads multiple values from the onboard IMU and inputs, processing them to produce stable and usable data for the game logic.
