@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="cookie_cream">#FFF8EC</color>
+    <color name="cookie_caramel">#B5722E</color>
+    <color name="cookie_cocoa">#3B2317</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>
