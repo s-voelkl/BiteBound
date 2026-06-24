@@ -44,6 +44,9 @@ const int default_game_duration_sec = 120;
 /** Default maximum number of cookies in the game. */
 const int default_cookies_count = 10;
 
+/** Default maximum number of visible cookies in the game. */
+const int default_max_visible_cookies = 4;
+
 /** ----- Display settings ----- */
 /** Display width in pixels. */
 const int display_width = 240;
@@ -56,7 +59,7 @@ const int default_wall_thickness_px = 6;
 
 /** ----- Physics settings ----- */
 /** IMU sensitivity multiplier (IMU = Inertial Measurement Units) */
-const float default_imu_sensitivity_multiplier = 1.25;
+const float default_imu_sensitivity_multiplier = 1.25f;
 
 /** Bounce restitution coefficient.
  * This coefficient determines how much energy is conserved in a collision.
@@ -66,14 +69,14 @@ const float default_imu_sensitivity_multiplier = 1.25;
  * which results in a realistic bounce effect for the ball in the game.
  * This value can be adjusted based on the desired game feel and physics behavior.
  */
-const float default_bounce_restitution = 0.75;
+const float default_bounce_restitution = 0.75f;
 
 /** Exponential moving average alpha.
  * This is the smoothing factor for the exponential moving average filter applied to the sensor data.
  * A higher alpha gives more weight to recent data points, while a lower alpha gives more weight to older data points.
  * new_value = alpha * new_measurement + (1 - alpha) * old_value
  */
-const float default_ema_alpha = 0.25;
+const float default_ema_alpha = 0.25f;
 
 /** Deadzone threshold for sensor measurements.
  * This threshold defines the minimum change in sensor readings that will be considered significant.
@@ -81,10 +84,21 @@ const float default_ema_alpha = 0.25;
  * This helps to create a more stable and enjoyable gaming experience by filtering out small, insignificant
  * movements of the device, e.g. when the player is holding the device still or making very slight movements.
  */
-const float default_acceleration_deadzone_threshold = 0.05;
+const float default_deadzone_threshold = 0.05f;
 
-/** Gyroscope deadzone threshold for sensor measurements. */
-const float default_gyro_deadzone_threshold = 2.0f;
+/** Maximum speed for the ball [px/s] to travel per second.*/
+const float default_max_speed = 400.0f;
+
+/** Continuous drag [1/s].
+ * Default 0 means NO permanent damping, so the ball
+ * never stalls on its own; energy is only lost on collisions.
+ * Otherwise, a positive value will apply a continuous drag force to the ball,
+ * gradually slowing it down over time.
+ */
+const float default_linear_damping = 0.0f;
+
+/** Maximum number of contact resolution iterations per sub-step (corner safety).*/
+const int default_max_contact_iterations = 4;
 
 /** Standard earth gravity in m/s^2. */
 const float default_earth_gravity_g = 1.00f;

@@ -30,6 +30,7 @@ void setup() {
   // serial initialization delay for test output
   delay(3000); 
   Serial.println("Starting AUnit tests...");
+
 #else
   // Connect to WiFi
   wifiManager.connect();
