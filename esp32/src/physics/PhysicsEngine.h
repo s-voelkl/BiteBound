@@ -4,6 +4,7 @@
 #include "Vec2.h"
 #include "PhysicsBody.h"
 #include "ICollider.h"
+#include "../../config.h"
 
 /**
  * @brief Tunable physics parameters.
@@ -11,25 +12,25 @@
  * These parameters can be adjusted via MQTT on runtime
  */
 struct PhysicsParams
-{ 
+{
     // The "imu_sensitivity_multiplier" config setting; more granular adjustment to movement sensitivity
-    float sensitivity = 1.25f;
+    float sensitivity = default_imu_sensitivity_multiplier;
 
     // Bounce Factor applied to the object; 0 means no bounce; 1 means perfect bounce
-    float restitution = 0.75f;
+    float restitution = default_bounce_restitution;
 
     // EMA smoothing alpha; Higher means more responsive
-    float emaAlpha = 0.25f;
+    float emaAlpha = default_ema_alpha;
 
     // Input deadzone: tilt below this value will not be registered
-    float deadzone = 0.05f;
+    float deadzone = default_deadzone_threshold;
 
     // The maximum value the ball can travel per second [px/s]
-    float maxSpeed = 400.0f;
+    float maxSpeed = default_max_speed;
 
     /** Continuous drag [1/s]. Default 0 means NO permanent damping, so the ball
      *  never stalls on its own; energy is only lost on collisions. */
-    float linearDamping = 0.0f;
+    float linearDamping = default_linear_damping;
 };
 
 /**

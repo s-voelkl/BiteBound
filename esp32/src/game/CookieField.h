@@ -4,9 +4,10 @@
 #include <stdint.h>
 #include "Cookie.h"
 #include "../physics/PhysicsBody.h" // for PhysicsBody in checkPickup
+#include "../../config.h"
 
 // Max count of cookies
-static const uint8_t kMaxVisibleCookies = 4;
+static const int kMaxVisibleCookies = default_max_visible_cookies;
 
 /**
  * @brief Produces a fresh cookie at a valid position for the current game.

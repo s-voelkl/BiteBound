@@ -3,7 +3,7 @@
 #include <math.h>
 
 /** @brief Maximum contact-resolution iterations per sub-step (corner safety). */
-static const int kMaxContactIterations = 4;
+static const int kMaxContactIterations = default_max_contact_iterations;
 
 void PhysicsEngine::setParams(const PhysicsParams &params)
 {
