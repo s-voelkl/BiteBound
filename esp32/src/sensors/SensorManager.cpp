@@ -14,7 +14,7 @@ SensorManager::SensorManager()
     // Initialize last-known values for stable fallback payloads.
     _lastData.accelerometerX = 0.0f;
     _lastData.accelerometerY = 0.0f;
-    _lastData.accelerometerZ = default_earth_gravity;
+    _lastData.accelerometerZ = default_earth_gravity_g;
     _lastData.gyroscopeX = 0.0f;
     _lastData.gyroscopeY = 0.0f;
     _lastData.gyroscopeZ = 0.0f;
@@ -45,14 +45,14 @@ void SensorManager::begin()
         Serial.println("[+] QMI8658 IMU successfully started.");
 
         _qmi.configAccelerometer(
-            SensorQMI8658::ACC_RANGE_4G,
-            SensorQMI8658::ACC_ODR_1000Hz,
-            SensorQMI8658::LPF_MODE_0);
+            SensorQMI8658::ACC_RANGE_4G,   // Sets full-scale range to ±4G (Good balance for hand movements)
+            SensorQMI8658::ACC_ODR_1000Hz, // Output Data Rate at 1000Hz (High responsiveness)
+            SensorQMI8658::LPF_MODE_0);    // Low-Pass Filter Mode 0 (Disables or minimizes filtering for lowest latency)
 
         _qmi.configGyroscope(
-            SensorQMI8658::GYR_RANGE_256DPS,
-            SensorQMI8658::GYR_ODR_896_8Hz,
-            SensorQMI8658::LPF_MODE_3);
+            SensorQMI8658::GYR_RANGE_256DPS, // Range of ±256 Degrees Per Second (High precision for slow-to-medium hand rotation)
+            SensorQMI8658::GYR_ODR_896_8Hz,  // Gyro Output Data Rate at ~896.8Hz
+            SensorQMI8658::LPF_MODE_3);      // Low-Pass Filter Mode 3 (Adds some smoothing to remove high-frequency jitter/noise)
 
         _qmi.enableGyroscope();
         _qmi.enableAccelerometer();
@@ -61,7 +61,7 @@ void SensorManager::begin()
     }
 
     // GPIO configuration for button and battery sensing remains valid regardless of IMU state.
-    pinMode(pin_boot_button, INPUT_PULLUP);
+    pinMode(pin_power_button, INPUT_PULLUP);
     analogReadResolution(12);
 
     _initialized = true;
@@ -81,8 +81,6 @@ SensorData SensorManager::read()
     rawData.timestamp = String(timeStr);
 
     // Fetch IMU values (accelerometer + gyroscope) only when the driver reports fresh data.
-    Serial.print("IMU data ready: ");
-    Serial.println(_imuAvailable && _qmi.getDataReady() ? "YES" : "NO");
     if (_imuAvailable && _qmi.getDataReady())
     {
         float accX = rawData.accelerometerX;
@@ -128,8 +126,8 @@ SensorData SensorManager::read()
     int rawAdc = analogRead(pin_battery_adc);
     rawData.batteryVoltage = (rawAdc * adc_voltage_reference / adc_max_resolution) * battery_voltage_multiplier;
 
-    // Boot button state readout
-    rawData.button = (digitalRead(pin_boot_button) == LOW);
+    // Power button state readout
+    rawData.button = (digitalRead(pin_power_button) == LOW);
 
     // Keep the new values as previous state for the next read.
     _lastData = rawData;
@@ -156,7 +154,7 @@ SensorData SensorManager::readMock()
     // Generate random values for testing
     rawData.accelerometerX = ((random(200) / 100.0f) - 1.0f); // -1.0 to 1.0
     rawData.accelerometerY = ((random(200) / 100.0f) - 1.0f);
-    rawData.accelerometerZ = default_earth_gravity + ((random(100) / 100.0f) - 0.5f); // ±0.5 from gravity
+    rawData.accelerometerZ = default_earth_gravity_g + ((random(100) / 100.0f) - 0.5f); // ±0.5 from gravity
 
     rawData.gyroscopeX = (random(1000) / 10.0f) - 50.0f; // -50 to 50
     rawData.gyroscopeY = (random(1000) / 10.0f) - 50.0f;

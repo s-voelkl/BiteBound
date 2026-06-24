@@ -84,8 +84,8 @@ void loop() {
   serializeJson(doc, payload);
 
   // Log to Serial output
-  Serial.print("Telemetry Payload: ");
-  Serial.println(payload);
+  // Serial.print("Telemetry Payload: ");
+  // Serial.println(payload);
 
   // Publish to MQTT Broker
   mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
