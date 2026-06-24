@@ -4,6 +4,10 @@
 /**
  * @brief A single collectible cookie.
  *
+ * @param x      Center X [px].
+ * @param y      Center Y [px].
+ * @param radius Collision radius [px].
+ * @param active True when the cookie is visible and can be collected.
  */
 struct Cookie
 {

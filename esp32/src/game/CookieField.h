@@ -33,7 +33,8 @@ public:
  * Keeps a few visible cookies (1-3). When the ball touches one, the score
  * increases and that cookie reappears at a new position from the injected
  * spawner. The game is won once collected() reaches target(). Reusable in both games!
- * Only the spawner differs
+ * Only the CookieField itself knows the current score and target; the game loop
+ * queries it via collected() and remaining().
  */
 class CookieField
 {
@@ -60,7 +61,7 @@ public:
     uint16_t remaining() const { return (_target > _collected) ? (_target - _collected) : 0; }
     bool finished() const { return _collected >= _target; }
 
-    uint8_t count() const { return _count; }            // visible cookies (for rendering)
+    uint8_t count() const { return _count; } // visible cookies (for rendering)
     const Cookie &at(uint8_t i) const { return _cookies[i]; }
 
 private:
