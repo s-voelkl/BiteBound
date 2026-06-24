@@ -9,9 +9,9 @@
  */
 struct Contact
 {
-    Vec2 normal;            ///< Normal vector pointing OUT of the obstacle (into free space).
-    float penetration = 0;  ///< Overlap depth [px]; >= 0 when hit.
-    bool hit = false;       ///< True when the body overlaps an obstacle.
+    Vec2 normal;           // Normal vector pointing OUT of the obstacle (into free space).
+    float penetration = 0; // Overlap depth [px]; >= 0 when hit.
+    bool hit = false;      // True when the body overlaps an obstacle.
 };
 
 /**

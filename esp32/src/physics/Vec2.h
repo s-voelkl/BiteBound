@@ -4,6 +4,9 @@
 /**
  * @brief Minimal 2D vector used throughout the physics engine.
  *
+ * @param x X component.
+ * @param y Y component.
+ *
  */
 struct Vec2
 {

@@ -11,11 +11,11 @@
  */
 struct PhysicsBody
 {
-    float x = 0.0f;      ///< Center position X [px], origin top-left.
-    float y = 0.0f;      ///< Center position Y [px].
-    float vx = 0.0f;     ///< Velocity X [px/s].
-    float vy = 0.0f;     ///< Velocity Y [px/s].
-    float radius = 4.0f; ///< Collision radius [px]; smaller than the path width.
+    float x = 0.0f;      // Center position X [px], origin top-left.
+    float y = 0.0f;      // Center position Y [px].
+    float vx = 0.0f;     // Velocity X [px/s].
+    float vy = 0.0f;     // Velocity Y [px/s].
+    float radius = 4.0f; // Collision radius [px]; smaller than the path width.
 };
 
 #endif // PHYSICS_BODY_H
