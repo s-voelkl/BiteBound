@@ -230,63 +230,44 @@ See: <https://docs.waveshare.com/ESP32-S3-Touch-LCD-1.69>
 - BOOT button
 - RST reset button
 
+Top side: Where the USB-C port is left-sided and the top display frame is smaller.
+
+Acceleration measurements:
+
+- X: Front/Back movement. Positive when moving forward. Default of 0.0
+- Y: Left/Right movement. Positive when moving right. Default of 0.0
+- Z: Up/Down movement. Down = more negative. Default of -1G.
+
+Gyroscope measurements
+
+- X: Left/Right rotation --> Roll
+- Y: Forward/Backward rotation --> Pitch
+- Z: Clockwise/Counterclockwise rotation --> Yaw
+
 ### Sensor Handling
 
-The ESP32 reads multiple values from the onboard IMU and inputs, processing them to produce stable and usable data for the game logic.
+Implemented in `esp32/src/sensors/SensorManager.h` and `esp32/src/sensors/SensorManager.cpp`.
 
-#### Read Sensor Values
+- Sources: QMI8658 IMU (I2C), battery ADC, power button GPIO
+- `SensorData` fields: `timestamp`, `accelerometerX/Y/Z`, `gyroscopeX/Y/Z`, `batteryVoltage`, `button`
+- No touch fields in the current implementation
+- `begin()` is safe to call once; `read()` keeps last IMU values if no fresh IMU data is available
+- `readMock()` returns bounded test values (battery within configured mock min/max)
 
-The sensors are continuously polled and packed into a `SensorData` struct utilizing Waveshare's `SensorQMI8658` (IMU) and `SensorCST816x` (TouchController) on the internal I2C pins. Hardware constants and battery calculations are tied directly through analog pins onto a 12-bit ADC. For MQTT telemetry transmission, this struct is mapped into a standard JSON payload. An example payload looks like this:
-
-```json
-{
-  "timestamp": "2026-06-17T12:00:00Z",
-  "accX": 0.0,
-  "accY": 0.11,
-  "accZ": 9.81,
-  "gyrX": 0.0,
-  "gyrY": 0.0,
-  "gyrZ": 3.4,
-  "touchX": 12,
-  "touchY": 200,
-  "touchPressed": false,
-  "batteryVoltage": 3.8,
-  "button": false
-}
-```
-
-#### Filters
-
-To ensure a smooth gaming experience, raw sensor inputs are filtered:
-
-1. **Deadzone Filter**: Nullifies variations below a defined threshold to discard hardware noise and hand micromovements.
-2. **Low-Pass Filter (EMA)**: Applies an Exponential Moving Average to smooth out values over time, calculating the new value with: `new_value = alpha * new_measurement + (1 - alpha) * old_value`.
-
-#### Configuration Options
-
-The default filter parameters are centralized in `config.h` so they can be easily adjusted across the project:
-
-- `default_ema_alpha`: Determines how much weight the new values have against the previous values (e.g., `0.25`).
-- `default_acceleration_deadzone_threshold`: Threshold for the accelerometer against standard gravity.
-- `default_gyro_deadzone_threshold`: Threshold for the gyroscope noise in degrees/s.
-- `default_earth_gravity`: Calibrated rest standard for the Z-axis (e.g., `9.81` m/s²).
+`esp32/src/sensors/TestSensorManager.cpp` covers init state, valid `read()` output, and `readMock()` range checks.
 
 #### Basic Usage
-
-The `SensorManager` handles hardware abstraction and provides filtered values directly to the main loop:
 
 ```cpp
 #include "src/sensors/SensorManager.h"
 
-// 1. Initialize sensor hardware and assign config parameters
 sensorManager.begin();
-sensorManager.setEmaAlpha(default_ema_alpha);
-sensorManager.setAccDeadzoneThreshold(default_acceleration_deadzone_threshold);
-sensorManager.setGyroDeadzoneThreshold(default_gyro_deadzone_threshold);
 
-// 2. Continually read values inside loop()
-SensorData sensorData = sensorManager.read();
+if (sensorManager.isInitialized()) {
+    SensorData sensorData = sensorManager.read();
+    // publish or process sensorData
+}
 
-// Or use the testing mock without physical hardware
+// Optional test/mock path without relying on hardware values
 // SensorData sensorData = sensorManager.readMock();
 ```
