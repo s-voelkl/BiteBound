@@ -1,6 +1,7 @@
 #include "src/network/time/TimeManager.h"
 #include "src/network/wifi-connection/WifiManager.h" 
 #include "src/network/mqtt/MqttManager.h"
+#include "src/network/json-builder/JsonBuilder.h"
 #include "src/sensors/SensorManager.h"
 #include "config.h"
 #include <AUnit.h>
@@ -14,7 +15,7 @@
 // Set to 1 to run AUnit tests; set 0 for main functionality.
 // Can be overridden at compile time via -DRUN_TESTS=1 (used by CI).
 #ifndef RUN_TESTS
-#define RUN_TESTS 0
+#define RUN_TESTS 1
 #endif
 
 /**
@@ -68,20 +69,52 @@ void loop() {
   SensorData sensorData = sensorManager.read();
 #endif
 
-  // Create JSON payload
-  JsonDocument doc; 
-  doc["timestamp"] = sensorData.timestamp;
-  doc["accX"] = sensorData.accelerometerX;
-  doc["accY"] = sensorData.accelerometerY;
-  doc["accZ"] = sensorData.accelerometerZ;
-  doc["gyrX"] = sensorData.gyroscopeX;
-  doc["gyrY"] = sensorData.gyroscopeY;
-  doc["gyrZ"] = sensorData.gyroscopeZ;
-  doc["batteryVoltage"] = sensorData.batteryVoltage;
-  doc["button"] = sensorData.button;
-
-  String payload;
-  serializeJson(doc, payload);
+  // Populate telemetry data struct from sensors and configuration
+  TelemetryData telemetry;
+  
+  // Device Information
+  telemetry.client_id = device_id;
+  telemetry.hardware = device_hardware;
+  telemetry.firmware_version = device_firmware_version;
+  telemetry.uptime_ms = millis();
+  telemetry.wifi_ssid = wifiManager.getSSID();
+  
+  // Game Configuration
+  telemetry.game_id = 1;
+  telemetry.player_name = "Player 1"; 
+  telemetry.target_cookies = default_cookies_count;
+  telemetry.screen_width = display_width;
+  telemetry.screen_height = display_height;
+  telemetry.wall_thickness_px = default_wall_thickness_px;
+  
+  // Game State
+  telemetry.status = "running";
+  telemetry.cookies_collected = 0;
+  telemetry.cookies_remaining = 10;
+  telemetry.current_round = 1;
+  telemetry.elapsed_time_sec = 0.0f;
+  
+  // Physics Simulation State
+  telemetry.ball_pos_x = 112.45f;
+  telemetry.ball_pos_y = 145.2f;
+  telemetry.velocity_x = 1.85f;
+  telemetry.velocity_y = -0.92f;
+  telemetry.acc_x = 0.15f;
+  telemetry.acc_y = -0.34f;
+  telemetry.collision_detected = false;
+  
+  // Sensor Readings (from SensorManager)
+  telemetry.accel_x = sensorData.accelerometerX;
+  telemetry.accel_y = sensorData.accelerometerY;
+  telemetry.accel_z = sensorData.accelerometerZ;
+  telemetry.gyro_x = sensorData.gyroscopeX;
+  telemetry.gyro_y = sensorData.gyroscopeY;
+  telemetry.gyro_z = sensorData.gyroscopeZ;
+  telemetry.battery_voltage = sensorData.batteryVoltage;
+  telemetry.button = sensorData.button;
+  
+  // Build JSON payload
+  String payload = buildTelemetryJson(telemetry);
 
   // Log to Serial output
   // Serial.print("Telemetry Payload: ");

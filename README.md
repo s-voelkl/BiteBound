@@ -271,3 +271,81 @@ if (sensorManager.isInitialized()) {
 // Optional test/mock path without relying on hardware values
 // SensorData sensorData = sensorManager.readMock();
 ```
+
+### Telemetry JSON Builder
+
+The JSON builder compiles comprehensive telemetry data from sensors, game state, physics simulation, and device information into a structured JSON payload suitable for MQTT transmission.
+
+Implemented in `esp32/src/network/json-builder/JsonBuilder.h` and `esp32/src/network/json-builder/JsonBuilder.cpp`.
+
+- **Input**: `TelemetryData` struct containing device info, game config, game state, physics state, and sensor readings
+- **Output**: Formatted JSON string ready for MQTT publication
+- **Structure**: Hierarchical JSON with categories: `device`, `config`, `state`, `physics`, and `sensors`
+
+#### JSON Payload Structure
+
+```json
+{
+  "device": {
+    "client_id": "BiteBound-ESP32-S3-001",
+    "hardware": "Waveshare ESP32-S3 1.69inch",
+    "firmware_version": "1.0.0",
+    "uptime_ms": 745200,
+    "wifi_ssid": "MyWiFiNetwork"
+  },
+  "config": {
+    "game_id": 1,
+    "player_name": "Player 1",
+    "target_cookies": 15,
+    "screen_width": 240,
+    "screen_height": 280,
+    "wall_thickness_px": 6
+  },
+  "state": {
+    "status": "running",
+    "cookies_collected": 4,
+    "cookies_remaining": 11,
+    "current_round": 2,
+    "elapsed_time_sec": 42.8
+  },
+  "physics": {
+    "ball_pos_x": 112.45,
+    "ball_pos_y": 145.2,
+    "velocity_x": 1.85,
+    "velocity_y": -0.92,
+    "acc_x": 0.15,
+    "acc_y": -0.34,
+    "collision_detected": false
+  },
+  "sensors": {
+    "accel_x": 0.12,
+    "accel_y": -0.08,
+    "accel_z": 9.81,
+    "gyro_x": 0.02,
+    "gyro_y": -0.01,
+    "gyro_z": 0.005,
+    "battery_voltage": 4.2,
+    "button": false
+  }
+}
+```
+
+#### Basic Usage
+
+```cpp
+#include "src/network/json-builder/JsonBuilder.h"
+#include "src/sensors/SensorManager.h"
+
+// Read sensor data
+SensorData sensorData = sensorManager.read();
+
+// Populate telemetry data struct
+TelemetryData telemetry;
+telemetry.client_id = device_id;
+telemetry.hardware = "Waveshare ESP32-S3 1.69inch";
+// ...
+
+// Build and publish JSON
+String payload = buildTelemetryJson(telemetry);
+mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
+```
