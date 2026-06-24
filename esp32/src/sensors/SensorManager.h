@@ -2,7 +2,8 @@
 #define SENSOR_MANAGER_H
 
 #include <Arduino.h>
-#include <ArduinoJson.h>
+#include "../../config.h"
+#include "SensorQMI8658.hpp"
 
 /**
  * @brief Aggregates a single snapshot of all sensor readings.
@@ -22,6 +23,7 @@ struct SensorData
     float gyroscopeX;
     float gyroscopeY;
     float gyroscopeZ;
+    float batteryVoltage;
     bool button;
 };
 
@@ -45,6 +47,10 @@ public:
      *
      * Configures pin modes and performs any sensor-specific setup
      * (for example calibration) required before the first read().
+     *
+     * The manager is considered initialised after core GPIO/ADC setup, even when
+     * the IMU is temporarily unavailable. In that case read() will safely fall
+     * back to the previously known IMU values until the device provides data.
      */
     void begin();
 
@@ -58,19 +64,28 @@ public:
     SensorData read();
 
     /**
-     * @brief Indicates whether begin() has completed successfully.
+     * @brief Mock implementation of read() for testing purposes.
      *
-     * @return true once the sensors have been initialised, false otherwise.
+     * @return Random/Mocked SensorData snapshot.
+     */
+    SensorData readMock();
+
+    /**
+     * @brief Indicates whether begin() completed manager setup.
+     *
+     * @return true once basic sensor manager setup has run, false otherwise.
      */
     bool isInitialized() const;
 
 private:
     bool _initialized;
+    bool _imuAvailable;
+    SensorData _lastData;
+
+    // Hardware components
+    SensorQMI8658 _qmi;
 };
 
-/**
- * @brief Shared SensorManager instance used by the main sketch and tests.
- */
 extern SensorManager sensorManager;
 
 #endif // SENSOR_MANAGER_H
