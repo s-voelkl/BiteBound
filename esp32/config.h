@@ -81,7 +81,7 @@ const float default_acceleration_deadzone_threshold = 0.05;
 const float default_gyro_deadzone_threshold = 2.0f;
 
 /** Standard earth gravity in m/s^2. */
-const float default_earth_gravity = 9.81f;
+const float default_earth_gravity_g = 1.00f;
 
 /** ----- Time settings ----- */
 /** NTP server address 1 for time synchronization. */
@@ -100,14 +100,12 @@ const int time_epoch_2020_Jan_1 = 1577836800;
 const int pin_i2c_sda = 11;
 /** I2C SCL Pin for IMU and Touch. */
 const int pin_i2c_scl = 10;
-/** Touch Interrupt Pin. */
-const int pin_touch_interrupt = 38;
-/** Touch hardware reset Pin. */
-const int pin_touch_reset = 13;
 /** ADC Pin for Battery reading. */
 const int pin_battery_adc = 1;
 /** Boot Button Pin. */
 const int pin_boot_button = 0;
+/** PWR Button Pin. SYS_OUT pulled up, pulled low when pressed; SYS_EN controls battery power hold.*/
+const int pin_power_button = 40;
 
 /** ----- Analog & Battery Settings ----- */
 /** MCU ADC Reference Voltage. */
