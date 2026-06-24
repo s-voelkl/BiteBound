@@ -1,6 +1,6 @@
 {
+  "version": "7.7.3",
   "name": "nodered",
-  "version": "1.0.1",
   "description": "NodeRED Dashboard and MQTT communication for BiteBound project",
   "main": "flows.js",
   "scripts": {
@@ -11,7 +11,26 @@
   "author": "Simon Völkl, Johannes Schieder",
   "license": "MIT",
   "type": "commonjs",
+  "_id": "nodered@1.0.1",
+  "path": "C:\\Users\\Völkl\\source\\repos\\BiteBound\\nodered",
+  "devDependencies": {},
+  "peerDependencies": {},
   "dependencies": {
-    "node-red": "^4.1.11"
+    "node-red": "^5.0.0"
+  },
+  "uibuilder": {
+    "packages": {
+      "node-red": {
+        "spec": "^5.0.0",
+        "installFolder": "C:\\Users\\Völkl\\source\\repos\\BiteBound\\nodered\\node_modules\\node-red",
+        "installedVersion": "5.0.0",
+        "estimatedEntryPoint": "?",
+        "homepage": "https://www.npmjs.com/search?q=node-red",
+        "packageUrl": "/node-red",
+        "url": "../uibuilder/vendor/node-red/?",
+        "installedFrom": "npm",
+        "outdated": {}
+      }
+    }
   }
 }
