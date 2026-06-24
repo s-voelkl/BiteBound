@@ -8,7 +8,7 @@
 // Set to 1 to run AUnit tests; set 0 for main functionality.
 // Can be overridden at compile time via -DRUN_TESTS=1 (used by CI).
 #ifndef RUN_TESTS
-#define RUN_TESTS 1
+#define RUN_TESTS 0
 #endif
 
 /**
@@ -24,10 +24,6 @@ void setup() {
   delay(3000); 
   Serial.println("Starting AUnit tests...");
 
-  aunit::TestRunner::exclude("*");
-  aunit::TestRunner::include("physics_*");
-  aunit::TestRunner::include("cookie_*");
-  aunit::TestRunner::setTimeout(0);
 #else
   // Connect to WiFi
   wifiManager.connect();
