@@ -9,6 +9,12 @@
 /** Device ID for identifying the ESP32 device on the network. */
 const char *const device_id = "BiteBound-ESP32-S3-001";
 
+/** Device hardware description. */
+const char *const device_hardware = "Waveshare ESP32-S3 1.69inch";
+
+/** Device firmware version. */
+const char *const device_firmware_version = "1.0.0";
+
 /** ----- MQTT settings ----- */
 /** HiveMQ Cloud broker port. */
 const int mqtt_port = 8883;
@@ -22,7 +28,7 @@ const char *const mqtt_command_topic = "mauc2026/group_03/game/command";
 /** MQTT topic for sending telemetry data from the ESP32 device. */
 const char *const mqtt_telemetry_topic = "mauc2026/group_03/game/telemetry";
 
-/** MQTT topic for sending telemetry data from the ESP32 device. */
+/** MQTT topic for sending test data from the ESP32 device. */
 const char *const mqtt_test_topic = "mauc2026/group_03/test";
 
 /** Quality of Service level for MQTT messages. */
