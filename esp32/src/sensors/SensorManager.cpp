@@ -93,13 +93,13 @@ SensorData SensorManager::read()
 
         if (_qmi.getAccelerometer(accX, accY, accZ))
         {
-            Serial.print("Accelerometer: ");
-            Serial.print("X=");
-            Serial.print(accX);
-            Serial.print(" Y=");
-            Serial.print(accY);
-            Serial.print(" Z=");
-            Serial.println(accZ);
+            // Serial.print("Accelerometer: ");
+            // Serial.print("X=");
+            // Serial.print(accX);
+            // Serial.print(" Y=");
+            // Serial.print(accY);
+            // Serial.print(" Z=");
+            // Serial.println(accZ);
 
             rawData.accelerometerX = accX;
             rawData.accelerometerY = accY;
@@ -108,13 +108,13 @@ SensorData SensorManager::read()
 
         if (_qmi.getGyroscope(gyrX, gyrY, gyrZ))
         {
-            Serial.print("Gyroscope: ");
-            Serial.print("X=");
-            Serial.print(gyrX);
-            Serial.print(" Y=");
-            Serial.print(gyrY);
-            Serial.print(" Z=");
-            Serial.println(gyrZ);
+            // Serial.print("Gyroscope: ");
+            // Serial.print("X=");
+            // Serial.print(gyrX);
+            // Serial.print(" Y=");
+            // Serial.print(gyrY);
+            // Serial.print(" Z=");
+            // Serial.println(gyrZ);
 
             rawData.gyroscopeX = gyrX;
             rawData.gyroscopeY = gyrY;
