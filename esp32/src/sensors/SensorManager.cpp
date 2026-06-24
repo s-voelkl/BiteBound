@@ -34,9 +34,8 @@ void SensorManager::begin()
     // Initialize I2C
     Wire.begin(pin_i2c_sda, pin_i2c_scl);
 
-    // Initialize and configure the QMI8658 using the same sequence as the vendor sample.
+    // Initialize and configure the QMI8658
     if (!_qmi.begin(Wire, QMI8658_L_SLAVE_ADDRESS, pin_i2c_sda, pin_i2c_scl))
-    // if (!_qmi.begin(Wire, QMI8658_L_SLAVE_ADDRESS, IIC_SDA, IIC_SCL))
     {
         Serial.println("[-] QMI8658 IMU not found!");
         _imuAvailable = false;

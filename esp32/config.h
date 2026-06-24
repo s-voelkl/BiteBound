@@ -97,11 +97,11 @@ const int time_epoch_2020_Jan_1 = 1577836800;
 
 /** ----- Hardware Pins ----- */
 /** I2C SDA Pin for IMU and Touch. */
-const int pin_i2c_sda = 6;
+const int pin_i2c_sda = 11;
 /** I2C SCL Pin for IMU and Touch. */
-const int pin_i2c_scl = 7;
+const int pin_i2c_scl = 10;
 /** Touch Interrupt Pin. */
-const int pin_touch_interrupt = 5;
+const int pin_touch_interrupt = 38;
 /** Touch hardware reset Pin. */
 const int pin_touch_reset = 13;
 /** ADC Pin for Battery reading. */
