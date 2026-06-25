@@ -3,9 +3,13 @@
 #include "src/network/mqtt/MqttManager.h"
 #include "src/network/json-builder/JsonBuilder.h"
 #include "src/sensors/SensorManager.h"
+#include "src/graphics/GraphicsManager.h"
+#include "src/physics/PhysicsBody.h"
 #include "config.h"
+
 #include <AUnit.h>
 #include <ArduinoJson.h>
+#include <Arduino_GFX_Library.h>
 
 // Set to 1 to use mock sensor data instead of real hardware
 #ifndef MOCK_SENSORS
@@ -15,8 +19,20 @@
 // Set to 1 to run AUnit tests; set 0 for main functionality.
 // Can be overridden at compile time via -DRUN_TESTS=1 (used by CI).
 #ifndef RUN_TESTS
-#define RUN_TESTS 0
+#define RUN_TESTS 1
 #endif
+
+// Global Graphics Setup
+Arduino_DataBus *bus = create_default_Arduino_DataBus();
+Arduino_GFX *gfx = new Arduino_ST7789(bus, -1 /* RST Pin */, 0 /* Rotation */, true /* IPS */, display_width, display_height);
+GraphicsManager graphicsManager(display_width, display_height);
+
+// Play space calculations
+const int play_width = display_width;
+const int play_height = display_height - ui_header_height;
+
+// Memory allocation for the game board bitmap
+uint8_t* gameBoard = nullptr;
 
 /**
  * @brief Main setup function for the MCU controller.
@@ -43,6 +59,10 @@ void setup() {
 
   // Setup MQTT client
   mqttManager.begin();
+
+  // Initialize Display
+  gfx->begin();
+  graphicsManager.begin(gfx);
 #endif
 }
 
