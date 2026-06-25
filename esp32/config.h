@@ -57,6 +57,20 @@ const int display_height = 280;
 /** Default wall thickness in pixels. */
 const int default_wall_thickness_px = 6;
 
+/** Top HUD header height in pixels. */
+const int ui_header_height = 20;
+
+/** Maximum number of cookies allowed to be rendered on the screen at once. */
+const int max_rendered_cookies = 20;
+
+/** ----- Color Palette (RGB565 Format) ----- */
+const uint16_t color_background = 0x0000;  // Black
+const uint16_t color_wall_type_1 = 0x7BEF; // Slate Grey
+const uint16_t color_wall_type_2 = 0x001F; // Royal Blue
+const uint16_t color_sphere = 0xF800;      // Vibrant Red
+const uint16_t color_cookie = 0xFFE0;      // Gold / Yellow
+const uint16_t color_ui_text = 0xFFFF;     // Crisp White
+
 /** ----- Physics settings ----- */
 /** IMU sensitivity multiplier (IMU = Inertial Measurement Units) */
 const float default_imu_sensitivity_multiplier = 1.25f;
