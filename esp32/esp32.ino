@@ -49,33 +49,32 @@ void setup() {
   Serial.println("Starting AUnit tests...");
 
 #else
-  // Connect to WiFi
-  wifiManager.connect();
-
-  // Synchronize time (required for TLS certificate validation and timestamps).
-  timeManager.sync();
-
-  // Initialize sensors
-  sensorManager.begin();
-
-  // Setup MQTT client
-  mqttManager.begin();
-
-  // Initialize Display
+  // Initialize Display and Graphics Manager
   if (!gfx->begin()) {
     Serial.println("Failed to initialize GFX display!");
   }
-
-  // TODO: Remove!
-  gfx->fillScreen(color_background);
-  pinMode(pin_lcd_bl, OUTPUT);
-  digitalWrite(pin_lcd_bl, HIGH);
-
-  gfx->setCursor(10, 10);
-  gfx->setTextColor(color_ui_text);
-  gfx->println("BiteBound");
-  
+  // pinMode(pin_lcd_bl, OUTPUT);
+  // digitalWrite(pin_lcd_bl, HIGH);
   graphicsManager.begin(gfx);
+
+  // Connect to WiFi
+  graphicsManager.drawLoadingScreen("Connecting WiFi...");
+  wifiManager.connect();
+
+  // Synchronize time (required for TLS certificate validation and timestamps).
+  graphicsManager.drawLoadingScreen("Syncing Time...");
+  timeManager.sync();
+
+  // Initialize sensors
+  graphicsManager.drawLoadingScreen("Initializing Sensors...");
+  sensorManager.begin();
+
+  // Setup MQTT client
+  graphicsManager.drawLoadingScreen("Starting MQTT...");
+  mqttManager.begin();
+
+  // End of setup, ready to enter main loop
+  graphicsManager.drawLoadingScreen("BiteBound is Ready!");
 #endif
 }
 
