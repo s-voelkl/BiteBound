@@ -82,7 +82,7 @@ void GraphicsManager::drawUI(const GameState &state, bool forceDraw)
         _gfx->setTextSize(1);
 
         // Print scoring
-        _gfx->setCursor(4, 5);
+        _gfx->setCursor(30, 5);
         _gfx->print("Round:");
         _gfx->print(state.currentRound);
         _gfx->print(" Cookies:");
@@ -91,12 +91,13 @@ void GraphicsManager::drawUI(const GameState &state, bool forceDraw)
         _gfx->print(state.cookiesRemaining);
 
         // Print stopwatch timer
-        _gfx->print(" Time:");
-        _gfx->print((int)state.elapsedTimeSec);
-        _gfx->print("s");
+        // _gfx->print(" Time:");
+        // _gfx->print((int)state.elapsedTimeSec);
+        // _gfx->print("s");
 
         // Align status string
-        _gfx->setCursor(_width - 60, 5);
+        // _gfx->setCursor(_width - 60, 5);
+        _gfx->print(" ");
         _gfx->print(state.status);
     }
 }
