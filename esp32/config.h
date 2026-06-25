@@ -143,6 +143,22 @@ const int pin_boot_button = 0;
 /** PWR Button Pin. SYS_OUT pulled up, pulled low when pressed; SYS_EN controls battery power hold.*/
 const int pin_power_button = 40;
 
+/** ----- LCD Pins -----
+ * The following pins are used for the SPI interface to communicate with the LCD display.
+ */
+/** LCD Data/Command Pin. */
+const int pin_lcd_dc = 4;
+/** LCD Chip Select Pin. */
+const int pin_lcd_cs = 5;
+/** LCD Serial Clock Pin. */
+const int pin_lcd_sck = 6;
+/** LCD Master Out Slave In Pin. */
+const int pin_lcd_mosi = 7;
+/** LCD Reset Pin. */
+const int pin_lcd_rst = 8;
+/** LCD Backlight Pin (optional, can be used to control the backlight) */
+const int pin_lcd_bl = 15;
+
 /** ----- Analog & Battery Settings ----- */
 /** MCU ADC Reference Voltage. */
 const float adc_voltage_reference = 3.3f;

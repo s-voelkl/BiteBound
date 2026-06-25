@@ -23,8 +23,9 @@
 #endif
 
 // Global Graphics Setup
-Arduino_DataBus *bus = create_default_Arduino_DataBus();
-Arduino_GFX *gfx = new Arduino_ST7789(bus, -1 /* RST Pin */, 0 /* Rotation */, true /* IPS */, display_width, display_height);
+Arduino_DataBus *bus = new Arduino_ESP32SPI(pin_lcd_dc, pin_lcd_cs, pin_lcd_sck, pin_lcd_mosi);
+Arduino_GFX *gfx = new Arduino_ST7789(bus, pin_lcd_rst /* RST */,0 /* rotation */, 
+  true /* IPS */, display_width, display_height, 0, 20, 0, 0);
 GraphicsManager graphicsManager(display_width, display_height);
 
 // Play space calculations
@@ -61,7 +62,19 @@ void setup() {
   mqttManager.begin();
 
   // Initialize Display
-  gfx->begin();
+  if (!gfx->begin()) {
+    Serial.println("Failed to initialize GFX display!");
+  }
+
+  // TODO: Remove!
+  gfx->fillScreen(color_background);
+  pinMode(pin_lcd_bl, OUTPUT);
+  digitalWrite(pin_lcd_bl, HIGH);
+
+  gfx->setCursor(10, 10);
+  gfx->setTextColor(color_ui_text);
+  gfx->println("BiteBound");
+  
   graphicsManager.begin(gfx);
 #endif
 }
