@@ -10,7 +10,8 @@ class MockGFX : public Arduino_GFX
 public:
     MockGFX(int16_t w, int16_t h)
         : Arduino_GFX(w, h), beginCount(0), writePixelPreclippedCount(0),
-          writeFillRectPreclippedCount(0), writeFastHLineCount(0), startWriteCount(0), endWriteCount(0) {}
+          writeFillRectPreclippedCount(0), writeFastHLineCount(0),
+          startWriteCount(0), endWriteCount(0), fullScreenClearCount(0) {}
 
     bool begin(int32_t speed = GFX_NOT_DEFINED) override
     {
@@ -28,6 +29,11 @@ public:
     void writeFillRectPreclipped(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) override
     {
         writeFillRectPreclippedCount++;
+        // If the rectangle dimensions span the full display, we track it as a screen clear
+        if (w == _width && h == _height)
+        {
+            fullScreenClearCount++;
+        }
     }
 
     // Intercept horizontal lines (used by RLE optimizations)
@@ -47,13 +53,14 @@ public:
         endWriteCount++;
     }
 
-    // Counters for unit test validation
+    // Counter statistics
     int beginCount;
     int writePixelPreclippedCount;
     int writeFillRectPreclippedCount;
     int writeFastHLineCount;
     int startWriteCount;
     int endWriteCount;
+    int fullScreenClearCount;
 };
 
 // Verifies that constructor correctly maps basic state
@@ -114,20 +121,19 @@ test(GraphicsManagerTest, FullVsPartialDrawTransitions)
     // First iteration: Trigger Full Redraw
     gm.update(grid, 10, 10, ball, cookies, 2, state);
 
-    // Check that we performed initial screen wipes and fills
-    assertTrue(mockGfx.writeFillRectPreclippedCount > 0);
+    // Check that we performed exactly one full screen clear
+    assertEqual(mockGfx.fullScreenClearCount, 1);
     assertFalse(gm.isFullRedrawNeeded());
 
     int preUpdateWritePixelCount = mockGfx.writePixelPreclippedCount;
     int preUpdateFastHLineCount = mockGfx.writeFastHLineCount;
-    int preUpdateFillRectCount = mockGfx.writeFillRectPreclippedCount;
 
     // Tick 2: Move the ball slightly (triggers Partial Redraw)
     ball.x = 52.0f;
     gm.update(grid, 10, 10, ball, cookies, 2, state);
 
-    // The screen should NOT have been cleared again (fill rect counts should stay identical)
-    assertEqual(mockGfx.writeFillRectPreclippedCount, preUpdateFillRectCount);
+    // Verify that the screen was NOT cleared again
+    assertEqual(mockGfx.fullScreenClearCount, 1);
 
     // Validate that only regional changes (pixels/lines) were written
     assertTrue(mockGfx.writePixelPreclippedCount > preUpdateWritePixelCount || mockGfx.writeFastHLineCount > preUpdateFastHLineCount);
@@ -149,11 +155,11 @@ test(GraphicsManagerTest, RoundChangeForcesFullRedraw)
     gm.update(grid, 10, 1, ball, cookies, 0, state);
     assertFalse(gm.isFullRedrawNeeded());
 
-    int initialFillCount = mockGfx.writeFillRectPreclippedCount;
+    assertEqual(mockGfx.fullScreenClearCount, 1);
 
     state.currentRound = 2;
     gm.update(grid, 10, 1, ball, cookies, 0, state);
 
     // Redraw count should have incremented due to the screen wipe
-    assertTrue(mockGfx.writeFillRectPreclippedCount > initialFillCount);
+    assertEqual(mockGfx.fullScreenClearCount, 2);
 }
