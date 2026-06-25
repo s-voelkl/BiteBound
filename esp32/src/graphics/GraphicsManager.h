@@ -55,6 +55,15 @@ public:
         int cookieCount,
         const GameState &state);
 
+    /**
+     * @brief Renders a stylized, brand-themed loading screen on the display.
+     * Generates a warm espresso background with a detailed chocolate chip cookie
+     * featuring procedural chips and a custom thematic "bite" out of its side.
+     *
+     * @param statusText Subtitle to display under the logo (e.g. "Loading...", "Connecting WiFi").
+     */
+    void drawLoadingScreen(const char *statusText = "Loading...");
+
     // Getters for internal tracking state (useful for validating within unit tests)
     bool isFullRedrawNeeded() const { return _needsFullRedraw; }
     PhysicsBody getPrevBallState() const { return _prevBall; }

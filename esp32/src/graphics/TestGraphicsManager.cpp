@@ -163,3 +163,20 @@ test(GraphicsManagerTest, RoundChangeForcesFullRedraw)
     // Redraw count should have incremented due to the screen wipe
     assertEqual(mockGfx.fullScreenClearCount, 2);
 }
+
+// Verifies that drawLoadingScreen executes and clears the display
+test(GraphicsManagerTest, DrawLoadingScreenExecution)
+{
+    GraphicsManager gm(240, 280);
+    MockGFX mockGfx(240, 280);
+    gm.begin(&mockGfx);
+
+    // Invoke screen draw
+    gm.drawLoadingScreen("Testing System...");
+
+    // Validate that a full screen clear took place
+    assertEqual(mockGfx.fullScreenClearCount, 1);
+
+    // Ensure procedural rendering occurred (fills circles for background bite, dough, chips)
+    assertTrue(mockGfx.writeFillRectPreclippedCount > 0);
+}

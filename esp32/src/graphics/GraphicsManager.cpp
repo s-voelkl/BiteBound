@@ -248,3 +248,59 @@ void GraphicsManager::update(
         _prevGameState = state;
     }
 }
+
+void GraphicsManager::drawLoadingScreen(const char *statusText)
+{
+    if (!_gfx)
+        return;
+
+    // 1. Clear display with rich Dark Cocoa background
+    _gfx->fillScreen(color_dark_cocoa);
+
+    // Coordinate variables for center alignment
+    int16_t centerX = _width / 2;
+    int16_t centerY = _height / 2 - 15;
+    int16_t baseRadius = 38;
+
+    // 2. Procedural Cookie Rendering
+    // Baked outer edge
+    _gfx->fillCircle(centerX, centerY, baseRadius, color_cookie_golden);
+    // Soft golden cookie dough center
+    _gfx->fillCircle(centerX, centerY, baseRadius - 3, color_cookie_dough);
+
+    // Scattered dark chocolate chips
+    _gfx->fillCircle(centerX - 14, centerY - 12, 4, color_chocolate_chip);
+    _gfx->fillCircle(centerX + 16, centerY - 16, 3, color_chocolate_chip);
+    _gfx->fillCircle(centerX - 10, centerY + 14, 3, color_chocolate_chip);
+    _gfx->fillCircle(centerX + 12, centerY + 12, 4, color_chocolate_chip);
+    _gfx->fillCircle(centerX - 2, centerY - 2, 5, color_chocolate_chip);
+    _gfx->fillCircle(centerX + 14, centerY - 2, 3, color_chocolate_chip);
+    _gfx->fillCircle(centerX - 16, centerY + 1, 3, color_chocolate_chip);
+
+    // Thematic "Bite" taken out of the right edge (using background color overlap)
+    _gfx->fillCircle(centerX + baseRadius - 4, centerY + 6, 12, color_dark_cocoa);
+    _gfx->fillCircle(centerX + baseRadius - 8, centerY - 6, 10, color_dark_cocoa);
+
+    // 3. Render Title "BiteBound" with clear drop shadow
+    _gfx->setTextSize(3);
+
+    // Offset Drop-Shadow (Chocolate Chip color)
+    _gfx->setTextColor(color_chocolate_chip);
+    _gfx->setCursor(centerX - 78 + 2, centerY + 55 + 2);
+    _gfx->print("BiteBound");
+
+    // Foreground Text (Warm Frosting White)
+    _gfx->setTextColor(color_frosting_white);
+    _gfx->setCursor(centerX - 78, centerY + 55);
+    _gfx->print("BiteBound");
+
+    // 4. Render Loading Status (Honey glow accent)
+    _gfx->setTextSize(1);
+    _gfx->setTextColor(color_honey);
+
+    // Center-align the string (6 pixels per character average width at size 1)
+    int statusLen = strlen(statusText);
+    int16_t statusX = centerX - (statusLen * 6) / 2;
+    _gfx->setCursor(statusX, centerY + 100);
+    _gfx->print(statusText);
+}
