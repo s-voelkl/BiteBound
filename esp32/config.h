@@ -65,13 +65,26 @@ const int ui_header_height = 20;
 /** Maximum number of cookies allowed to be rendered on the screen at once. */
 const int max_rendered_cookies = 20;
 
-/** ----- Color Palette (RGB565 Format) ----- */
-const uint16_t color_background = 0x0000;  // Black
-const uint16_t color_wall_type_1 = 0x7BEF; // Slate Grey
-const uint16_t color_wall_type_2 = 0x001F; // Royal Blue
-const uint16_t color_sphere = 0xF800;      // Vibrant Red
-const uint16_t color_cookie = 0xFFE0;      // Gold / Yellow
-const uint16_t color_ui_text = 0xFFFF;     // Crisp White
+/** ----- Color Palette ----- */
+const uint16_t color_cookie_dough = 0xE5CE;   // CookieDough (0xFFE0B978)
+const uint16_t color_cookie_golden = 0xDD09;  // CookieGolden (0xD9A24A)
+const uint16_t color_caramel_brown = 0xB385;  // CaramelBrown (0xB5722E)
+const uint16_t color_chocolate_chip = 0x59C4; // ChocolateChip (0x5A3A22)
+const uint16_t color_dark_cocoa = 0x3902;     // DarkCocoa (0x3B2317)
+const uint16_t color_milk_cream = 0xFFDD;     // MilkCream (0xFFF8EC)
+const uint16_t color_frosting_white = 0xFFFF; // FrostingWhite (0xFFFDF8)
+const uint16_t color_cinnamon = 0x8AC5;       // Cinnamon (0x8C5A2B)
+const uint16_t color_berry_red = 0xC245;      // BerryRed (0xC0492F)
+const uint16_t color_mint_green = 0x4C6B;     // MintGreen (0x4C8C5A)
+const uint16_t color_honey = 0xF5C9;          // Honey (0xF2B84B)
+
+/** ----- Main Game Mapping (Backward Compatible Names) ----- */
+const uint16_t color_background = color_dark_cocoa;    // Espresso Brown base
+const uint16_t color_wall_type_1 = color_cookie_dough; // Golden Dough paths
+const uint16_t color_wall_type_2 = color_cinnamon;     // Cinnamon pathways
+const uint16_t color_sphere = color_berry_red;         // Jam Red Sphere
+const uint16_t color_cookie = color_honey;             // Honey Yellow dots
+const uint16_t color_ui_text = color_milk_cream;       // Warm milk HUD text
 
 /** ----- Physics settings ----- */
 /** IMU sensitivity multiplier (IMU = Inertial Measurement Units) */
