@@ -29,7 +29,6 @@ test(JsonBuilderBasicStructure)
     data.velocity_y = -1.5f;
     data.acc_x = 0.1f;
     data.acc_y = -0.2f;
-    data.collision_detected = false;
 
     data.accel_x = 0.5f;
     data.accel_y = -0.3f;
@@ -121,7 +120,6 @@ test(JsonBuilderAllFieldsPresent)
     data.velocity_y = -1.0f;
     data.acc_x = 0.1f;
     data.acc_y = -0.1f;
-    data.collision_detected = false;
     data.accel_x = 0.0f;
     data.accel_y = 0.0f;
     data.accel_z = 9.81f;
@@ -161,7 +159,6 @@ test(JsonBuilderAllFieldsPresent)
     assertTrue(doc["physics"]["velocity_y"].is<float>());
     assertTrue(doc["physics"]["acc_x"].is<float>());
     assertTrue(doc["physics"]["acc_y"].is<float>());
-    assertTrue(doc["physics"]["collision_detected"].is<bool>());
 
     assertTrue(doc["sensors"]["accel_x"].is<float>());
     assertTrue(doc["sensors"]["accel_y"].is<float>());

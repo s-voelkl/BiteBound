@@ -102,7 +102,6 @@ void loop() {
   telemetry.velocity_y = -0.92f;
   telemetry.acc_x = 0.15f;
   telemetry.acc_y = -0.34f;
-  telemetry.collision_detected = false;
   
   // Sensor Readings (from SensorManager)
   telemetry.accel_x = sensorData.accelerometerX;

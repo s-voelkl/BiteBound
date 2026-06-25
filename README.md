@@ -299,13 +299,13 @@ Implemented in `esp32/src/network/json-builder/JsonBuilder.h` and `esp32/src/net
     "target_cookies": 15,
     "screen_width": 240,
     "screen_height": 280,
-    "wall_thickness_px": 6
+    "wall_thickness_px": 6 // min: 6, max: 40 --> ball size 1/2
   },
   "state": {
-    "status": "running",
+    "status": "running", // idle, running, completed
     "cookies_collected": 4,
     "cookies_remaining": 11,
-    "current_round": 2,
+    "current_round": 2, // game init: 1. game change: reset to 1. 
     "elapsed_time_sec": 42.8
   },
   "physics": {
@@ -315,7 +315,6 @@ Implemented in `esp32/src/network/json-builder/JsonBuilder.h` and `esp32/src/net
     "velocity_y": -0.92,
     "acc_x": 0.15,
     "acc_y": -0.34,
-    "collision_detected": false
   },
   "sensors": {
     "accel_x": 0.12,
@@ -349,3 +348,11 @@ telemetry.hardware = "Waveshare ESP32-S3 1.69inch";
 String payload = buildTelemetryJson(telemetry);
 mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
 ```
+
+### MQTT Communication
+
+#### Topics
+
+#### Communication Logic
+
+On game start or change: game round resets to 1.
