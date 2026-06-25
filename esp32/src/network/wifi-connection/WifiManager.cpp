@@ -41,3 +41,12 @@ String WifiManager::localIP() const
     }
     return WiFi.localIP().toString();
 }
+
+String WifiManager::getSSID() const
+{
+    if (WiFi.status() != WL_CONNECTED)
+    {
+        return String();
+    }
+    return WiFi.SSID();
+}

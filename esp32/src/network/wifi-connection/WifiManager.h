@@ -50,6 +50,13 @@ public:
      */
     String localIP() const;
 
+    /**
+     * @brief Returns the SSID of the currently connected WiFi network.
+     *
+     * @return The SSID as a string, or an empty string when not connected.
+     */
+    String getSSID() const;
+
 private:
     const char *_ssid;
     const char *_password;

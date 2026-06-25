@@ -1,7 +1,6 @@
 #include "SensorManager.h"
 #include "../../config.h"
 
-#include <ArduinoJson.h>
 #include <AUnit.h>
 
 /**
@@ -18,7 +17,7 @@ test(SensorManager_begin_marksReaderInitialised)
 
 /**
  * @test Verifies that SensorManager::read() returns a populated SensorData
- * snapshot with finite numeric values and a non-empty timestamp.
+ * snapshot with finite numeric values, extended types and a non-empty timestamp.
  */
 test(SensorManager_read_returnsValidData)
 {
@@ -39,4 +38,23 @@ test(SensorManager_read_returnsValidData)
     assertTrue(isfinite(data.gyroscopeX));
     assertTrue(isfinite(data.gyroscopeY));
     assertTrue(isfinite(data.gyroscopeZ));
+
+    // Assert: Extended properties exist
+    assertTrue(data.batteryVoltage > 0.0f);
+}
+
+/**
+ * @test Verifies that readMock() generates values within expected ranges.
+ */
+test(SensorManager_readMock_returnsValidData)
+{
+    sensorManager.begin();
+    SensorData data = sensorManager.readMock();
+
+    assertNotEqual(data.timestamp.length(), (unsigned int)0);
+    assertTrue(isfinite(data.accelerometerX));
+    assertTrue(isfinite(data.accelerometerZ));
+
+    // Battery must fall around the mocked valid ranges
+    assertTrue(data.batteryVoltage >= battery_min_voltage_mock && data.batteryVoltage <= battery_max_voltage_mock);
 }
