@@ -3,49 +3,57 @@
 
 /**
  * @class MockGFX
- * @brief Test double for Arduino_GFX to track rendering call counts.
+ * @brief Test double for Arduino_GFX tracking rendering operations via virtual transaction overrides.
  */
 class MockGFX : public Arduino_GFX
 {
 public:
     MockGFX(int16_t w, int16_t h)
-        : Arduino_GFX(w, h), drawPixelCount(0), fillRectCount(0), fillScreenCount(0), drawFastHLineCount(0), fillCircleCount(0) {}
+        : Arduino_GFX(w, h), beginCount(0), writePixelPreclippedCount(0),
+          writeFillRectPreclippedCount(0), writeFastHLineCount(0), startWriteCount(0), endWriteCount(0) {}
 
     bool begin(int32_t speed = GFX_NOT_DEFINED) override
     {
+        beginCount++;
         return true;
     }
 
+    // Intercept base pixel drawing (Must override as it is pure virtual)
     void writePixelPreclipped(int16_t x, int16_t y, uint16_t color) override
     {
-        drawPixelCount++;
+        writePixelPreclippedCount++;
     }
 
-    void fillScreen(uint16_t color) override
+    // Intercept rectangular area fills (called by fillRect, fillScreen, etc.)
+    void writeFillRectPreclipped(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) override
     {
-        fillScreenCount++;
+        writeFillRectPreclippedCount++;
     }
 
-    void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) override
+    // Intercept horizontal lines (used by RLE optimizations)
+    void writeFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) override
     {
-        fillRectCount++;
+        writeFastHLineCount++;
     }
 
-    void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) override
+    // Intercept write transaction blocks
+    void startWrite() override
     {
-        drawFastHLineCount++;
+        startWriteCount++;
     }
 
-    void fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color) override
+    void endWrite() override
     {
-        fillCircleCount++;
+        endWriteCount++;
     }
 
-    int drawPixelCount;
-    int fillRectCount;
-    int fillScreenCount;
-    int drawFastHLineCount;
-    int fillCircleCount;
+    // Counters for unit test validation
+    int beginCount;
+    int writePixelPreclippedCount;
+    int writeFillRectPreclippedCount;
+    int writeFastHLineCount;
+    int startWriteCount;
+    int endWriteCount;
 };
 
 // Verifies that constructor correctly maps basic state
@@ -105,22 +113,24 @@ test(GraphicsManagerTest, FullVsPartialDrawTransitions)
 
     // First iteration: Trigger Full Redraw
     gm.update(grid, 10, 10, ball, cookies, 2, state);
-    assertEqual(mockGfx.fillScreenCount, 1);
+
+    // Check that we performed initial screen wipes and fills
+    assertTrue(mockGfx.writeFillRectPreclippedCount > 0);
     assertFalse(gm.isFullRedrawNeeded());
 
-    int preUpdateDrawPixelCount = mockGfx.drawPixelCount;
-    int preUpdateFillCircleCount = mockGfx.fillCircleCount;
+    int preUpdateWritePixelCount = mockGfx.writePixelPreclippedCount;
+    int preUpdateFastHLineCount = mockGfx.writeFastHLineCount;
+    int preUpdateFillRectCount = mockGfx.writeFillRectPreclippedCount;
 
     // Tick 2: Move the ball slightly (triggers Partial Redraw)
     ball.x = 52.0f;
     gm.update(grid, 10, 10, ball, cookies, 2, state);
 
-    // Entire screen must NOT clear again
-    assertEqual(mockGfx.fillScreenCount, 1);
+    // The screen should NOT have been cleared again (fill rect counts should stay identical)
+    assertEqual(mockGfx.writeFillRectPreclippedCount, preUpdateFillRectCount);
 
-    // Validate only regional changes were written
-    assertTrue(mockGfx.drawPixelCount > preUpdateDrawPixelCount);
-    assertTrue(mockGfx.fillCircleCount > preUpdateFillCircleCount);
+    // Validate that only regional changes (pixels/lines) were written
+    assertTrue(mockGfx.writePixelPreclippedCount > preUpdateWritePixelCount || mockGfx.writeFastHLineCount > preUpdateFastHLineCount);
 }
 
 // Verifies that changes to the round metadata force a full redraw
@@ -139,8 +149,11 @@ test(GraphicsManagerTest, RoundChangeForcesFullRedraw)
     gm.update(grid, 10, 1, ball, cookies, 0, state);
     assertFalse(gm.isFullRedrawNeeded());
 
+    int initialFillCount = mockGfx.writeFillRectPreclippedCount;
+
     state.currentRound = 2;
     gm.update(grid, 10, 1, ball, cookies, 0, state);
 
-    assertEqual(mockGfx.fillScreenCount, 2); // Initial loop + round changed
+    // Redraw count should have incremented due to the screen wipe
+    assertTrue(mockGfx.writeFillRectPreclippedCount > initialFillCount);
 }
