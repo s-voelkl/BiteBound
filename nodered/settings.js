@@ -397,6 +397,14 @@ module.exports = {
         // }
     },
 
+    /** uibuilder global settings (applies to all uibuilder nodes)
+     * uibRoot defines where instance folders are stored.
+     * With this setting, the edit link resolves under this repo's nodered folder.
+     */
+    uibuilder: {
+        uibRoot: __dirname + '/uibuilder-dashboard' // default: __dirname + '/uibuilder'
+    },
+
 
 /*******************************************************************************
  * Editor Settings

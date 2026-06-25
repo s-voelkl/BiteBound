@@ -209,3 +209,143 @@ Schieder: Setup
 
 - Test Coverage: ESP32 ohne Display 80%, Android 40% max., NodeRed nichts.
 - main Branch Protection, mit PRs
+
+## Documentation
+
+### ESP32-S3-Touch-LCD-1.69 Features
+
+See: <https://docs.waveshare.com/ESP32-S3-Touch-LCD-1.69>
+
+- ESP32-S3R8 Wi-Fi and Bluetooth SoC, 240 MHz, 8MB stacked PSRAM
+- W25Q128JVSIQ 16MB NOR Flash
+- PCF85063 RTC clock chip
+- QMI8658 6-axis IMU (3-axis gyroscope + 3-axis accelerometer)
+- ETA6098 high-efficiency Li-battery charging chip
+- MX1.25 Li-battery connector MX1.25 2P connector for 3.7V Li-battery, supports charging/discharging
+- Type-C port ESP32-S3 USB, for program uploading and log printing
+- Buzzer audible peripheral
+- RTC battery connector for rechargeable RTC battery, supports charging/discharging
+- Onboard chip antenna supports 2.4 GHz Wi-Fi (802.11 b/g/n) and Bluetooth® 5 (LE)
+- Power function button supports power-on detection, single-click, double-click, multi-click and long-press
+- BOOT button
+- RST reset button
+
+Top side: Where the USB-C port is left-sided and the top display frame is smaller.
+
+Acceleration measurements:
+
+- X: Front/Back movement. Positive when moving forward. Default of 0.0
+- Y: Left/Right movement. Positive when moving right. Default of 0.0
+- Z: Up/Down movement. Down = more negative. Default of -1G.
+
+Gyroscope measurements
+
+- X: Left/Right rotation --> Roll
+- Y: Forward/Backward rotation --> Pitch
+- Z: Clockwise/Counterclockwise rotation --> Yaw
+
+### Sensor Handling
+
+Implemented in `esp32/src/sensors/SensorManager.h` and `esp32/src/sensors/SensorManager.cpp`.
+
+- Sources: QMI8658 IMU (I2C), battery ADC, power button GPIO
+- `SensorData` fields: `timestamp`, `accelerometerX/Y/Z`, `gyroscopeX/Y/Z`, `batteryVoltage`, `button`
+- No touch fields in the current implementation
+- `begin()` is safe to call once; `read()` keeps last IMU values if no fresh IMU data is available
+- `readMock()` returns bounded test values (battery within configured mock min/max)
+
+`esp32/src/sensors/TestSensorManager.cpp` covers init state, valid `read()` output, and `readMock()` range checks.
+
+#### Basic Usage
+
+```cpp
+#include "src/sensors/SensorManager.h"
+
+sensorManager.begin();
+
+if (sensorManager.isInitialized()) {
+    SensorData sensorData = sensorManager.read();
+    // publish or process sensorData
+}
+
+// Optional test/mock path without relying on hardware values
+// SensorData sensorData = sensorManager.readMock();
+```
+
+### Telemetry JSON Builder
+
+The JSON builder compiles comprehensive telemetry data from sensors, game state, physics simulation, and device information into a structured JSON payload suitable for MQTT transmission.
+
+Implemented in `esp32/src/network/json-builder/JsonBuilder.h` and `esp32/src/network/json-builder/JsonBuilder.cpp`.
+
+- **Input**: `TelemetryData` struct containing device info, game config, game state, physics state, and sensor readings
+- **Output**: Formatted JSON string ready for MQTT publication
+- **Structure**: Hierarchical JSON with categories: `device`, `config`, `state`, `physics`, and `sensors`
+
+#### JSON Payload Structure
+
+```json
+{
+  "device": {
+    "client_id": "BiteBound-ESP32-S3-001",
+    "hardware": "Waveshare ESP32-S3 1.69inch",
+    "firmware_version": "1.0.0",
+    "uptime_ms": 745200,
+    "wifi_ssid": "MyWiFiNetwork"
+  },
+  "config": {
+    "game_id": 1,
+    "player_name": "Player 1",
+    "target_cookies": 15,
+    "screen_width": 240,
+    "screen_height": 280,
+    "wall_thickness_px": 6
+  },
+  "state": {
+    "status": "running",
+    "cookies_collected": 4,
+    "cookies_remaining": 11,
+    "current_round": 2,
+    "elapsed_time_sec": 42.8
+  },
+  "physics": {
+    "ball_pos_x": 112.45,
+    "ball_pos_y": 145.2,
+    "velocity_x": 1.85,
+    "velocity_y": -0.92,
+    "acc_x": 0.15,
+    "acc_y": -0.34,
+    "collision_detected": false
+  },
+  "sensors": {
+    "accel_x": 0.12,
+    "accel_y": -0.08,
+    "accel_z": 9.81,
+    "gyro_x": 0.02,
+    "gyro_y": -0.01,
+    "gyro_z": 0.005,
+    "battery_voltage": 4.2,
+    "button": false
+  }
+}
+```
+
+#### Basic Usage
+
+```cpp
+#include "src/network/json-builder/JsonBuilder.h"
+#include "src/sensors/SensorManager.h"
+
+// Read sensor data
+SensorData sensorData = sensorManager.read();
+
+// Populate telemetry data struct
+TelemetryData telemetry;
+telemetry.client_id = device_id;
+telemetry.hardware = "Waveshare ESP32-S3 1.69inch";
+// ...
+
+// Build and publish JSON
+String payload = buildTelemetryJson(telemetry);
+mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
+```
