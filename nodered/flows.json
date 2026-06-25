@@ -8,22 +8,6 @@
     "env": []
   },
   {
-    "id": "549416542d31dd12",
-    "type": "junction",
-    "z": "d55d12a9a75a0bcb",
-    "x": 560,
-    "y": 180,
-    "wires": [["b39fe4811b39263b"]]
-  },
-  {
-    "id": "b39fe4811b39263b",
-    "type": "junction",
-    "z": "d55d12a9a75a0bcb",
-    "x": 1000,
-    "y": 180,
-    "wires": [["8a9bf2bdc5491977"]]
-  },
-  {
     "id": "06ce52e4a0ba9f4e",
     "type": "tls-config",
     "name": "",
@@ -84,7 +68,7 @@
     "inputs": 0,
     "x": 220,
     "y": 80,
-    "wires": [["626e3b94958d8a34", "549416542d31dd12"]]
+    "wires": [["626e3b94958d8a34", "8a9bf2bdc5491977"]]
   },
   {
     "id": "5d0c8b0a93c5fd70",
@@ -117,7 +101,7 @@
     "rh": 0,
     "inputs": 0,
     "x": 220,
-    "y": 240,
+    "y": 380,
     "wires": [["52b308c72214c93a"]]
   },
   {
@@ -134,7 +118,7 @@
     "statusVal": "",
     "statusType": "auto",
     "x": 550,
-    "y": 240,
+    "y": 380,
     "wires": []
   },
   {
@@ -151,8 +135,8 @@
     "correl": "",
     "expiry": "",
     "broker": "d30ffaafeae9efa0",
-    "x": 560,
-    "y": 380,
+    "x": 480,
+    "y": 240,
     "wires": []
   },
   {
@@ -194,7 +178,7 @@
     "payload": "{\"command\":\"start\",\"meta\":{\"source_ui\":\"NODE_RED\",\"request_id\":\"id1\",\"timestamp\":\"2024-06-08T11:50:00Z\"},\"player\":{\"name\":\"Player1\"},\"game\":{\"game_id\":1},\"parameters\":{\"cookies_count\":10,\"wall_thickness_px\":6},\"physics\":{\"imu_sensitivity_multiplier\":1.25,\"bounce_restitution\":0.75,\"ema_alpha\":0.25,\"deadzone_threshold\":0.04}}",
     "payloadType": "json",
     "x": 170,
-    "y": 360,
+    "y": 220,
     "wires": [["d10ce6af3fa27dd0"]]
   },
   {
@@ -204,7 +188,7 @@
     "name": "Manual signal for game state change",
     "info": "",
     "x": 240,
-    "y": 320,
+    "y": 180,
     "wires": []
   },
   {
@@ -225,7 +209,7 @@
     "payload": "{\"command\":\"stop\",\"meta\":{\"source_ui\":\"NODE_RED\",\"request_id\":\"id1\",\"timestamp\":\"2024-06-08T11:50:00Z\"},\"player\":{\"name\":\"Player1\"},\"game\":{\"game_id\":1},\"parameters\":{\"cookies_count\":10,\"wall_thickness_px\":6},\"physics\":{\"imu_sensitivity_multiplier\":1.25,\"bounce_restitution\":0.75,\"ema_alpha\":0.25,\"deadzone_threshold\":0.04}}",
     "payloadType": "json",
     "x": 170,
-    "y": 400,
+    "y": 260,
     "wires": [["d10ce6af3fa27dd0"]]
   },
   {
@@ -245,7 +229,7 @@
     "name": "Dashboard --> ESP32 ",
     "info": "",
     "x": 200,
-    "y": 200,
+    "y": 340,
     "wires": []
   },
   {
@@ -271,8 +255,8 @@
     "title": "",
     "descr": "",
     "editurl": "vscode://file/C:/Users/Völkl/source/repos/BiteBound/nodered/uibuilder-dashboard",
-    "x": 1180,
-    "y": 320,
+    "x": 540,
+    "y": 120,
     "wires": [["3ef1d13ba31f8ec0"], []]
   },
   {
@@ -287,8 +271,8 @@
     "initialize": "",
     "finalize": "",
     "libs": [],
-    "x": 880,
-    "y": 380,
+    "x": 820,
+    "y": 180,
     "wires": [["d10ce6af3fa27dd0", "97b1ca411f2614f5"]]
   },
   {
@@ -304,8 +288,8 @@
     "targetType": "msg",
     "statusVal": "",
     "statusType": "auto",
-    "x": 1140,
-    "y": 420,
+    "x": 1090,
+    "y": 180,
     "wires": []
   }
 ]
