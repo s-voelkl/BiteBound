@@ -53,8 +53,7 @@ test(MazeCookieSpawnerTest, spawn_alwaysLandsOnCorridor)
 }
 
 /**
- * @test On pickup the spawner respawns at a fresh corridor cell, mirroring the
- * rect spawner's k-cookies-respawn model (no fixed/unique placement).
+ * @test On pickup the spawner respawns at a fresh corridor cell.
  */
 test(MazeCookieSpawnerTest, spawn_respawnsOnCorridorAfterPickup)
 {
