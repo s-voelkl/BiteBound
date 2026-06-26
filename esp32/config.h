@@ -40,6 +40,17 @@ const int mqtt_qos = 1;
 const bool mqtt_retain = false;
 
 /** ----- Game settings ----- */
+
+/** Game ID for the maze game. */
+const int game_maze_id = 0;
+/** Game ID for the plane game. */
+const int game_plane_id = 1;
+/** Default game id. */
+const int default_game_id = game_maze_id;
+
+/** Default player name. */
+const char *const default_player_name = "Cookie-Lover";
+
 /** Default game duration in seconds. */
 const int default_game_duration_sec = 120;
 
@@ -183,5 +194,19 @@ const float battery_voltage_multiplier = 2.0f;
 const float battery_min_voltage_mock = 3.0f;
 /** Maximal simulated battery voltage. */
 const float battery_max_voltage_mock = 4.2f;
+
+/** ----- Concurrency and Multithreading Settings ----- */
+/** Network core ID. */
+#define core_network 0
+/** Game core ID. */
+#define core_game 1
+/** Game loop tick rate in milliseconds. Equals 50Hz. */
+#define game_tick_rate_ms 20
+/** Telemetry publishing rate in milliseconds. Equals 2Hz. */
+#define telemetry_rate_ms 500
+/** FreeRTOS queue length. */
+#define cmd_queue_length 10
+/** FreeRTOS queue item size. */
+#define cmd_queue_item_size sizeof(CommandMsg)
 
 #endif // CONFIG_H
