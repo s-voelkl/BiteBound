@@ -15,7 +15,7 @@ test(CommandParser_ParseStartSuccess)
                      "\"wall_thickness_px\":" + String(default_wall_thickness_px) +
                      "}," +
                      "\"physics\":{" +
-                     "\"imu_sensitivity_multiplier\":" + String(default_imu_sensitivity) + "," +
+                     "\"imu_sensitivity_multiplier\":" + String(default_imu_sensitivity_multiplier) + "," +
                      "\"bounce_restitution\":" + String(default_bounce_restitution) + "," +
                      "\"ema_alpha\":" + String(default_ema_alpha) + "," +
                      "\"deadzone_threshold\":" + String(default_deadzone_threshold) +
@@ -30,7 +30,7 @@ test(CommandParser_ParseStartSuccess)
     assertEqual(strcmp(msg.playerName, default_player_name), 0);
     assertEqual(msg.cookiesCount, default_cookies_count);
     assertEqual(msg.wallThicknessPx, default_wall_thickness_px);
-    assertEqual(msg.imuSensitivity, default_imu_sensitivity);
+    assertEqual(msg.imuSensitivity, default_imu_sensitivity_multiplier);
     assertEqual(msg.bounceRestitution, default_bounce_restitution);
     assertEqual(msg.emaAlpha, default_ema_alpha);
     assertEqual(msg.deadzoneThreshold, default_deadzone_threshold);

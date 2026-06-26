@@ -11,7 +11,7 @@ test(SharedState_InitDefaults)
     assertEqual(state.gameId, default_game_id);
     assertEqual(state.cookiesCount, default_cookies_count);
     assertEqual(state.wallThicknessPx, default_wall_thickness_px);
-    assertEqual(state.imuSensitivity, default_imu_sensitivity);
+    assertEqual(state.imuSensitivity, default_imu_sensitivity_multiplier);
     assertEqual(state.bounceRestitution, default_bounce_restitution);
     assertEqual(state.emaAlpha, default_ema_alpha);
     assertEqual(state.deadzoneThreshold, default_deadzone_threshold);

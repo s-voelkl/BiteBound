@@ -68,7 +68,7 @@ bool CommandParser::parse(const String &jsonPayload, CommandMsg &outMsg)
     outMsg.cookiesCount = doc["parameters"]["cookies_count"] | default_cookies_count;
     outMsg.wallThicknessPx = doc["parameters"]["wall_thickness_px"] | default_wall_thickness_px;
 
-    outMsg.imuSensitivity = doc["physics"]["imu_sensitivity_multiplier"] | default_imu_sensitivity;
+    outMsg.imuSensitivity = doc["physics"]["imu_sensitivity_multiplier"] | default_imu_sensitivity_multiplier;
     outMsg.bounceRestitution = doc["physics"]["bounce_restitution"] | default_bounce_restitution;
     outMsg.emaAlpha = doc["physics"]["ema_alpha"] | default_ema_alpha;
     outMsg.deadzoneThreshold = doc["physics"]["deadzone_threshold"] | default_deadzone_threshold;

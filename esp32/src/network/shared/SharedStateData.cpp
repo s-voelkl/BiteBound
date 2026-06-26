@@ -8,7 +8,7 @@ void initSharedState(SharedStateData &state)
     state.gameId = default_game_id;
     state.cookiesCount = default_cookies_count;
     state.wallThicknessPx = default_wall_thickness_px;
-    state.imuSensitivity = default_imu_sensitivity;
+    state.imuSensitivity = default_imu_sensitivity_multiplier;
     state.bounceRestitution = default_bounce_restitution;
     state.emaAlpha = default_ema_alpha;
     state.deadzoneThreshold = default_deadzone_threshold;
