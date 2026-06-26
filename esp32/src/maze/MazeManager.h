@@ -21,6 +21,19 @@ class MazeManager
 {
 public:
     /**
+     * @struct FreeCell
+     * @brief Pixel-space center of a DFS path node
+     *
+     * These are the only viable positions for cookies to be placed
+     * in the maze
+     */
+    struct FreeCell
+    {
+        float x; ///< Center X in pixels.
+        float y; ///< Center Y in pixels.
+    };
+
+    /**
      * @brief Constructs the MazeManager.
      * @param width The width of the play area in pixels.
      * @param height The height of the play area in pixels.
@@ -35,6 +48,14 @@ public:
      */
     bool generate(uint8_t *board);
 
+    /**
+     * @brief Returns the corridor-cell centers created by the last generate() call.
+     *
+     * Empty until generate() succeeds (also cleared when generation fails). Use
+     * these as the only valid spawn positions inside the maze; see FreeCell.
+     */
+    const std::vector<FreeCell> &getFreeCells() const { return _freeCells; }
+
     /** @brief Returns the configured play-field width in pixels. */
     int getWidth() const { return _width; }
 
@@ -48,6 +69,8 @@ private:
     int _width;         ///< Width of the maze area in pixels.
     int _height;        ///< Height of the maze area in pixels.
     int _wallThickness; ///< Thickness of the maze components in pixels.
+
+    std::vector<FreeCell> _freeCells; ///< Corridor-cell centers from the last generate().
 
     /**
      * @struct Cell
@@ -74,6 +97,15 @@ private:
      * @param offsetY Vertical pixel offset to apply for centering.
      */
     void writeBlock(uint8_t *board, int gx, int gy, uint8_t value, int offsetX, int offsetY);
+
+    /**
+     * @brief Records the pixel center of a carved corridor cell into _freeCells.
+     * @param gx Grid X coordinate in blocks.
+     * @param gy Grid Y coordinate in blocks.
+     * @param offsetX Horizontal pixel offset applied for centering.
+     * @param offsetY Vertical pixel offset applied for centering.
+     */
+    void addFreeCell(int gx, int gy, int offsetX, int offsetY);
 
     /**
      * @brief Fills the entire flat buffer with a target pixel value.
