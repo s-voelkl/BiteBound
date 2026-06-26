@@ -24,8 +24,7 @@ public:
      * @struct FreeCell
      * @brief Pixel-space center of a DFS path node
      *
-     * These are the only viable positions for cookies to be placed
-     * in the maze
+     * These are the only viable positions for cookies to be placed in the maze
      */
     struct FreeCell
     {
