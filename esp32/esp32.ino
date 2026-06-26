@@ -5,6 +5,7 @@
 #include "src/sensors/SensorManager.h"
 #include "src/graphics/GraphicsManager.h"
 #include "src/physics/PhysicsBody.h"
+#include "src/maze/MazeManager.h"
 #include "config.h"
 
 #include <AUnit.h>
@@ -19,7 +20,7 @@
 // Set to 1 to run AUnit tests; set 0 for main functionality.
 // Can be overridden at compile time via -DRUN_TESTS=1 (used by CI).
 #ifndef RUN_TESTS
-#define RUN_TESTS 0
+#define RUN_TESTS 1
 #endif
 
 // Global Graphics Setup
@@ -31,6 +32,9 @@ GraphicsManager graphicsManager(display_width, display_height);
 // Play space calculations
 const int play_width = display_width;
 const int play_height = display_height - ui_header_height;
+
+// Global Maze Manager Setup
+MazeManager mazeManager(play_width, play_height, default_wall_thickness_px);
 
 // Memory allocation for the game board bitmap
 uint8_t *gameBoard = nullptr;
@@ -65,6 +69,9 @@ void setup() {
   graphicsManager.drawLoadingScreen("Syncing Time...");
   timeManager.sync();
 
+  // Seed standard library random engine with timing noise
+  std::srand(micros()); 
+
   // Initialize sensors
   graphicsManager.drawLoadingScreen("Initializing Sensors...");
   sensorManager.begin();
@@ -72,6 +79,20 @@ void setup() {
   // Setup MQTT client
   graphicsManager.drawLoadingScreen("Starting MQTT...");
   mqttManager.begin();
+
+  // TODO: Move game board init and maze gen!
+  // Allocate memory for the global gameBoard
+  gameBoard = new uint8_t[play_width * play_height];
+
+  // Generate maze
+  if (gameBoard) {
+    bool generated = mazeManager.generate(gameBoard);
+    if (generated) {
+      Serial.println("Procedural maze successfully generated.");
+    } else {
+      Serial.println("Maze generation failed.");
+    }
+  }
 
   // End of setup, ready to enter main loop
   graphicsManager.drawLoadingScreen("BiteBound is Ready!");
