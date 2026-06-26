@@ -57,7 +57,7 @@ const int display_width = 240;
 const int display_height = 280;
 
 /** Default wall thickness in pixels. */
-const int default_wall_thickness_px = 6;
+const int default_wall_thickness_px = 10;
 
 /** Top HUD header height in pixels. */
 const int ui_header_height = 20;
