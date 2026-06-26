@@ -1,5 +1,6 @@
 #include <AUnit.h>
-#include "SharedState.h"
+#include "SharedStateData.h"
+#include "MutexLock.h"
 #include "../../../config.h"
 
 test(SharedState_InitDefaults)

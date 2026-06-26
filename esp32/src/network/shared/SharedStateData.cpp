@@ -1,4 +1,4 @@
-#include "SharedState.h"
+#include "SharedStateData.h"
 #include "../../../config.h"
 
 void initSharedState(SharedStateData &state)
