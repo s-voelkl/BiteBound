@@ -562,6 +562,7 @@ The physics is a shared, game-agnostic 2D simulation under `esp32/src/physics/`.
 - **`PhysicsEngine`** — holds the parameters and EMA filter state and provides the integration and collision-resolution algorithms.
 - **`ICollider` / `Contact`** — strategy interface returning the deepest current `Contact` (out-facing `normal`, `penetration` depth, `hit` flag).
 - **`BorderCollider`** — keeps the ball inside the axis-aligned play-field rectangle (used by Game 2).
+- **`MazeCollider`** — circle-vs-wall collision against the maze board, treating any non-zero pixel as solid (used by Game 1). The maze's outer wall ring means this also bounds the ball, so Game 1 needs no `BorderCollider`.
 
 #### Simulation Pipeline
 
@@ -575,8 +576,8 @@ The method `step()` returns `true` when at least one collision was resolved (map
 #### Basic Usage
 
 ```cpp
-#include "src/physics/PhysicsEngine.h"
-#include "src/physics/BorderCollider.h"
+#include "src/physics/core/PhysicsEngine.h"
+#include "src/physics/colliders/BorderCollider.h"
 
 PhysicsEngine engine;
 PhysicsBody ball{ /* x */ 120, /* y */ 140 };
@@ -594,16 +595,16 @@ The collectible/score logic under `esp32/src/game/` is shared between both games
 
 - **`Cookie`** — a single collectible: position, `radius` and an `active` flag (false once eaten until it respawns).
 - **`GameState`** — volatile HUD metadata: `status` (`idle` / `running` / `completed`), `cookiesCollected`, `cookiesRemaining`, `currentRound`, `elapsedTimeSec`.
-- **`ICookieSpawner`** — strategy that produces a fresh cookie at a valid position, avoiding the ball. Game 1 uses a maze-cell spawner, Game 2 uses `RectCookieSpawner`.
-- **`RectCookieSpawner`** — spawns a cookie at a random point inside the play-field, kept a margin from the edges and away from the ball. *(Wall-aware spawning for the maze is planned; currently a cookie
-can land on a wall.)* <!-- TODO: Implement wall-aware spawning -->
+- **`ICookieSpawner`** — strategy that produces a fresh cookie at a valid position, avoiding the ball. Game 2 uses `RectCookieSpawner`, Game 1 uses `MazeCookieSpawner`.
+- **`RectCookieSpawner`** — spawns a cookie at a random point inside the play-field, kept a margin from the edges and away from the ball.
+- **`MazeCookieSpawner`** — the maze counterpart. It only draws from the corridor cells the `MazeManager` exposes (`getFreeCells()`), so a cookie never lands on a wall. Same set of cookies respawning on pickup as the rectangle spawner, just constrained to the maze.
 - **`CookieField`** — keeps a small fixed set of visible cookies (no heap, MCU-friendly). On contact it scores and respawns the eaten cookie via the injected spawner; the round is won once `collected()` reaches `target()`. The game loop queries it via `collected()`, `remaining()` and `finished()`.
 
 #### Basic Usage
 
 ```cpp
-#include "src/game/CookieField.h"
-#include "src/game/RectCookieSpawner.h"
+#include "src/game/cookies/CookieField.h"
+#include "src/game/cookies/RectCookieSpawner.h"
 
 RectCookieSpawner spawner(play_width, play_height, /* cookieRadius */ 3.0f);
 CookieField field;
@@ -612,4 +613,58 @@ field.start(/* visibleCount */ 3, /* target */ default_cookies_count, spawner, b
 // Per tick, after moving the ball:
 field.checkPickup(ball);
 if (field.finished()) { /* round complete */ }
+```
+
+### Game Engine
+
+The `GameEngine` (`esp32/src/engine/`) runs both games through a single loop. It owns the shared `PhysicsEngine` and the active `GameConfig`, holds both games as members, and points at whichever one is active. The per-frame work — read the tilt, step the physics, collect cookies, update the telemetry state — lives in the engine, so the games themselves stay small.
+
+Each game implements `IGame` and inherits the common parts from `BaseGame` (the ball, the cookie field, the pickup and win checks). A game only provides what actually differs between modes:
+
+- **`Game1Labyrinth`** — a `MazeManager`, a `MazeCollider` over the generated board, and the maze cookie spawner. Its `buildLevel()` generates a fresh maze, so a new layout appears whenever the round (re)starts.
+- **`Game2Flatland`** — a `BorderCollider` and `RectCookieSpawner` on an open, wall-free board.
+
+#### Choosing a mode and counting rounds
+
+- `chooseGameMode(id)` selects a game and starts it. The chosen game resets its round to 1, so switching modes — or re-selecting the same one — always begins at round 1.
+- `nextRound()` advances the active game: it bumps that game's own round counter and rebuilds the level. For Game 1 that is a new maze; Game 2 counts rounds the same way without one.
+
+The round counter lives in each game, not the engine, so the two modes count independently. Both entry points run through the game's `buildLevel()`, which is why the maze regenerates on a mode change and on a new round without any special-casing.
+
+#### Implementation decisions
+
+- Both games are members and are never allocated or freed on a switch, which keeps the MCU heap from fragmenting. They share one play board: Game 1 writes a maze into it, Game 2 clears it to open space.
+- `MazeCollider` does circle-vs-wall collision per pixel (0 = corridor, non-zero = wall). The generated maze already has a solid border ring, so the collider keeps the ball on the board by itself.
+- `update()` takes the raw tilt values rather than a `SensorData`, so the engine has no dependency on the sensor layer and can be tested without hardware.
+- After a round is built the engine raises a redraw flag. The sketch reads it with `consumeRedraw()` and asks the `GraphicsManager` for a full repaint; partial updates handle the frames in between.
+
+#### Basic Usage
+
+```cpp
+#include "src/engine/GameEngine.h"
+
+GameEngine gameEngine;
+
+void setup() {
+    // ...display, WiFi, sensors, MQTT...
+    gameEngine.begin(play_width, play_height);
+    gameEngine.chooseGameMode(1); // start the labyrinth at round 1
+}
+
+void loop() {
+    SensorData s = sensorManager.read();
+    gameEngine.update(s.accelerometerX, s.accelerometerY, dt);
+
+    if (gameEngine.consumeRedraw()) {
+        graphicsManager.forceFullRedraw();
+    }
+    graphicsManager.update(
+        gameEngine.board(), play_width, play_height,
+        gameEngine.ball(),
+        gameEngine.cookies().data(), gameEngine.cookies().count(),
+        gameEngine.state());
+
+    // gameEngine.nextRound();       // advance to a new round (new maze for Game 1)
+    // gameEngine.chooseGameMode(2); // switch to the open-field game (round back to 1)
+}
 ```
