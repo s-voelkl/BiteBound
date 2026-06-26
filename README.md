@@ -315,7 +315,7 @@ Implemented in `esp32/src/network/json-builder/JsonBuilder.h` and `esp32/src/net
 - **Output**: Formatted JSON string ready for MQTT publication
 - **Structure**: Hierarchical JSON with categories: `device`, `config`, `state`, `physics`, and `sensors`
 
-#### JSON Payload Structure
+#### JSON Telemetry Payload
 
 ```json
 {
