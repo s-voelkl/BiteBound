@@ -37,7 +37,6 @@ String buildTelemetryJson(const TelemetryData &data)
     physics["velocity_y"] = data.velocity_y;
     physics["acc_x"] = data.acc_x;
     physics["acc_y"] = data.acc_y;
-    physics["collision_detected"] = data.collision_detected;
 
     // Sensor Readings
     JsonObject sensors = doc["sensors"].to<JsonObject>();
@@ -89,7 +88,6 @@ String buildTelemetryJsonTest()
     testData.velocity_y = -0.92;
     testData.acc_x = 0.15;
     testData.acc_y = -0.34;
-    testData.collision_detected = false;
 
     // Sensor Readings
     testData.accel_x = 0.12;
