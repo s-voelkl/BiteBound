@@ -3,8 +3,8 @@
 
 #include <string.h>
 #include "BaseGame.h"
-#include "RectCookieSpawner.h"
-#include "../physics/BorderCollider.h"
+#include "../cookies/RectCookieSpawner.h"
+#include "../../physics/colliders/BorderCollider.h"
 
 /**
  * @brief Game 2: an open play-field limited only by the screen edges.

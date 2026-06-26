@@ -1,6 +1,6 @@
 #include "CookieField.h"
 #include "Cookie.h"
-#include "../physics/PhysicsBody.h"
+#include "../../physics/core/PhysicsBody.h"
 
 #include <AUnit.h>
 

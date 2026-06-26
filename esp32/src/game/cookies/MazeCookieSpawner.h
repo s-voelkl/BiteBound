@@ -4,7 +4,7 @@
 #include <Arduino.h> // for random()
 #include <vector>
 #include "CookieField.h"            // ICookieSpawner, Cookie, PhysicsBody
-#include "../maze/MazeManager.h"    // MazeManager::FreeCell
+#include "../../maze/MazeManager.h"    // MazeManager::FreeCell
 
 /**
  * @brief Game 1 spawner: places cookies only on carved maze corridors.

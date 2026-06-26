@@ -3,11 +3,11 @@
 
 #include <stdint.h>
 #include "GameConfig.h"
-#include "../physics/PhysicsEngine.h"
+#include "../physics/core/PhysicsEngine.h"
 #include "../game/GameState.h"
-#include "../game/IGame.h"
-#include "../game/Game1Labyrinth.h"
-#include "../game/Game2Flatland.h"
+#include "../game/modes/IGame.h"
+#include "../game/modes/Game1Labyrinth.h"
+#include "../game/modes/Game2Flatland.h"
 
 /**
  * @brief Orchestrates both games behind one shared engine

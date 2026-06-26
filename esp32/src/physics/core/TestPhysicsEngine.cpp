@@ -1,6 +1,6 @@
 #include "PhysicsEngine.h"
-#include "BorderCollider.h"
-#include "ICollider.h"
+#include "../colliders/BorderCollider.h"
+#include "../colliders/ICollider.h"
 #include "PhysicsBody.h"
 
 #include <math.h>

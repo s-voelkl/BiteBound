@@ -2,7 +2,7 @@
 #define ENGINE_GAME_CONFIG_H
 
 #include <stdint.h>
-#include "../physics/PhysicsEngine.h" // PhysicsParams
+#include "../physics/core/PhysicsEngine.h" // PhysicsParams
 #include "../../config.h"
 
 /**

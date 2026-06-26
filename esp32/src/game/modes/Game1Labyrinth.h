@@ -3,9 +3,9 @@
 
 #include <vector>
 #include "BaseGame.h"
-#include "MazeCookieSpawner.h"
-#include "../maze/MazeManager.h"
-#include "../physics/MazeCollider.h"
+#include "../cookies/MazeCookieSpawner.h"
+#include "../../maze/MazeManager.h"
+#include "../../physics/colliders/MazeCollider.h"
 
 /**
  * @brief Game 1: randomly generated maze.

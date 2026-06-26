@@ -2,10 +2,10 @@
 #define GAME_IGAME_H
 
 #include <stdint.h>
-#include "../physics/PhysicsBody.h"
-#include "../physics/ICollider.h"
-#include "CookieField.h"
-#include "../engine/GameConfig.h"
+#include "../../physics/core/PhysicsBody.h"
+#include "../../physics/colliders/ICollider.h"
+#include "../cookies/CookieField.h"
+#include "../../engine/GameConfig.h"
 
 /**
  * @brief A single game mode.

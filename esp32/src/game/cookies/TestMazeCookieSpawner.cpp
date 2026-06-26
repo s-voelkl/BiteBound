@@ -1,10 +1,10 @@
 #include <AUnit.h>
 #include <vector>
 
-#include "src/game/MazeCookieSpawner.h"
-#include "src/game/CookieField.h"
+#include "src/game/cookies/MazeCookieSpawner.h"
+#include "src/game/cookies/CookieField.h"
 #include "src/maze/MazeManager.h"
-#include "src/physics/PhysicsBody.h"
+#include "src/physics/core/PhysicsBody.h"
 
 // Shared small maze geometry: even wall thickness keeps cell centers integral,
 // so a pixel center maps exactly onto a board index.

@@ -1,6 +1,6 @@
 #include <AUnit.h>
-#include "src/physics/MazeCollider.h"
-#include "src/physics/PhysicsBody.h"
+#include "src/physics/colliders/MazeCollider.h"
+#include "src/physics/core/PhysicsBody.h"
 
 static const int kW = 20;
 static const int kH = 20;

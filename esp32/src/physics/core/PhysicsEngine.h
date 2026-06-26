@@ -3,8 +3,8 @@
 
 #include "Vec2.h"
 #include "PhysicsBody.h"
-#include "ICollider.h"
-#include "../../config.h"
+#include "../colliders/ICollider.h"
+#include "../../../config.h"
 
 /**
  * @brief Tunable physics parameters.
