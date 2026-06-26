@@ -605,9 +605,9 @@ The collectible/score logic under `esp32/src/game/` is shared between both games
 #include "src/game/CookieField.h"
 #include "src/game/RectCookieSpawner.h"
 
-RectCookieSpawner spawner(play_width, play_height, /* cookieRadius */ 3.0f);
+RectCookieSpawner spawner(play_width, play_height, /* cookieRadius */ default_cookie_radius);
 CookieField field;
-field.start(/* visibleCount */ 3, /* target */ default_cookies_count, spawner, ball);
+field.start(/* visibleCount */ default_max_visible_cookies, /* target */ default_cookies_count, spawner, ball);
 
 // Per tick, after moving the ball:
 field.checkPickup(ball);
@@ -624,7 +624,7 @@ if (field.finished()) { /* round complete */ }
 mazeGenerator.generate(gameBoard);
 
 // 2. Setup spawner with free cells from MazeManager
-MazeCookieSpawner spawner(&mazeGenerator.getFreeCells(), /* cookieRadius */ 3.0f);
+MazeCookieSpawner spawner(&mazeGenerator.getFreeCells(), /* cookieRadius */ default_cookie_radius);
 
 // 3. Initialize and start the cookie field, see same above.
 ```
