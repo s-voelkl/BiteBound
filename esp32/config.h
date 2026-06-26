@@ -42,11 +42,11 @@ const bool mqtt_retain = false;
 /** ----- Game settings ----- */
 
 /** Game ID for the maze game. */
-const int game_maze_id = 0;
+const int game_id_maze = 1;
 /** Game ID for the plane game. */
-const int game_plane_id = 1;
+const int game_id_plane = 2;
 /** Default game id. */
-const int default_game_id = game_maze_id;
+const int default_game_id = game_id_maze;
 
 /** Default player name. */
 const char *const default_player_name = "Cookie-Lover";

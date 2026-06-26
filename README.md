@@ -330,7 +330,7 @@ Implemented in `esp32/src/network/json-builder/JsonBuilder.h` and `esp32/src/net
     "wifi_ssid": "MyWiFiNetwork"
   },
   "config": {
-    "game_id": 1,
+    "game_id": 1, // default for maze, 2 for plane.
     "player_name": "Player 1",
     "target_cookies": 15,
     "screen_width": 240,
