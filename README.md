@@ -353,6 +353,103 @@ mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
 
 #### Topics
 
+##### 1. Command Topic
+
+``mauc2026/group_03/game/command``: Android / NodeRED --> ESP32. Commands to start/stop the game, set parameters, and control game state.
+
+##### 2. Telemetry Topic
+
+``mauc2026/group_03/game/telemetry``: ESP32 --> Android / NodeRED. Publishes telemetry data including sensor readings, game state, and physics simulation results.
+
 #### Communication Logic
 
 On game start or change: game round resets to 1.
+
+### Display Manager
+
+SPI interface LCD display pins: see [library example](https://github.com/waveshareteam/ESP32-S3-Touch-LCD-1.69/blob/main/examples/Arduino/libraries/Mylibrary/pin_config.h)
+
+#### Display Subsystem & Graphics Manager
+
+The rendering engine for the 240x280 ST7789 display is managed by the `GraphicsManager` class. It is designed to sustain a stable **50Hz game loop (20ms time budget)** on Core 1 while preventing display tearing, flicker, or performance bottlenecks.
+
+#### Architectural Overview
+
+Updating a $240 \times 280$ display in 16-bit color (RGB565) requires pushing **131.25 KB** of data per frame. Over a standard, stable 27 MHz SPI bus, a full frame transmission takes **~40ms**, which physically violates the 20ms constraint of a 50Hz game loop.
+
+To circumvent this hardware bottleneck, the `GraphicsManager` implements a hybrid rendering architecture:
+
+1. **Full Redraw Mode (Round Start / State Transition):**
+   When a new round begins or the game state changes, a full redraw is triggered. The manager clears the screen, draws the HUD, and renders the static maze. To optimize SPI bandwidth, the maze generator renders horizontal spans of identical pixel states using an RLE (Run-Length Encoding) algorithm rather than individual pixels.
+2. **Partial Update Mode (50Hz Active Ticks):**
+   During active gameplay, the screen is *never* fully re-cleared. Instead, the manager utilizes a **"Dirty Rectangles"** approach:
+   - It calculates the bounding box of the sphere's *previous* position and overwrites only that region with the underlying static maze background.
+   - It checks for and restores any active cookies that were overlapped by the sphere's previous position to prevent graphical clipping.
+   - It handles cookie collection/respawns by locally drawing or erasing only those tiny $16 \times 16$ pixel regions.
+   - It draws the sphere at its *new* position.
+
+This reduces the active frame data payload from **131.25 KB to ~1 KB**, dropping display transmission overhead from **~40ms to under 1ms**.
+
+1. **HUD Smart Caching:**
+   Drawing text characters is computationally expensive. The manager checks if volatile variables (such as score or status) have updated, or if a full second has elapsed, before performing HUD redraws.
+
+---
+
+#### Basic Usage
+
+##### 1. Initialization
+
+Include the header and instantiate the class. The board dimensions are automatically retrieved from `config.h`.
+
+```cpp
+#include "src/graphics/GraphicsManager.h"
+
+// Instantiate the display bus and driver as per the hardware setup
+Arduino_DataBus *bus = new Arduino_ESP32SPI(pin_lcd_dc, pin_lcd_cs, pin_lcd_sck, pin_lcd_mosi);
+Arduino_GFX *gfx = new Arduino_ST7789(bus, pin_lcd_rst /* RST */,0 /* rotation */, 
+  true /* IPS */, display_width, display_height, 0, 20, 0, 0);
+
+// Instantiate the Graphics Manager
+GraphicsManager graphicsManager(display_width, display_height);
+```
+
+##### 2. Setup Hook
+
+Attach your physical display instance during the system startup routine:
+
+```cpp
+void setup() {
+    if (!gfx->begin()) {
+      Serial.println("Failed to initialize GFX display!");
+    }
+    graphicsManager.begin(gfx);
+    
+    // Additional game setup...
+}
+```
+
+##### 3. Loading Screen
+
+A simple loading screen can be displayed while the game initializes:
+
+```cpp
+graphicsManager.drawLoadingScreen("Loading Game...");
+```
+
+##### 4. Execution
+
+Invoke the `update()` method on every 20ms tick. The manager automatically determines whether a full redraw or a high-performance partial redraw is necessary based on state changes.
+
+```cpp
+  // 1. Update sensors, physics, collisions, game state, etc.
+  // 2. Request screen update
+  graphicsManager.update(
+      mazeGrid,           // uint8_t array representing the wall/empty play grid
+      play_width,         // Width of the play area
+      play_height,        // Height of the play area
+      simulationBall,     // PhysicsBody struct of the ball
+      simulationCookies,  // Array of Cookie structs
+      cookie_count,       // Total size of cookie array
+      telemetryState      // GameState tracking meta values (round, time, score)
+  );
+```
