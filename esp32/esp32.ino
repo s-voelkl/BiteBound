@@ -4,7 +4,7 @@
 #include "src/network/json-builder/JsonBuilder.h"
 #include "src/sensors/SensorManager.h"
 #include "src/graphics/GraphicsManager.h"
-#include "src/physics/PhysicsBody.h"
+#include "src/maze/MazeManager.h"
 #include "config.h"
 
 #include <AUnit.h>
@@ -32,6 +32,9 @@ GraphicsManager graphicsManager(display_width, display_height);
 const int play_width = display_width;
 const int play_height = display_height - ui_header_height;
 
+// Global Maze Manager Setup
+MazeManager mazeManager(play_width, play_height, default_wall_thickness_px);
+
 // Memory allocation for the game board bitmap
 uint8_t *gameBoard = nullptr;
 
@@ -53,8 +56,8 @@ void setup() {
   if (!gfx->begin()) {
     Serial.println("Failed to initialize GFX display!");
   }
-  // pinMode(pin_lcd_bl, OUTPUT);
-  // digitalWrite(pin_lcd_bl, HIGH);
+  pinMode(pin_lcd_bl, OUTPUT);
+  digitalWrite(pin_lcd_bl, HIGH);
   graphicsManager.begin(gfx);
 
   // Connect to WiFi
@@ -65,6 +68,9 @@ void setup() {
   graphicsManager.drawLoadingScreen("Syncing Time...");
   timeManager.sync();
 
+  // Seed standard library random engine with timing noise
+  std::srand(micros()); 
+
   // Initialize sensors
   graphicsManager.drawLoadingScreen("Initializing Sensors...");
   sensorManager.begin();
@@ -72,6 +78,21 @@ void setup() {
   // Setup MQTT client
   graphicsManager.drawLoadingScreen("Starting MQTT...");
   mqttManager.begin();
+
+  // TODO: Move game board init and maze gen!
+  graphicsManager.drawLoadingScreen("Creating Maze...");
+  // Allocate memory for the global gameBoard
+  gameBoard = new uint8_t[play_width * play_height];
+
+  // Generate maze
+  if (gameBoard) {
+    bool generated = mazeManager.generate(gameBoard);
+    if (generated) {
+      Serial.println("Procedural maze successfully generated.");
+    } else {
+      Serial.println("Maze generation failed.");
+    }
+  }
 
   // End of setup, ready to enter main loop
   graphicsManager.drawLoadingScreen("BiteBound is Ready!");

@@ -7,7 +7,7 @@
 /**
  * @brief Game 2 spawner: a random position inside [0, width] x [0, height],
  * kept a margin away from the edges and away from the ball.
- *
+ * TODO: Currently, spawning in a wall is possible!
  */
 class RectCookieSpawner : public ICookieSpawner
 {

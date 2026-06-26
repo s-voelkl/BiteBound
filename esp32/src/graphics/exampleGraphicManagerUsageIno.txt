@@ -4,7 +4,9 @@
 #include "src/network/json-builder/JsonBuilder.h"
 #include "src/sensors/SensorManager.h"
 #include "src/graphics/GraphicsManager.h"
+#include "src/maze/MazeManager.h"
 #include "config.h"
+
 #include <AUnit.h>
 #include <ArduinoJson.h>
 #include <Arduino_GFX_Library.h>
@@ -29,8 +31,11 @@ GraphicsManager graphicsManager(display_width, display_height);
 const int play_width = display_width;
 const int play_height = display_height - ui_header_height;
 
-// Memory allocation for the collision bitmap
-uint8_t* mazeGrid = nullptr;
+// Global Maze Manager Setup
+MazeManager mazeManager(play_width, play_height, default_wall_thickness_px);
+
+// Memory allocation for the game board bitmap
+uint8_t* gameBoard = nullptr;
 
 // Test objects for simulation demonstration
 PhysicsBody simulationBall;
@@ -70,20 +75,18 @@ void setup() {
   graphicsManager.drawLoadingScreen("Starting MQTT...");
   mqttManager.begin();
 
-  // Allocate 62.4 KB of heap for the pixel state grid
-  graphicsManager.drawLoadingScreen("Allocating Memory...");
-  mazeGrid = (uint8_t*)malloc(play_width * play_height);
-  if (mazeGrid != nullptr) {
-    memset(mazeGrid, 0, play_width * play_height);
-    
-    // Draw outer boundary barriers directly into the array
-    for (int x = 0; x < play_width; ++x) {
-       mazeGrid[x] = 1; // Top border wall
-       mazeGrid[(play_height - 1) * play_width + x] = 1; // Bottom border wall
-    }
-    for (int y = 0; y < play_height; ++y) {
-       mazeGrid[y * play_width] = 1; // Left wall
-       mazeGrid[y * play_width + (play_width - 1)] = 1; // Right wall
+  // TODO: Move game board init and maze gen!
+  graphicsManager.drawLoadingScreen("Creating Maze...");
+  // Allocate memory for the global gameBoard
+  gameBoard = new uint8_t[play_width * play_height];
+
+  // Generate maze
+  if (gameBoard) {
+    bool generated = mazeManager.generate(gameBoard);
+    if (generated) {
+      Serial.println("Procedural maze successfully generated.");
+    } else {
+      Serial.println("Maze generation failed.");
     }
   }
 
@@ -170,7 +173,7 @@ void loop() {
 
     // Trigger high-performance screen render
     graphicsManager.update(
-        mazeGrid, 
+        gameBoard, 
         play_width, 
         play_height, 
         simulationBall, 
