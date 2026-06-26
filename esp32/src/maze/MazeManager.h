@@ -1,0 +1,118 @@
+#ifndef MAZE_MANAGER_H
+#define MAZE_MANAGER_H
+
+#include <stdint.h>
+#include <vector>
+
+/**
+ * @class MazeManager
+ * @brief Handles procedural generation of a maze using a randomized Depth-First Search (DFS) algorithm.
+ *
+ * This class slices the play-field into a block grid where each block is of size wallThickness x wallThickness.
+ * The active maze grid is mathematically centered within the play-field, distributing any remainder pixel
+ * padding symmetrically to the borders.
+ *
+ * The output is written into a flat 1D pixel array of size (width * height), mapping pixels to:
+ * - 0: Empty (passageway)
+ * - 1: Wall Type 1 (outer borders / solid boundary padding)
+ * - 2: Wall Type 2 (inner procedural maze walls)
+ */
+class MazeManager
+{
+public:
+    /**
+     * @struct FreeCell
+     * @brief Pixel-space center of a DFS path node
+     *
+     * These are the only viable positions for cookies to be placed
+     * in the maze
+     */
+    struct FreeCell
+    {
+        float x; ///< Center X in pixels.
+        float y; ///< Center Y in pixels.
+    };
+
+    /**
+     * @brief Constructs the MazeManager.
+     * @param width The width of the play area in pixels.
+     * @param height The height of the play area in pixels.
+     * @param wallThickness The thickness of walls and passages in pixels.
+     */
+    MazeManager(int width, int height, int wallThickness);
+
+    /**
+     * @brief Generates the procedural maze and centers it symmetrically within the provided flat buffer.
+     * @param board Pre-allocated flat pixel buffer of size (width * height).
+     * @return true if generation was successful, false otherwise.
+     */
+    bool generate(uint8_t *board);
+
+    /**
+     * @brief Returns the corridor-cell centers created by the last generate() call.
+     *
+     * Empty until generate() succeeds (also cleared when generation fails). Use
+     * these as the only valid spawn positions inside the maze; see FreeCell.
+     */
+    const std::vector<FreeCell> &getFreeCells() const { return _freeCells; }
+
+    /** @brief Returns the configured play-field width in pixels. */
+    int getWidth() const { return _width; }
+
+    /** @brief Returns the configured play-field height in pixels. */
+    int getHeight() const { return _height; }
+
+    /** @brief Returns the configured wall thickness in pixels. */
+    int getWallThickness() const { return _wallThickness; }
+
+private:
+    int _width;         ///< Width of the maze area in pixels.
+    int _height;        ///< Height of the maze area in pixels.
+    int _wallThickness; ///< Thickness of the maze components in pixels.
+
+    std::vector<FreeCell> _freeCells; ///< Corridor-cell centers from the last generate().
+
+    /**
+     * @struct Cell
+     * @brief Coordinates of a pathway hub in the DFS grid.
+     */
+    struct Cell
+    {
+        int cx; ///< Column index in the cell grid.
+        int cy; ///< Row index in the cell grid.
+
+        bool operator==(const Cell &other) const
+        {
+            return cx == other.cx && cy == other.cy;
+        }
+    };
+
+    /**
+     * @brief Sets all pixels within a specific grid block to a target value, applying horizontal and vertical offsets.
+     * @param board Flat pixel array.
+     * @param gx Grid X coordinate in blocks.
+     * @param gy Grid Y coordinate in blocks.
+     * @param value The pixel state (0, 1, or 2).
+     * @param offsetX Horizontal pixel offset to apply for centering.
+     * @param offsetY Vertical pixel offset to apply for centering.
+     */
+    void writeBlock(uint8_t *board, int gx, int gy, uint8_t value, int offsetX, int offsetY);
+
+    /**
+     * @brief Records the pixel center of a carved corridor cell into _freeCells.
+     * @param gx Grid X coordinate in blocks.
+     * @param gy Grid Y coordinate in blocks.
+     * @param offsetX Horizontal pixel offset applied for centering.
+     * @param offsetY Vertical pixel offset applied for centering.
+     */
+    void addFreeCell(int gx, int gy, int offsetX, int offsetY);
+
+    /**
+     * @brief Fills the entire flat buffer with a target pixel value.
+     * @param board Flat pixel array.
+     * @param value The pixel state (0, 1, or 2).
+     */
+    void fillBoard(uint8_t *board, uint8_t value);
+};
+
+#endif // MAZE_MANAGER_H

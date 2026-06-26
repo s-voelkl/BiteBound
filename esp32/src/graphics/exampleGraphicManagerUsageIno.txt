@@ -1,0 +1,230 @@
+#include "src/network/time/TimeManager.h"
+#include "src/network/wifi-connection/WifiManager.h" 
+#include "src/network/mqtt/MqttManager.h"
+#include "src/network/json-builder/JsonBuilder.h"
+#include "src/sensors/SensorManager.h"
+#include "src/graphics/GraphicsManager.h"
+#include "src/maze/MazeManager.h"
+#include "config.h"
+
+#include <AUnit.h>
+#include <ArduinoJson.h>
+#include <Arduino_GFX_Library.h>
+
+// Set to 1 to use mock sensor data instead of real hardware
+#ifndef MOCK_SENSORS
+#define MOCK_SENSORS 0
+#endif
+
+// Set to 1 to run AUnit tests; set 0 for main functionality.
+#ifndef RUN_TESTS
+#define RUN_TESTS 0
+#endif
+
+// Global Graphics Setup
+Arduino_DataBus *bus = new Arduino_ESP32SPI(pin_lcd_dc, pin_lcd_cs, pin_lcd_sck, pin_lcd_mosi);
+Arduino_GFX *gfx = new Arduino_ST7789(bus, pin_lcd_rst /* RST */,0 /* rotation */, 
+  true /* IPS */, display_width, display_height, 0, 20, 0, 0);
+GraphicsManager graphicsManager(display_width, display_height);
+
+// Play space calculations
+const int play_width = display_width;
+const int play_height = display_height - ui_header_height;
+
+// Global Maze Manager Setup
+MazeManager mazeManager(play_width, play_height, default_wall_thickness_px);
+
+// Memory allocation for the game board bitmap
+uint8_t* gameBoard = nullptr;
+
+// Test objects for simulation demonstration
+PhysicsBody simulationBall;
+const int cookie_count = default_cookies_count;
+Cookie simulationCookies[cookie_count];
+GameState telemetryState;
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("ESP32 BiteBound Hardware starting...");
+  
+#if RUN_TESTS 
+  delay(3000); 
+  Serial.println("Starting AUnit tests...");
+#else
+  // Initialize Display and Graphics Manager
+  if (!gfx->begin()) {
+    Serial.println("Failed to initialize GFX display!");
+  }
+  pinMode(pin_lcd_bl, OUTPUT);
+  digitalWrite(pin_lcd_bl, HIGH);
+  graphicsManager.begin(gfx);
+
+  // Connect to WiFi
+  graphicsManager.drawLoadingScreen("Connecting WiFi...");
+  wifiManager.connect();
+
+  // Synchronize time (required for TLS certificate validation and timestamps).
+  graphicsManager.drawLoadingScreen("Syncing Time...");
+  timeManager.sync();
+
+  // Initialize sensors
+  graphicsManager.drawLoadingScreen("Initializing Sensors...");
+  sensorManager.begin();
+
+  // Setup MQTT client
+  graphicsManager.drawLoadingScreen("Starting MQTT...");
+  mqttManager.begin();
+
+  // TODO: Move game board init and maze gen!
+  graphicsManager.drawLoadingScreen("Creating Maze...");
+  // Allocate memory for the global gameBoard
+  gameBoard = new uint8_t[play_width * play_height];
+
+  // Generate maze
+  if (gameBoard) {
+    bool generated = mazeManager.generate(gameBoard);
+    if (generated) {
+      Serial.println("Procedural maze successfully generated.");
+    } else {
+      Serial.println("Maze generation failed.");
+    }
+  }
+
+  // Position game items
+  graphicsManager.drawLoadingScreen("Positioning Game Items...");
+  simulationBall.x = 120.0f;
+  simulationBall.y = 150.0f;
+  simulationBall.vx = 40.0f; // px/s
+  simulationBall.vy = 30.0f; // px/s
+  simulationBall.radius = 5.0f;
+
+  simulationCookies[0] = Cookie(50.0f, 60.0f, 3.0f, true);
+  simulationCookies[1] = Cookie(190.0f, 60.0f, 3.0f, true);
+  simulationCookies[2] = Cookie(120.0f, 110.0f, 3.0f, true);
+  simulationCookies[3] = Cookie(50.0f, 230.0f, 3.0f, true);
+  simulationCookies[4] = Cookie(190.0f, 230.0f, 3.0f, true);
+
+  telemetryState.status = "running";
+  telemetryState.cookiesCollected = 0;
+  telemetryState.cookiesRemaining = cookie_count;
+  telemetryState.currentRound = 1;
+  telemetryState.elapsedTimeSec = 0.0f;
+
+  // End of setup, ready to enter main loop
+  graphicsManager.drawLoadingScreen("BiteBound is Ready!");
+#endif
+}
+
+void loop() {
+#if RUN_TESTS
+  aunit::TestRunner::run();
+#else
+  mqttManager.connect();
+  mqttManager.loop();
+
+  // Non-blocking timer tracking execution cycles
+  unsigned long currentMillis = millis();
+  static unsigned long lastGameTick = 0;
+  static unsigned long lastMqttSend = 0;
+
+  // 1. GAME LOOP RUNNING AT 50Hz (Every 20ms)
+  if (currentMillis - lastGameTick >= 20) {
+    lastGameTick = currentMillis;
+
+    // Tick the stopwatch timer
+    telemetryState.elapsedTimeSec += 0.02f;
+
+    // Run simple ball simulation with wall bounces
+    simulationBall.x += simulationBall.vx * 0.02f;
+    simulationBall.y += simulationBall.vy * 0.02f;
+
+    // Horizontal bounds check
+    if (simulationBall.x - simulationBall.radius < 5.0f) {
+        simulationBall.x = 5.0f + simulationBall.radius;
+        simulationBall.vx = -simulationBall.vx * 0.5f; // elastic coefficient damping
+    } else if (simulationBall.x + simulationBall.radius >= play_width - 5.0f) {
+        simulationBall.x = play_width - 5.0f - simulationBall.radius;
+        simulationBall.vx = -simulationBall.vx * 0.5f;
+    }
+
+    // Vertical bounds check (accounting for HUD header)
+    if (simulationBall.y - simulationBall.radius < ui_header_height + 5.0f) {
+        simulationBall.y = ui_header_height + 5.0f + simulationBall.radius;
+        simulationBall.vy = -simulationBall.vy * 0.5f;
+    } else if (simulationBall.y + simulationBall.radius >= display_height - 5.0f) {
+        simulationBall.y = display_height - 5.0f - simulationBall.radius;
+        simulationBall.vy = -simulationBall.vy * 0.5f;
+    }
+
+    // Process collisions with cookies
+    for (int i = 0; i < cookie_count; ++i) {
+        if (simulationCookies[i].active) {
+            float dx = simulationBall.x - simulationCookies[i].x;
+            float dy = simulationBall.y - simulationCookies[i].y;
+            float distanceSq = dx * dx + dy * dy;
+            float collideDistance = simulationBall.radius + simulationCookies[i].radius;
+            
+            if (distanceSq < (collideDistance * collideDistance)) {
+                simulationCookies[i].active = false;
+                telemetryState.cookiesCollected++;
+            }
+        }
+    }
+
+    // Trigger high-performance screen render
+    graphicsManager.update(
+        gameBoard, 
+        play_width, 
+        play_height, 
+        simulationBall, 
+        simulationCookies, 
+        cookie_count, 
+        telemetryState
+    );
+  }
+
+  // 2. TELEMETRY TASK RUNNING AT 2Hz (Every 500ms, as planned)
+  if (currentMillis - lastMqttSend >= 500) {
+    lastMqttSend = currentMillis;
+
+    SensorData sensorData = sensorManager.read();
+    TelemetryData telemetry;
+    
+    telemetry.client_id = device_id;
+    telemetry.hardware = device_hardware;
+    telemetry.firmware_version = device_firmware_version;
+    telemetry.uptime_ms = millis();
+    telemetry.wifi_ssid = wifiManager.getSSID();
+    
+    telemetry.game_id = 1;
+    telemetry.player_name = "Player 1"; 
+    telemetry.target_cookies = telemetryState.cookiesRemaining;
+    telemetry.screen_width = display_width;
+    telemetry.screen_height = display_height;
+    telemetry.wall_thickness_px = default_wall_thickness_px;
+    
+    telemetry.status = telemetryState.status;
+    telemetry.cookies_collected = telemetryState.cookiesCollected;
+    telemetry.cookies_remaining = telemetryState.cookiesRemaining - telemetryState.cookiesCollected;
+    telemetry.current_round = telemetryState.currentRound;
+    telemetry.elapsed_time_sec = telemetryState.elapsedTimeSec;
+    
+    telemetry.ball_pos_x = simulationBall.x;
+    telemetry.ball_pos_y = simulationBall.y;
+    telemetry.velocity_x = simulationBall.vx;
+    telemetry.velocity_y = simulationBall.vy;
+    
+    telemetry.accel_x = sensorData.accelerometerX;
+    telemetry.accel_y = sensorData.accelerometerY;
+    telemetry.accel_z = sensorData.accelerometerZ;
+    telemetry.gyro_x = sensorData.gyroscopeX;
+    telemetry.gyro_y = sensorData.gyroscopeY;
+    telemetry.gyro_z = sensorData.gyroscopeZ;
+    telemetry.battery_voltage = sensorData.batteryVoltage;
+    telemetry.button = sensorData.button;
+    
+    String payload = buildTelemetryJson(telemetry);
+    mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
+  }
+#endif
+}
