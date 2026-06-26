@@ -31,18 +31,9 @@ The ESP32 firmware is split into self-contained, unit-tested modules under `esp3
 | Game | `src/game/` | Shared cookie/score logic (`Cookie`, `CookieField`, `ICookieSpawner`, `RectCookieSpawner`, `GameState`). |
 | Maze | `src/maze/` | Procedural DFS maze generation (`MazeManager`). |
 | Graphics | `src/graphics/` | Optimized 50Hz rendering on the ST7789 display (`GraphicsManager`). |
-| Network | `src/network/` | WiFi, NTP time, secure MQTT and telemetry JSON (`WifiManager`, `TimeManager`, `MqttManager`, `JsonBuilder`). |
+| Network | `src/network/` | WiFi, NTP time, secure MQTT, telemetry JSON and shared state management (`WifiManager`, `TimeManager`, `MqttManager`, `JsonBuilder`, `CommandParser`, `CommandMsg`, `CommandType`, `MutexLock`, `SharedStateData`). |
 
 See the component diagram in [diagrams/src/architecture.puml](diagrams/src/architecture.puml).
-
-### Concurrency Model (ESP32-S3 Dual Core)
-
-The ESP32-S3 is a dual-core SoC, which lets the latency-sensitive game loop run independently from the network stack:
-
-- **Core 1 — Game Core (~50Hz / 20ms budget):** sensor read, physics step, collision, cookie pickup,  game state and display rendering.
-- **Core 0 — Network Core (~2Hz):** MQTT publish/receive and keep-alive, so blocking network I/O never stalls the game loop.
-
-Shared state (ball position, game state, runtime config received over MQTT) is protected with a FreeRTOS mutex (`SemaphoreHandle_t`). Incoming game commands from the dashboard (START / STOP / parameter changes) are passed to the game core via a queue.
 
 ### Game Loop
 
@@ -305,6 +296,18 @@ Manages the secure (TLS) MQTT connection to the HiveMQ Cloud broker via `PubSubC
 
 Recommended defaults: **QoS 1** and **retain = false** (see `config.h`).
 
+##### 1. Command Topic
+
+``mauc2026/group_03/game/command``: Android / NodeRED --> ESP32. Commands to start/stop the game, set parameters, and control game state.
+
+##### 2. Telemetry Topic
+
+``mauc2026/group_03/game/telemetry``: ESP32 --> Android / NodeRED. Publishes telemetry data including sensor readings, game state, and physics simulation results.
+
+##### Internal Logic
+
+On game start or change: game round resets to 1.
+
 ### Telemetry JSON Builder
 
 The JSON builder compiles comprehensive telemetry data from sensors, game state, physics simulation, and device information into a structured JSON payload suitable for MQTT transmission.
@@ -362,6 +365,42 @@ Implemented in `esp32/src/network/json-builder/JsonBuilder.h` and `esp32/src/net
 }
 ```
 
+### Command JSON Parser
+
+Commands received on the `mauc2026/group_03/game/command` topic are decoded by the `src/network/json-parser/CommandParser.cpp` based on the schema below:
+
+#### JSON Command Payload
+
+```json
+{
+  "command": "start",
+  "meta": {
+    "source_ui": "NODE_RED",
+    "request_id": "req-9843-ad",
+    "timestamp": "2024-06-08T11:50:00Z"
+  },
+  "player": {
+    "name": "Player 1"
+  },
+  "game": {
+    "game_id": 1
+  },
+  "parameters": {
+    "cookies_count": 10,
+    "wall_thickness_px": 6
+  },
+  "physics": {
+    "imu_sensitivity_multiplier": 1.25,
+    "bounce_restitution": 0.75,
+    "ema_alpha": 0.25,
+    "deadzone_threshold": 0.04
+  }
+}
+```
+
+- **Accepted Actions (`command`):** `start`, `stop`, `param_change`.
+- **Dynamic Config Tuning:** Customizes physical variables (IMU sensitivity limits, damping offsets) and display specifications (wall thickness bounds, total game cookies) without restarting the system.
+
 #### Basic Usage
 
 ```cpp
@@ -382,21 +421,50 @@ String payload = buildTelemetryJson(telemetry);
 mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
 ```
 
-### MQTT Communication
+### Concurrency Model (ESP32-S3 Dual Core)
 
-#### Topics
+The ESP32-S3 contains a dual-core SoC, enabling isolation of timing-sensitive display/physics loops from blocking network I/O operations:
 
-##### 1. Command Topic
+- **Core 1 — Game Core (~50Hz / 20ms Budget):** Processes raw sensor inputs, updates the 2D physics simulation, resolves wall and cookie collisions, and paints updates to the ST7789 display controller.
+- **Core 0 — Network Core (~2Hz Telemetry & Commands):** Manages connection keep-alive, listens for command payloads from MQTT, and serializes/publishes telemetry data asynchronously.
 
-``mauc2026/group_03/game/command``: Android / NodeRED --> ESP32. Commands to start/stop the game, set parameters, and control game state.
+#### Shared Memory & IPC Primitives
 
-##### 2. Telemetry Topic
+```text
+               +-----------------------------------------+
+               |  Core 0 (Network Core)                  |
+               |                                         |
+               |  +------------------+                   |
+               |  | MQTT Command Sub |                   |
+               |  +--------+---------+                   |
+               |           |                             |
+               |           v                             |
+               |    [CommandParser]                      |
+               |           |                             |
+               +-----------|-----------------------------+
+                           | (Queue push)
+                           v
+                     [Command Queue] (Length: 10)
+                           |
+                           | (Queue pop)
+               +-----------|-----------------------------+
+               |           v                             |
+               |  Core 1 (Game Core)                     |
+               |                                         |
+               |  +------------------+                   |
+               |  |   vGameTask      | <-----------------+
+               |  +--------+---------+                   |
+               |           |                             |
+               +-----------|-----------------------------+
+                           |
+                           v
+                =======[Mutex Lock]=======
+                [     SharedStateData    ] <==== Thread Safe Read/Write
+                ==========================
+```
 
-``mauc2026/group_03/game/telemetry``: ESP32 --> Android / NodeRED. Publishes telemetry data including sensor readings, game state, and physics simulation results.
-
-#### Communication Logic
-
-On game start or change: game round resets to 1.
+- **Shared State (`SharedStateData`):** Keeps track of variables (coordinate states, score levels, device configurations) accessed by both cores. This memory map is protected by a FreeRTOS Mutex (`SemaphoreHandle_t`) utilizing a C++ RAII guard wrapper class `MutexLock` to prevent race conditions.
+- **Command Routing (`CommandMsg`):** Input commands generated from Android or Node-RED dashboards are transferred safely to the Game Core utilizing a FreeRTOS Queue (`commandQueue`). This prevents lock contention on the active game loop.
 
 ### Display Manager
 
