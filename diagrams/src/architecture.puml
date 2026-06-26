@@ -1,5 +1,5 @@
 @startuml architecture
-' top to bottom direction
+top to bottom direction
 ' skinparam classAttributeIconSize 0
 ' skinparam monochrome true
 ' skinparam shadowing false
@@ -10,13 +10,18 @@
 '     BackgroundColor<<enum>> #EEE8D5
 '     BackgroundColor<<abstract>> #EEE8D5
 ' }
+' skinparam linetype ortho
+' page 2x2
+' skinparam nodesep 20
+' skinparam ranksep 20
 
 package "Entry Point (Core 1)" {
     class "esp32.ino" as Main {
         + setup() : void
         + loop() : void
         - gameBoard : uint8_t*
-        - configMutex : SemaphoreHandle_t
+        - stateMutex : SemaphoreHandle_t
+        - commandQueue : QueueHandle_t
     }
 }
 
@@ -29,6 +34,65 @@ package "Configuration" {
         + Time / NTP settings
         + Hardware & LCD pins
         + Analog & battery settings
+    }
+}
+
+package "Shared Data (Cross-Core)" {
+    enum CommandType {
+        START
+        STOP
+        PARAM_CHANGE
+        UNKNOWN
+    }
+
+    struct CommandMsg {
+        + type : CommandType
+        + playerName : char[32]
+        + gameId : int
+        + cookiesCount : int
+        + wallThicknessPx : int
+        + imuSensitivity : float
+        + bounceRestitution : float
+        + emaAlpha : float
+        + deadzoneThreshold : float
+        + requestId : char[36]
+    }
+
+    struct SharedStateData {
+        + playerName : char[32]
+        + gameId : int
+        + (other parameters)
+        ' + cookiesCount : int
+        ' + wallThicknessPx : int
+        ' + imuSensitivity : float
+        ' + bounceRestitution : float
+        ' + emaAlpha : float
+        ' + deadzoneThreshold : float
+        ' + ballPosX : float
+        ' + ballPosY : float
+        ' + velocityX : float
+        ' + velocityY : float
+        ' + accX : float
+        ' + accY : float
+        ' + cookiesCollected : int
+        ' + cookiesRemaining : int
+        ' + currentRound : int
+        ' + elapsedTimeSec : float
+        ' + isRunning : bool
+    }
+
+    class MutexLock <<utility>> {
+        + MutexLock(mutex : SemaphoreHandle_t, timeout : TickType_t)
+        + ~MutexLock()
+        + isLocked() : bool
+        - m_mutex : SemaphoreHandle_t
+        - m_locked : bool
+    }
+}
+
+package "JSON Parser (Core 0)" {
+    class CommandParser {
+        + {static} parse(jsonPayload : const String&, outMsg : CommandMsg&) : bool
     }
 }
 
@@ -164,8 +228,7 @@ package "Game (Core 1)" {
     }
 
     class CookieField {
-        + start(visibleCount : uint8_t, target : uint16_t, 
-            spawner : ICookieSpawner&, ball : PhysicsBody&) : void
+        + start(visibleCount : uint8_t, target : uint16_t, \n  spawner : ICookieSpawner&, ball : PhysicsBody&) : void
         + checkPickup(ball : PhysicsBody&) : uint8_t
         + collected() : uint16_t
         + remaining() : uint16_t
@@ -188,27 +251,34 @@ package "Graphics (Core 1)" {
     class GraphicsManager {
         + begin(gfx : Arduino_GFX*) : void
         + forceFullRedraw() : void
-        + update(mazeGrid : uint8_t*, gridW : int, gridH : int, ball : PhysicsBody&, 
-            cookies : Cookie*, count : int, state : GameState&) : void
+        + update(mazeGrid : uint8_t*, gridW : int, gridH : int, ball : PhysicsBody&, \n  cookies : Cookie*, count : int, state : GameState&) : void
         + drawLoadingScreen(statusText : const char*) : void
     }
 }
 
-' Orchestration from the main sketch (Core 1 game loop)
+' Orchestration and shared bindings
 Main --> SensorManager : "reads input"
 Main --> PhysicsEngine : "steps simulation"
-Main --> CookieField : "tracks cookies"
-Main --> MazeManager : "generates board"
+' Main --> CookieField : "tracks cookies"
+' Main --> MazeManager : "generates board"
 Main --> GraphicsManager : "owns / renders"
-Main ..> JsonBuilder : "builds telemetry"
-Main ..> MqttManager : "starts on Core 0 (FreeRTOS)"
-Main ..> Config : "reads settings (thread-safe)"
+' Main ..> JsonBuilder : "builds telemetry"
+' Main ..> MqttManager : "starts on Core 0"
+Main ..> Config : "reads settings"
+' Main ..> MutexLock : "locks shared state (RAII)"
+' Main ..> SharedStateData : "updates/reads game parameters"
 
-' Network
+' Shared Data & Parser dependencies
+CommandMsg o--> CommandType : "uses"
+CommandParser ..> CommandMsg : "populates"
+CommandParser ..> CommandType : "resolves"
+
+' Network & IPC
 MqttManager ..> WifiManager : "requires"
 MqttManager ..> TimeManager : "requires (TLS)"
+MqttManager ..> CommandParser : "triggers on command payload"
 JsonBuilder ..> TelemetryData : "serializes"
-MqttManager ..> Config : "writes runtime updates (thread-safe)"
+MqttManager ..> SharedStateData : "reads telemetry metrics"
 
 ' Sensors
 SensorManager ..> SensorData : "creates"
@@ -224,7 +294,7 @@ BorderCollider ..|> ICollider : "implements"
 ' Game
 CookieField o--> Cookie : "owns set"
 CookieField ..> ICookieSpawner : "uses"
-CookieField ..> PhysicsBody : "pickup test"
+' CookieField ..> PhysicsBody : "pickup test"
 RectCookieSpawner ..|> ICookieSpawner : "implements"
 RectCookieSpawner ..> Cookie : "creates"
 
@@ -232,6 +302,6 @@ RectCookieSpawner ..> Cookie : "creates"
 GraphicsManager ..> PhysicsBody : "draws ball"
 GraphicsManager ..> Cookie : "draws cookies"
 GraphicsManager ..> GameState : "draws HUD"
-GraphicsManager ..> MazeManager : "renders board"
+' GraphicsManager ..> MazeManager : "renders board"
 
 @enduml
