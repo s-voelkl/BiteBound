@@ -81,6 +81,7 @@ void setup() {
   mqttManager.begin();
 
   // TODO: Move game board init and maze gen!
+  graphicsManager.drawLoadingScreen("Creating Maze...");
   // Allocate memory for the global gameBoard
   gameBoard = new uint8_t[play_width * play_height];
 
