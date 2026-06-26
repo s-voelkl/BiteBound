@@ -64,6 +64,7 @@ public:
 
     uint8_t count() const { return _count; } // visible cookies (for rendering)
     const Cookie &at(uint8_t i) const { return _cookies[i]; }
+    const Cookie *data() const { return _cookies; } // contiguous array (for rendering)
 
 private:
     Cookie _cookies[kMaxVisibleCookies]; // fixed size -> no heap (MCU-friendly)
