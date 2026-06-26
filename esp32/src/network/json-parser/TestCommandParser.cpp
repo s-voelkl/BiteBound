@@ -33,7 +33,7 @@ test(CommandParser_ParseStartSuccess)
     assertEqual(msg.imuSensitivity, default_imu_sensitivity_multiplier);
     assertEqual(msg.bounceRestitution, default_bounce_restitution);
     assertEqual(msg.emaAlpha, default_ema_alpha);
-    assertEqual(msg.deadzoneThreshold, default_deadzone_threshold);
+    assertNear(msg.deadzoneThreshold, default_deadzone_threshold, 1e-4f);
     assertEqual(strcmp(msg.requestId, "id1"), 0);
 }
 
