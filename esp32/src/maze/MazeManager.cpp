@@ -35,6 +35,16 @@ void MazeManager::writeBlock(uint8_t *board, int gx, int gy, uint8_t value, int 
     }
 }
 
+void MazeManager::addFreeCell(int gx, int gy, int offsetX, int offsetY)
+{
+    // Center of the block in play-field pixels (matches writeBlock's origin).
+    float cx = gx * _wallThickness + offsetX + _wallThickness * 0.5f;
+    float cy = gy * _wallThickness + offsetY + _wallThickness * 0.5f;
+
+    // add cell to the _freeCells vector
+    _freeCells.push_back({cx, cy});
+}
+
 void MazeManager::fillBoard(uint8_t *board, uint8_t value)
 {
     int totalPixels = _width * _height;
@@ -50,6 +60,9 @@ bool MazeManager::generate(uint8_t *board)
     {
         return false;
     }
+
+    // Discard cells added by previous runs
+    _freeCells.clear();
 
     // Ensure the play space can support at least a single path cell surrounded by borders
     if (_wallThickness <= 0 || _width < _wallThickness * 3 || _height < _wallThickness * 3)
@@ -105,6 +118,7 @@ bool MazeManager::generate(uint8_t *board)
     Cell startCell = {0, 0};
     visited[0] = true;
     writeBlock(board, 1, 1, 0, offsetX, offsetY); // Carve open the entry cell
+    addFreeCell(1, 1, offsetX, offsetY);          // Record it as a valid spawn position
     cellStack.push(startCell);
 
     // Offsets for Left, Right, Up, Down neighbors
@@ -146,6 +160,7 @@ bool MazeManager::generate(uint8_t *board)
             int neighborBlockX = 2 * neighbor.cx + 1;
             int neighborBlockY = 2 * neighbor.cy + 1;
             writeBlock(board, neighborBlockX, neighborBlockY, 0, offsetX, offsetY);
+            addFreeCell(neighborBlockX, neighborBlockY, offsetX, offsetY); // valid spawn position
 
             // Carve the intermediate wall blocking the pathway between them
             int wallBlockX = current.cx + neighbor.cx + 1;
