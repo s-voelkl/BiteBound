@@ -1,7 +1,15 @@
 @startuml architecture
+' top to bottom direction
 ' skinparam classAttributeIconSize 0
 ' skinparam monochrome true
 ' skinparam shadowing false
+' skinparam class {
+'     BackgroundColor<<utility>> #FDF6E3
+'     BackgroundColor<<interface>> #EEE8D5
+'     BackgroundColor<<struct>> #EEE8D5
+'     BackgroundColor<<enum>> #EEE8D5
+'     BackgroundColor<<abstract>> #EEE8D5
+' }
 
 package "Entry Point (Core 1)" {
     class "esp32.ino" as Main {
@@ -156,7 +164,8 @@ package "Game (Core 1)" {
     }
 
     class CookieField {
-        + start(visibleCount : uint8_t, target : uint16_t, spawner : ICookieSpawner&, ball : PhysicsBody&) : void
+        + start(visibleCount : uint8_t, target : uint16_t, 
+            spawner : ICookieSpawner&, ball : PhysicsBody&) : void
         + checkPickup(ball : PhysicsBody&) : uint8_t
         + collected() : uint16_t
         + remaining() : uint16_t
@@ -179,7 +188,8 @@ package "Graphics (Core 1)" {
     class GraphicsManager {
         + begin(gfx : Arduino_GFX*) : void
         + forceFullRedraw() : void
-        + update(mazeGrid : uint8_t*, gridW : int, gridH : int, ball : PhysicsBody&, cookies : Cookie*, count : int, state : GameState&) : void
+        + update(mazeGrid : uint8_t*, gridW : int, gridH : int, ball : PhysicsBody&, 
+            cookies : Cookie*, count : int, state : GameState&) : void
         + drawLoadingScreen(statusText : const char*) : void
     }
 }
