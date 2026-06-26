@@ -453,3 +453,66 @@ Invoke the `update()` method on every 20ms tick. The manager automatically deter
       telemetryState      // GameState tracking meta values (round, time, score)
   );
 ```
+
+### Maze Generation (Procedural DFS)
+
+A procedural 2D maze generator has been integrated to build the game-board using an iterative, randomized Depth-First Search (DFS) algorithm (see AI prompt in [prompts/prompts.md](prompts/prompts.md)).
+
+#### Implementation Summary
+
+The maze generation is handled by the `MazeManager` class. Rather than using recursive calls — which risk exceeding the stack limits of an ESP32 task — the generation employs an iterative stack-based approach using standard library containers (`std::stack` and a flat `std::vector<bool>` for visited state tracking).
+
+The algorithm treats the board as a grid of blocks with a uniform dimension defined by the wall thickness. It identifies reachable pathway nodes (cells) at odd block coordinates, procedurally carving paths (value `0`) through walls of Type 2 (value `2`) until all cells have been visited.
+
+#### Technical Details
+
+##### Grid Mapping & Sizing
+
+- **Block Resolution:** The physical screen is divided into a grid of blocks, where each block is $W \times W$ pixels (with $W$ being the `wall_thickness_px`).
+
+- **Symmetry Constraints:** For a maze to have uniform enclosing borders, the grid dimensions must be odd. If the calculated columns or rows of the block grid are even, the class dynamically reduces the active maze grid bounds by 1 (`mazeCols = gridCols - 1`).
+- **Boundary Padding:** Any remaining pixel coordinates beyond the active maze blocks (due to uneven screen divisions or the odd-dimension adjustment) are filled with **Wall Type 1** to act as boundary padding.
+
+##### Coordinate Math
+
+- **Cells (Path Nodes):** Located at odd block coordinates:
+  $$gx = 2 \cdot cx + 1, \quad gy = 2 \cdot cy + 1$$
+
+- **Intermediary Walls:** When moving from cell $(cx, cy)$ to an adjacent cell $(nx, ny)$, the intervening wall block is calculated and carved at:
+  $$gx_{wall} = cx + nx + 1, \quad gy_{wall} = cy + ny + 1$$
+
+##### Output Pixel Representations
+
+The output buffer is populated with the following 8-bit unsigned integer flags:
+
+- `0`: Empty corridor (passable path).
+- `1`: Wall Type 1 (outer border, solid boundaries, and alignment padding).
+- `2`: Wall Type 2 (inner procedural maze walls).
+
+#### Usage Example
+
+The following example demonstrates how to initialize the `MazeManager` and generate a procedurally mapped maze within your application:
+
+```cpp
+#include "src/maze/MazeManager.h"
+
+// 1. Calculate the active play area dimensions
+const int play_width = 240;
+const int play_height = 260; // e.g., display_height - ui_header_height
+const int wall_thickness = 6;
+
+// 2. Allocate the flat pixel buffer 
+uint8_t* gameBoard = new uint8_t[play_width * play_height];
+
+// 3. Instantiate the MazeManager
+MazeManager mazeGenerator(play_width, play_height, wall_thickness);
+
+// 4. Generate the maze layout
+bool success = mazeGenerator.generate(gameBoard);
+if (success) {
+    // The gameBoard buffer is now populated with values 0, 1, and 2
+    // and is ready for the rendering engine or physics collider.
+} else {
+    // Generation failed due to invalid dimensions (e.g., width/height too small).
+    // The buffer is safely filled with Wall Type 1 as a fallback.
+}
