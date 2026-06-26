@@ -4,7 +4,6 @@
 #include "src/network/json-builder/JsonBuilder.h"
 #include "src/sensors/SensorManager.h"
 #include "src/graphics/GraphicsManager.h"
-#include "src/physics/PhysicsBody.h"
 #include "src/maze/MazeManager.h"
 #include "config.h"
 
@@ -57,8 +56,8 @@ void setup() {
   if (!gfx->begin()) {
     Serial.println("Failed to initialize GFX display!");
   }
-  // pinMode(pin_lcd_bl, OUTPUT);
-  // digitalWrite(pin_lcd_bl, HIGH);
+  pinMode(pin_lcd_bl, OUTPUT);
+  digitalWrite(pin_lcd_bl, HIGH);
   graphicsManager.begin(gfx);
 
   // Connect to WiFi

@@ -469,9 +469,8 @@ The algorithm treats the board as a grid of blocks with a uniform dimension defi
 ##### Grid Mapping & Sizing
 
 - **Block Resolution:** The physical screen is divided into a grid of blocks, where each block is $W \times W$ pixels (with $W$ being the `wall_thickness_px`).
-
 - **Symmetry Constraints:** For a maze to have uniform enclosing borders, the grid dimensions must be odd. If the calculated columns or rows of the block grid are even, the class dynamically reduces the active maze grid bounds by 1 (`mazeCols = gridCols - 1`).
-- **Boundary Padding:** Any remaining pixel coordinates beyond the active maze blocks (due to uneven screen divisions or the odd-dimension adjustment) are filled with **Wall Type 1** to act as boundary padding.
+- **Symmetric Centering:** Unused pixel remainders (due to uneven screen divisions or odd-dimension adjustments) are calculated and split evenly. This creates horizontal (`offsetX`) and vertical (`offsetY`) offsets to align the active maze perfectly within the display borders, distributing background padding symmetrically on opposite edges.
 
 ##### Coordinate Math
 

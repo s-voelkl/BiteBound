@@ -6,10 +6,10 @@
 MazeManager::MazeManager(int width, int height, int wallThickness)
     : _width(width), _height(height), _wallThickness(wallThickness) {}
 
-void MazeManager::writeBlock(uint8_t *board, int gx, int gy, uint8_t value)
+void MazeManager::writeBlock(uint8_t *board, int gx, int gy, uint8_t value, int offsetX, int offsetY)
 {
-    int startX = gx * _wallThickness;
-    int startY = gy * _wallThickness;
+    int startX = gx * _wallThickness + offsetX;
+    int startY = gy * _wallThickness + offsetY;
 
     // Safeguard to prevent out of bounds block generation
     if (startX >= _width || startY >= _height || startX < 0 || startY < 0)
@@ -66,6 +66,15 @@ bool MazeManager::generate(uint8_t *board)
     int mazeCols = (gridCols % 2 == 0) ? gridCols - 1 : gridCols;
     int mazeRows = (gridRows % 2 == 0) ? gridRows - 1 : gridRows;
 
+    // Calculate unused pixel remainders along both axes
+    int unusedWidthPx = _width - (mazeCols * _wallThickness);
+    int unusedHeightPx = _height - (mazeRows * _wallThickness);
+
+    // Distribute the unused padding symmetrically to the edges
+    // This ensures the maze is centered within the play area
+    int offsetX = unusedWidthPx / 2;
+    int offsetY = unusedHeightPx / 2;
+
     // Compute dimensions for the internal DFS graph nodes (cells)
     int cellCols = mazeCols / 2;
     int cellRows = mazeRows / 2;
@@ -76,7 +85,7 @@ bool MazeManager::generate(uint8_t *board)
         return false;
     }
 
-    // 1. Fill the entire canvas with Wall Type 1 (outer border & padding)
+    // 1. Fill the entire canvas with Wall Type 1 (outer border & alignment padding)
     fillBoard(board, 1);
 
     // 2. Fill the active inner grid with Wall Type 2 (uncarved inner walls)
@@ -84,7 +93,7 @@ bool MazeManager::generate(uint8_t *board)
     {
         for (int gx = 1; gx < mazeCols - 1; ++gx)
         {
-            writeBlock(board, gx, gy, 2);
+            writeBlock(board, gx, gy, 2, offsetX, offsetY);
         }
     }
 
@@ -95,7 +104,7 @@ bool MazeManager::generate(uint8_t *board)
     // Start DFS at top-left cell: (0, 0) in cell coords -> (1, 1) in block coords
     Cell startCell = {0, 0};
     visited[0] = true;
-    writeBlock(board, 1, 1, 0); // Carve open the entry cell
+    writeBlock(board, 1, 1, 0, offsetX, offsetY); // Carve open the entry cell
     cellStack.push(startCell);
 
     // Offsets for Left, Right, Up, Down neighbors
@@ -136,12 +145,12 @@ bool MazeManager::generate(uint8_t *board)
             // Carve the chosen neighbor cell
             int neighborBlockX = 2 * neighbor.cx + 1;
             int neighborBlockY = 2 * neighbor.cy + 1;
-            writeBlock(board, neighborBlockX, neighborBlockY, 0);
+            writeBlock(board, neighborBlockX, neighborBlockY, 0, offsetX, offsetY);
 
             // Carve the intermediate wall blocking the pathway between them
             int wallBlockX = current.cx + neighbor.cx + 1;
             int wallBlockY = current.cy + neighbor.cy + 1;
-            writeBlock(board, wallBlockX, wallBlockY, 0);
+            writeBlock(board, wallBlockX, wallBlockY, 0, offsetX, offsetY);
 
             // Descend into the neighbor cell
             cellStack.push(neighbor);

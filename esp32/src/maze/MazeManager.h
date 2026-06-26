@@ -9,13 +9,12 @@
  * @brief Handles procedural generation of a maze using a randomized Depth-First Search (DFS) algorithm.
  *
  * This class slices the play-field into a block grid where each block is of size wallThickness x wallThickness.
- * Pathways and walls are created from these blocks. The output is written into a flat 1D pixel array
- * of size (width * height), mapping pixels to:
+ * The active maze grid is mathematically centered within the play-field, distributing any remainder pixel
+ * padding symmetrically to the borders.
  *
+ * The output is written into a flat 1D pixel array of size (width * height), mapping pixels to:
  * - 0: Empty (passageway)
-
  * - 1: Wall Type 1 (outer borders / solid boundary padding)
- *
  * - 2: Wall Type 2 (inner procedural maze walls)
  */
 class MazeManager
@@ -30,7 +29,7 @@ public:
     MazeManager(int width, int height, int wallThickness);
 
     /**
-     * @brief Generates the procedural maze into the provided flat buffer.
+     * @brief Generates the procedural maze and centers it symmetrically within the provided flat buffer.
      * @param board Pre-allocated flat pixel buffer of size (width * height).
      * @return true if generation was successful, false otherwise.
      */
@@ -66,13 +65,15 @@ private:
     };
 
     /**
-     * @brief Sets all pixels within a specific grid block to a target value.
+     * @brief Sets all pixels within a specific grid block to a target value, applying horizontal and vertical offsets.
      * @param board Flat pixel array.
      * @param gx Grid X coordinate in blocks.
      * @param gy Grid Y coordinate in blocks.
      * @param value The pixel state (0, 1, or 2).
+     * @param offsetX Horizontal pixel offset to apply for centering.
+     * @param offsetY Vertical pixel offset to apply for centering.
      */
-    void writeBlock(uint8_t *board, int gx, int gy, uint8_t value);
+    void writeBlock(uint8_t *board, int gx, int gy, uint8_t value, int offsetX, int offsetY);
 
     /**
      * @brief Fills the entire flat buffer with a target pixel value.
