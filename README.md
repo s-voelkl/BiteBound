@@ -365,6 +365,26 @@ Implemented in `esp32/src/network/json-builder/JsonBuilder.h` and `esp32/src/net
 }
 ```
 
+#### Basic Usage
+
+```cpp
+#include "src/network/json-builder/JsonBuilder.h"
+#include "src/sensors/SensorManager.h"
+
+// Read sensor data
+SensorData sensorData = sensorManager.read();
+
+// Populate telemetry data struct
+TelemetryData telemetry;
+telemetry.client_id = device_id;
+telemetry.hardware = "Waveshare ESP32-S3 1.69inch";
+// ...
+
+// Build and publish JSON
+String payload = buildTelemetryJson(telemetry);
+mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
+```
+
 ### Command JSON Parser
 
 Commands received on the `mauc2026/group_03/game/command` topic are decoded by the `src/network/json-parser/CommandParser.cpp` based on the schema below:
@@ -398,28 +418,40 @@ Commands received on the `mauc2026/group_03/game/command` topic are decoded by t
 }
 ```
 
-- **Accepted Actions (`command`):** `start`, `stop`, `param_change`.
-- **Dynamic Config Tuning:** Customizes physical variables (IMU sensitivity limits, damping offsets) and display specifications (wall thickness bounds, total game cookies) without restarting the system.
-
 #### Basic Usage
 
+Command parsing is managed by the static `CommandParser::parse` utility located in `src/network/json-parser/CommandParser.h`. This utility handles the conversion of flat character payloads into typed `CommandMsg` structures.
+
+To parse a payload from your MQTT subscription callback and pass it safely into the command queue:
+
 ```cpp
-#include "src/network/json-builder/JsonBuilder.h"
-#include "src/sensors/SensorManager.h"
+#include "src/network/json-parser/CommandParser.h"
+#include "src/network/shared/CommandMsg.h"
 
-// Read sensor data
-SensorData sensorData = sensorManager.read();
+void handleMqttMessage(char* topic, byte* payload, unsigned int length) {
+    // Ensure null-termination of the incoming payload
+    char* cleanPayload = new char[length + 1];
+    memcpy(cleanPayload, payload, length);
+    cleanPayload[length] = '\0';
 
-// Populate telemetry data struct
-TelemetryData telemetry;
-telemetry.client_id = device_id;
-telemetry.hardware = "Waveshare ESP32-S3 1.69inch";
-// ...
-
-// Build and publish JSON
-String payload = buildTelemetryJson(telemetry);
-mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
+    if (strcmp(topic, mqtt_command_topic) == 0) {
+        CommandMsg cmd;
+        // Parse raw string to structured message representation
+        if (CommandParser::parse(cleanPayload, cmd)) {
+            // Push payload to FreeRTOS queue for processing on Core 1
+            if (xQueueSend(commandQueue, &cmd, 0) != pdPASS) {
+                Serial.println("Queue overflow, command discarded");
+            }
+        } else {
+            Serial.println("Failed to parse command payload schema");
+        }
+    }
+    delete[] cleanPayload;
+}
 ```
+
+- **Accepted Actions (`command`):** `start`, `stop`, `param_change`.
+- **Dynamic Config Tuning:** Customizes physical variables (IMU sensitivity limits, damping offsets) and display specifications (wall thickness bounds, total game cookies) without restarting the system.
 
 ### Concurrency Model (ESP32-S3 Dual Core)
 
@@ -429,6 +461,8 @@ The ESP32-S3 contains a dual-core SoC, enabling isolation of timing-sensitive di
 - **Core 0 — Network Core (~2Hz Telemetry & Commands):** Manages connection keep-alive, listens for command payloads from MQTT, and serializes/publishes telemetry data asynchronously.
 
 #### Shared Memory & IPC Primitives
+
+> Note: IPC = Inter-Process Communication: Mechanisms for processes to exchange data and synchronize actions in a multi-core environment. It ensures safe and efficient communication between concurrently running processes. Here, Core 0 and Core 1 are treated as separate processes with their own memory spaces, and IPC primitives (mutexes, queues) are used to safely share data between them (see [GeeksforGeeks Post](https://www.geeksforgeeks.org/operating-systems/inter-process-communication-ipc/))
 
 ```text
                +-----------------------------------------+
@@ -465,6 +499,49 @@ The ESP32-S3 contains a dual-core SoC, enabling isolation of timing-sensitive di
 
 - **Shared State (`SharedStateData`):** Keeps track of variables (coordinate states, score levels, device configurations) accessed by both cores. This memory map is protected by a FreeRTOS Mutex (`SemaphoreHandle_t`) utilizing a C++ RAII guard wrapper class `MutexLock` to prevent race conditions.
 - **Command Routing (`CommandMsg`):** Input commands generated from Android or Node-RED dashboards are transferred safely to the Game Core utilizing a FreeRTOS Queue (`commandQueue`). This prevents lock contention on the active game loop.
+
+#### Shared Data Management Usage
+
+The shared state is modularized into dedicated header files under `src/network/shared/` to decouple structure definitions and access controls:
+
+- `CommandType.h`: Declares the `CommandType` enum class (`START`, `STOP`, `PARAM_CHANGE`, `UNKNOWN`).
+- `CommandMsg.h`: Holds parameters and payload definitions for incoming execution requests.
+- `MutexLock.h`: Implements the RAII-based (see below) mutex lock guard.
+- `SharedStateData.h` / `SharedStateData.cpp`: Structures the runtime telemetry/configuration data and provides `initSharedState()`.
+
+> Note: RAII: Resource Acquisition Is Initialization, a C++ programming technique that binds the life cycle of a resource (e.g., allocated memory, open socket, locked mutex) to the lifetime of an object. Here, `MutexLock` automatically acquires the mutex in its constructor and releases it in its destructor, ensuring that the lock is always released when the object goes out of scope, even if an exception occurs. That means you don't have to manually unlock the mutex, which helps prevent deadlocks and resource leaks (see [cppreference](https://en.cppreference.com/cpp/language/raii)).
+
+##### Initializing Shared State
+
+Call `initSharedState` during the application setup to ensure predictable default values:
+
+```cpp
+#include "src/network/shared/SharedStateData.h"
+
+SharedStateData sharedState;
+
+void setup() {
+    initSharedState(sharedState);
+}
+```
+
+To protect variables from race conditions, wrap critical sections inside a block using the MutexLock utility:
+
+```cpp
+#include "src/network/shared/MutexLock.h"
+#include "src/network/shared/SharedStateData.h"
+
+// Task writing to state
+void updateBallPosition(float x, float y) {
+    MutexLock lock(stateMutex);
+    if (lock.isLocked()) {
+        sharedState.ballPosX = x;
+        sharedState.ballPosY = y;
+    }
+    // Mutex is automatically released when lock goes out of scope
+    // e.g. at the end of this function on return or exception
+}
+```
 
 ### Display Manager
 
