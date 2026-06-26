@@ -42,7 +42,6 @@ struct TelemetryData
     float velocity_y;
     float acc_x;
     float acc_y;
-    bool collision_detected;
 
     // Sensor Readings (from SensorData)
     float accel_x;
@@ -64,7 +63,7 @@ struct TelemetryData
  * @param data The TelemetryData struct containing all telemetry values.
  * @return A serialized JSON string ready to publish via MQTT.
  */
-String buildTelemetryJson(const TelemetryData& data);
+String buildTelemetryJson(const TelemetryData &data);
 
 /**
  * @brief Builds a test telemetry JSON document with mock data.
