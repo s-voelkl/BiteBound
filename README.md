@@ -28,7 +28,7 @@ The ESP32 firmware is split into self-contained, unit-tested modules under `esp3
 | --- | --- | --- |
 | Sensors | `src/sensors/` | Reads and smooths the IMU, battery and button (`SensorManager`, `SensorData`). |
 | Physics | `src/physics/` | Game-agnostic 2D simulation, integration and collision (`PhysicsEngine`, `PhysicsBody`, `ICollider`, `BorderCollider`, `Vec2`). |
-| Game | `src/game/` | Shared cookie/score logic (`Cookie`, `CookieField`, `ICookieSpawner`, `RectCookieSpawner`, `GameState`). |
+| Game | `src/game/` | Shared cookie/score logic (`Cookie`, `CookieField`, `ICookieSpawner`, `RectCookieSpawner`, `MazeCookieSpawner`, `GameState`). |
 | Maze | `src/maze/` | Procedural DFS maze generation (`MazeManager`). |
 | Graphics | `src/graphics/` | Optimized 50Hz rendering on the ST7789 display (`GraphicsManager`). |
 | Network | `src/network/` | WiFi, NTP time, secure MQTT and telemetry JSON (`WifiManager`, `TimeManager`, `MqttManager`, `JsonBuilder`). |
@@ -70,7 +70,7 @@ BiteBound/
 │   └── src/
 │       ├── sensors/          # SensorManager, SensorData
 │       ├── physics/          # PhysicsEngine, PhysicsBody, ICollider, BorderCollider, Vec2
-│       ├── game/             # Cookie, CookieField, ICookieSpawner, RectCookieSpawner, GameState
+│       ├── game/             # Cookie, CookieField, ICookieSpawner, RectCookieSpawner, MazeCookieSpawner, GameState
 │       ├── maze/             # MazeManager (procedural DFS)
 │       ├── graphics/         # GraphicsManager (ST7789 rendering)
 │       └── network/          # wifi-connection/, time/, mqtt/, json-builder/
@@ -595,21 +595,36 @@ The collectible/score logic under `esp32/src/game/` is shared between both games
 - **`Cookie`** — a single collectible: position, `radius` and an `active` flag (false once eaten until it respawns).
 - **`GameState`** — volatile HUD metadata: `status` (`idle` / `running` / `completed`), `cookiesCollected`, `cookiesRemaining`, `currentRound`, `elapsedTimeSec`.
 - **`ICookieSpawner`** — strategy that produces a fresh cookie at a valid position, avoiding the ball. Game 1 uses a maze-cell spawner, Game 2 uses `RectCookieSpawner`.
-- **`RectCookieSpawner`** — spawns a cookie at a random point inside the play-field, kept a margin from the edges and away from the ball. *(Wall-aware spawning for the maze is planned; currently a cookie
-can land on a wall.)* <!-- TODO: Implement wall-aware spawning -->
+- **`MazeCookieSpawner`** — spawner for the maze game field (1). Spawns a cookie at a random corridor cell center, avoiding the ball. Needs a reference to the `MazeManager` to access the `FreeCells` list.
+- **`RectCookieSpawner`** — spawner for the plane game field (2). Spawns a cookie at a random point inside the play-field, kept a margin from the edges and away from the ball.
 - **`CookieField`** — keeps a small fixed set of visible cookies (no heap, MCU-friendly). On contact it scores and respawns the eaten cookie via the injected spawner; the round is won once `collected()` reaches `target()`. The game loop queries it via `collected()`, `remaining()` and `finished()`.
 
-#### Basic Usage
+#### Basic Usage of RectCookieSpawner and CookieField
 
 ```cpp
 #include "src/game/CookieField.h"
 #include "src/game/RectCookieSpawner.h"
 
-RectCookieSpawner spawner(play_width, play_height, /* cookieRadius */ 3.0f);
+RectCookieSpawner spawner(play_width, play_height, /* cookieRadius */ default_cookie_radius);
 CookieField field;
-field.start(/* visibleCount */ 3, /* target */ default_cookies_count, spawner, ball);
+field.start(/* visibleCount */ default_max_visible_cookies, /* target */ default_cookies_count, spawner, ball);
 
 // Per tick, after moving the ball:
 field.checkPickup(ball);
 if (field.finished()) { /* round complete */ }
+```
+
+#### Basic Usage of MazeCookieSpawner
+
+```cpp
+#include "src/game/CookieField.h"
+#include "src/game/MazeCookieSpawner.h"
+
+// 1. Generate maze (see MazeManager section for setup)
+mazeGenerator.generate(gameBoard);
+
+// 2. Setup spawner with free cells from MazeManager
+MazeCookieSpawner spawner(&mazeGenerator.getFreeCells(), /* cookieRadius */ default_cookie_radius);
+
+// 3. Initialize and start the cookie field, see same above.
 ```

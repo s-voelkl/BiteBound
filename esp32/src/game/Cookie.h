@@ -1,6 +1,8 @@
 #ifndef COOKIE_H
 #define COOKIE_H
 
+#include "../../config.h"
+
 /**
  * @brief A single collectible cookie.
  *
@@ -16,7 +18,7 @@ struct Cookie
     float radius;
     bool active; // false once collected (until it respawns)
 
-    Cookie(float x = 0.0f, float y = 0.0f, float radius = 3.0f, bool active = false)
+    Cookie(float x = 0.0f, float y = 0.0f, float radius = default_cookie_radius, bool active = false)
         : x(x), y(y), radius(radius), active(active) {}
 };
 
