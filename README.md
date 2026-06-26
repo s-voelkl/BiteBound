@@ -14,80 +14,71 @@ The GitHub repository for this project is located at: [https://github.com/s-voel
 
 ## License
 
-MIT License
+The MIT License (MIT) applies to this project. See the [LICENSE](LICENSE) file for details.
 
 ## Usage
 
 See [Usage Guide](USAGE.md) for detailed instructions on how to set up and run the project.
 
-## Physik Simulation
+## Architecture Overview
 
-2D Euler-Integration.
-Fine-tuning nötig.
-Bibliothek für ESP32 vorhanden?
-Rauschen vermindern: Thresholds einbauen für Aktivierung (Deadzone)
-Tiefpassfilter (SMA / EMA): Neue Werte basieren ein wenig auf die alten Werte --> Glättung
-Kollisionsverhalten: Konstante: v[neu] = -v[alt] * e. e = 0.5 als Dämpfung.
+The ESP32 firmware is split into self-contained, unit-tested modules under `esp32/src/`, orchestrated from the main sketch `esp32/esp32.ino`. All tunable values and hardware pins are centralized in `esp32/config.h`.
 
-### Labyrinth-Generierung
+| Module | Path | Responsibility |
+| --- | --- | --- |
+| Sensors | `src/sensors/` | Reads and smooths the IMU, battery and button (`SensorManager`, `SensorData`). |
+| Physics | `src/physics/` | Game-agnostic 2D simulation, integration and collision (`PhysicsEngine`, `PhysicsBody`, `ICollider`, `BorderCollider`, `Vec2`). |
+| Game | `src/game/` | Shared cookie/score logic (`Cookie`, `CookieField`, `ICookieSpawner`, `RectCookieSpawner`, `GameState`). |
+| Maze | `src/maze/` | Procedural DFS maze generation (`MazeManager`). |
+| Graphics | `src/graphics/` | Optimized 50Hz rendering on the ST7789 display (`GraphicsManager`). |
+| Network | `src/network/` | WiFi, NTP time, secure MQTT and telemetry JSON (`WifiManager`, `TimeManager`, `MqttManager`, `JsonBuilder`). |
 
-Randomized Depth-First Search als kontrollierter Backtracking-Algorithmus (DFS).
-Zellen mit Wänden dazwischen.
+See the component diagram in [diagrams/src/architecture.puml](diagrams/src/architecture.puml).
 
-### Ablauf
+### Concurrency Model (ESP32-S3 Dual Core)
 
-1. Sensordaten lesen (Read) --> Tiefpassfilter, Deadzone
-2. Physik aktualisieren --> Simulation 1 Schritt laufen lassen. Beinhaltet Kollisionsverhalten.
-3. Rendern --> GFX-Bibliothek ansteuern.
-4. [alle 0.5s] MQTT senden (async!)
+The ESP32-S3 is a dual-core SoC, which lets the latency-sensitive game loop run independently from the network stack:
 
-### ESP32-S3 Dual Core Prozessor: 2 Threads möglich
+- **Core 1 — Game Core (~50Hz / 20ms budget):** sensor read, physics step, collision, cookie pickup,  game state and display rendering.
+- **Core 0 — Network Core (~2Hz):** MQTT publish/receive and keep-alive, so blocking network I/O never stalls the game loop.
 
-- Core 1: Game Core mit 50Hz: Sensorwerte, Physik, Display
-- Core 0: Prädestiniert für MQTT mit 2Hz. --> kein Delay
+Shared state (ball position, game state, runtime config received over MQTT) is protected with a FreeRTOS mutex (`SemaphoreHandle_t`). Incoming game commands from the dashboard (START / STOP / parameter changes) are passed to the game core via a queue.
 
-## MQTT
+### Game Loop
 
-MQTT möglichst viel von Sensiq Copy-Pasten.
-Frequenz 50Hz. millis() Funktion für einfachere Ansteuerung.
-Mutex: SemaphoreHandle_t (Mutex) für globale Variablen (Kugelposition, ...)
-Queue: für Game Command von Dashboard für "START, STOP, ..."
+1. **Read sensors** — IMU tilt is low-pass filtered (EMA) and a deadzone is applied.
+2. **Step physics** — one `PhysicsEngine::step()` advances the ball, clamps speed, sub-steps to avoid tunneling and resolves collisions against the active `ICollider`.
+3. **Update game** — `CookieField::checkPickup()` scores and respawns cookies; `GameState` is updated.
+4. **Render** — `GraphicsManager::update()` performs a partial (dirty-rect) or full redraw.
+5. **Publish telemetry** — every ~0.5s the current snapshot is serialized via `buildTelemetryJson()` and published over MQTT (asynchronously on Core 0).
 
-### MQTT Topics
-
-- Base Topic: mauc2026/group_03/
-- .../game/command: Spiel auswählen, starten, Parameter (Labyrinth Wandstärke, Anzahl Kekse, Spielername) an ESP32
-  Bsp: {"game_id": 1, "status": "RUNNING", "player_name": "Alex", "score": 4, "total_cookies": 10, "round": 1}
-- .../game/telemetry: Spielstandsanzeige (Bewegungssensorwerte, Physiksimulationswerte, Zeit, Spielstand (Punkte, Runden), etc.) an Dashboard
-  Bsp: {"ball_x": 112, "ball_y": 145, "tilt_x": 0.15, "tilt_y": -0.34}
-- ...test: Für Testzwecke und Debugging, z.B. bei Connection.
-
-Im Allgemeinen mit QoS 1 und Retain Flag auf False senden.
+> Note: MQTT messages are sent with **QoS 1** and **retain = false** by default. Topic details and the full telemetry payload are documented in the [MQTT Communication](#mqtt-communication) and [Telemetry JSON Builder](#telemetry-json-builder) sections.
 
 ## Folder Structure
 
-Gruppe_03/
-├── Gruppe_03.pdf             # Main documentation (compiled from LaTeX)
-├── android/                  # Android Studio project root
-│   ├── app/                  # Application source files (Kotlin/Java)
-│   │   └── src/              # App logic and UI layouts
-│   └── build.gradle          # Exclude the 'app/build' folder on submission!
-├── esp32/                    # Arduino project folder
-│   ├── esp32.ino             # Main sketch file
-│   ├── game_physics.cpp      # Physics engine implementation
-│   ├── game_physics.h
-│   ├── maze_generator.cpp    # DFS Maze generation algorithm
-│   ├── maze_generator.h
-│   ├── ........
-│   └── wifi_mqtt_secrets.h   # Network credentials (git-ignored during dev)
-├── nodered/                  # Node-RED dashboard folder
-│   └── flow.json             # Exported Node-RED flow
-├── prompts/                  # LLM chat transcripts & history logs
-│   └── chat_history.md
-├── screenshots/              # Game UI, Dashboard layouts, and flow screenshots
-└── tex/                      # LaTeX source tracking
-    ├── projektarbeit.tex     # Main LaTeX document template
-    └── quellen.bib           # Zotero / JabRef bibliography
+```text
+BiteBound/
+├── README.md                 # This documentation
+├── USAGE.md                  # Setup & run instructions
+├── android/                  # Android Studio project (Kotlin app)
+├── diagrams/                 # PlantUML architecture diagrams
+│   └── src/architecture.puml
+├── esp32/                    # Arduino firmware
+│   ├── esp32.ino             # Main sketch (setup/loop, Core 1 orchestration)
+│   ├── config.h              # Central config: network, game, display, physics, pins
+│   ├── wifi_mqtt_secrets.h   # Network/broker credentials (git-ignored during dev)
+│   └── src/
+│       ├── sensors/          # SensorManager, SensorData
+│       ├── physics/          # PhysicsEngine, PhysicsBody, ICollider, BorderCollider, Vec2
+│       ├── game/             # Cookie, CookieField, ICookieSpawner, RectCookieSpawner, GameState
+│       ├── maze/             # MazeManager (procedural DFS)
+│       ├── graphics/         # GraphicsManager (ST7789 rendering)
+│       └── network/          # wifi-connection/, time/, mqtt/, json-builder/
+├── nodered/                  # Node-RED dashboard flow
+├── prompts/                  # LLM chat transcripts (removed before publishing)
+├── screenshots/              # UI / dashboard / flow screenshots
+└── tex/                      # LaTeX report sources
+```
 
 ## Projectmanagement
 
@@ -108,6 +99,8 @@ Beide Spiele:
 
 - Vibrationsbuzzer
 - Sound spielen (tricky!!!)
+
+<!-- update? -->
 
 ### Aufgaben
 
@@ -131,13 +124,7 @@ Beide Spiele:
 - Dashboard für Anzeige von Punkten, Name, Runden, Zeit, Physikdaten, Sensorwerte, ...
 - Eingabemaske für Spielername, Keksanzahl, Wandstärke, Buttons für Start/Stop
 
-#### Android [Ausweichoption]: MQTT Dash
-
-- Verbindung aufsetzen
-- Subscribe: Daten erhalten und darstellen
-- Publish: Game starten
-
-#### Android [Primäroption]: Android-App in Kotlin
+#### Android: Android-App in Kotlin
 
 - Repo aufsetzen
 - Credentials file
@@ -193,18 +180,6 @@ Struktur:
   - Prompts
   - ESP32 Code
 
-### Aufgabenverteilung
-
-ESP:
-Simon: Setup MQTT + WiFi + AUnit (von Sensiq), Maze-Generierung
-Schieder: Repo-Setup, Physiksimulation, Cookies, Sensorwerte
-
-NodeRed:
-Simon: Setup
-
-Android:
-Schieder: Setup
-
 ### Guidelines
 
 - Test Coverage: ESP32 ohne Display 80%, Android 40% max., NodeRed nichts.
@@ -244,6 +219,31 @@ Gyroscope measurements
 - Y: Forward/Backward rotation --> Pitch
 - Z: Clockwise/Counterclockwise rotation --> Yaw
 
+### Configuration (config.h)
+
+All tunable parameters and hardware constants live in `esp32/config.h`, so behavior can be adjusted in one place without touching the module code. The values are grouped into the following categories:
+
+- **Network & device identity** — device ID, hardware/firmware strings.
+- **MQTT** — port, keep-alive, topics (command / telemetry / test), QoS and retain defaults.
+- **Game** — default game duration, target cookie count, max visible/rendered cookies.
+- **Display & colors** — screen dimensions, HUD header height, wall thickness and the cookie-themed RGB565 color palette.
+- **Physics tuning** — IMU sensitivity, bounce restitution, EMA alpha, deadzone, max speed, linear damping, contact iterations.
+- **Time / NTP** — NTP servers, GMT/DST offsets, epoch validity threshold.
+- **Hardware pins** — I2C (IMU/touch), buttons, and the SPI LCD pins.
+- **Analog & battery** — ADC reference/resolution, voltage divider and mock battery range.
+
+Many physics values (e.g. sensitivity, restitution) are mirrored in `PhysicsParams` and can be adjusted at runtime via MQTT.
+
+### Secrets (wifi_mqtt_secrets.h)
+
+The `esp32/wifi_mqtt_secrets.h` file is git-ignored and contains the following sensitive values:
+
+- WiFi SSID and password
+- HiveMQ Cloud broker hostname, port, username and password
+- HiveMQ Cloud CA certificate (PEM format)
+
+A template file `esp32/wifi_mqtt_secrets.h.template` is provided to show the expected structure.
+
 ### Sensor Handling
 
 Implemented in `esp32/src/sensors/SensorManager.h` and `esp32/src/sensors/SensorManager.cpp`.
@@ -272,6 +272,39 @@ if (sensorManager.isInitialized()) {
 // SensorData sensorData = sensorManager.readMock();
 ```
 
+### Network Managers (WiFi, Time, MQTT)
+
+Network connectivity is split into three single-responsibility managers under `esp32/src/network/`, each configured from `config.h` / `wifi_mqtt_secrets.h` and exposed as a shared global instance.
+
+#### WiFi (`wifi-connection/WifiManager`)
+
+Wraps the WiFi driver and manages the connection lifecycle.
+
+- `connect()` — blocks until associated with the configured access point.
+- `isConnected()` — current link state.
+- `localIP()` — assigned IP address as a string.
+- `getSSID()` — SSID of the connected network (published in telemetry).
+
+#### Time (`time/TimeManager`)
+
+Synchronizes the system clock via NTP. An accurate clock is required for ISO 8601 timestamps and to validate the broker's TLS certificate.
+
+- `sync()` — performs NTP sync and blocks until a plausible time is set.
+- `now()` — current Unix timestamp.
+- `isSynchronized()` — whether the clock passed the configured epoch threshold.
+
+#### MQTT (`mqtt/MqttManager`)
+
+Manages the secure (TLS) MQTT connection to the HiveMQ Cloud broker via `PubSubClient`.
+
+- `begin()` — installs the CA certificate, sets broker/keep-alive/callback/buffer (call after time sync).
+- `connect()` — establishes (or re-establishes) the connection; verifies via the test topic.
+- `loop()` — services incoming traffic and keep-alive (call every iteration).
+- `publish(topic, payload, retain)` / `subscribe(topic, qos)` — send/receive payloads.
+- `isConnected()`, `state()`, `disconnect()` — connection introspection and teardown.
+
+Recommended defaults: **QoS 1** and **retain = false** (see `config.h`).
+
 ### Telemetry JSON Builder
 
 The JSON builder compiles comprehensive telemetry data from sensors, game state, physics simulation, and device information into a structured JSON payload suitable for MQTT transmission.
@@ -282,7 +315,7 @@ Implemented in `esp32/src/network/json-builder/JsonBuilder.h` and `esp32/src/net
 - **Output**: Formatted JSON string ready for MQTT publication
 - **Structure**: Hierarchical JSON with categories: `device`, `config`, `state`, `physics`, and `sensors`
 
-#### JSON Payload Structure
+#### JSON Telemetry Payload
 
 ```json
 {
@@ -515,3 +548,68 @@ if (success) {
     // Generation failed due to invalid dimensions (e.g., width/height too small).
     // The buffer is safely filled with Wall Type 1 as a fallback.
 }
+```
+
+### Physics Engine
+
+The physics is a shared, game-agnostic 2D simulation under `esp32/src/physics/`. The same `PhysicsEngine` drives both games; each game owns its own `PhysicsBody` (the ball) and supplies a collision environment via the `ICollider` interface.
+
+#### Components
+
+- **`Vec2`** — minimal 2D float vector.
+- **`PhysicsBody`** — dynamic ball state: position (`x`, `y`), velocity (`vx`, `vy`) and `radius` (kept smaller than the corridor width for precise movement).
+- **`PhysicsParams`** — runtime-tunable values (sensitivity, restitution, EMA alpha, deadzone, max speed, linear damping), defaulted from `config.h`.
+- **`PhysicsEngine`** — holds the parameters and EMA filter state and provides the integration and collision-resolution algorithms.
+- **`ICollider` / `Contact`** — strategy interface returning the deepest current `Contact` (out-facing `normal`, `penetration` depth, `hit` flag).
+- **`BorderCollider`** — keeps the ball inside the axis-aligned play-field rectangle (used by Game 2).
+
+#### Simulation Pipeline
+
+1. **Input conditioning** — `inputAccel(tiltX, tiltY)` applies an EMA low-pass filter, then a deadzone, then sensitivity scaling to turn raw tilt into an acceleration vector. The engine is decoupled from `SensorData`, so the raw sensor values stay untouched for telemetry.
+2. **Integration** — `step()` uses semi-implicit Euler (velocity first, then position) and clamps the speed to `maxSpeed`.
+3. **Anti-tunneling** — motion is sub-stepped so a small ball cannot pass through a thin wall in a single frame.
+4. **Collision response** — on contact only the velocity component normal to the wall is reflected and scaled by `restitution`; the tangential component is preserved, so a ball scraping along a corridor keeps its speed. Energy is conserved except at collisions (no per-frame friction by default).
+
+The method `step()` returns `true` when at least one collision was resolved (maps to telemetry `physics.collision_detected`).
+
+#### Basic Usage
+
+```cpp
+#include "src/physics/PhysicsEngine.h"
+#include "src/physics/BorderCollider.h"
+
+PhysicsEngine engine;
+PhysicsBody ball{ /* x */ 120, /* y */ 140 };
+BorderCollider world(play_width, play_height);
+
+// Per 50Hz tick (dt = 0.02s):
+SensorData s = sensorManager.read();
+Vec2 accel = engine.inputAccel(s.accelerometerX, s.accelerometerY);
+bool collided = engine.step(ball, accel, 0.02f, world);
+```
+
+### Game Logic & Cookies
+
+The collectible/score logic under `esp32/src/game/` is shared between both games and depends only on the physics `PhysicsBody`, keeping it reusable and unit-testable.
+
+- **`Cookie`** — a single collectible: position, `radius` and an `active` flag (false once eaten until it respawns).
+- **`GameState`** — volatile HUD metadata: `status` (`idle` / `running` / `completed`), `cookiesCollected`, `cookiesRemaining`, `currentRound`, `elapsedTimeSec`.
+- **`ICookieSpawner`** — strategy that produces a fresh cookie at a valid position, avoiding the ball. Game 1 uses a maze-cell spawner, Game 2 uses `RectCookieSpawner`.
+- **`RectCookieSpawner`** — spawns a cookie at a random point inside the play-field, kept a margin from the edges and away from the ball. *(Wall-aware spawning for the maze is planned; currently a cookie
+can land on a wall.)* <!-- TODO: Implement wall-aware spawning -->
+- **`CookieField`** — keeps a small fixed set of visible cookies (no heap, MCU-friendly). On contact it scores and respawns the eaten cookie via the injected spawner; the round is won once `collected()` reaches `target()`. The game loop queries it via `collected()`, `remaining()` and `finished()`.
+
+#### Basic Usage
+
+```cpp
+#include "src/game/CookieField.h"
+#include "src/game/RectCookieSpawner.h"
+
+RectCookieSpawner spawner(play_width, play_height, /* cookieRadius */ 3.0f);
+CookieField field;
+field.start(/* visibleCount */ 3, /* target */ default_cookies_count, spawner, ball);
+
+// Per tick, after moving the ball:
+field.checkPickup(ball);
+if (field.finished()) { /* round complete */ }
+```
