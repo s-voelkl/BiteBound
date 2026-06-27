@@ -64,7 +64,7 @@ const int default_max_visible_cookies = 4;
 const float default_cookie_radius = 3.0f;
 
 /** Default physics body (sphere/ball) radius in pixels. */
-const float default_physics_body_radius = 4.0f;
+const float default_physics_body_radius = 3.0f;
 
 /** ----- Display settings ----- */
 /** Display width in pixels. */
@@ -200,5 +200,11 @@ const float battery_voltage_multiplier = 2.0f;
 const float battery_min_voltage_mock = 3.0f;
 /** Maximal simulated battery voltage. */
 const float battery_max_voltage_mock = 4.2f;
+
+/** ----- Concurrency and Multithreading Settings ----- */
+/** Game loop tick rate in milliseconds. Equals 50Hz. */
+#define game_tick_rate_ms 20
+/** Telemetry publishing rate in milliseconds. Equals 2Hz. */
+#define telemetry_rate_ms 500
 
 #endif // CONFIG_H

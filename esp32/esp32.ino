@@ -36,9 +36,6 @@ const int play_height = display_height - ui_header_height;
 // (each game tracks its own round counter).
 GameEngine gameEngine;
 
-// Telemetry publish throttle (game loop runs faster than we publish)
-const uint32_t telemetry_interval_ms = 500;
-
 /**
  * @brief Main setup function for the MCU controller.
  * This function initializes the serial communication, connects to WiFi and MQTT.
@@ -84,7 +81,7 @@ void setup() {
   // chooseGameMode() generates the first maze and flags a full redraw.
   graphicsManager.drawLoadingScreen("Creating Maze...");
   gameEngine.begin(play_width, play_height);
-  gameEngine.chooseGameMode(1);
+  gameEngine.chooseGameMode(default_game_id);
 
   graphicsManager.drawLoadingScreen("BiteBound is Ready!");
 #endif
@@ -106,9 +103,21 @@ void loop() {
   mqttManager.loop();
 
   // Frame timing for the physics step.
-  static uint32_t lastFrameMs = millis();
+  static uint32_t lastFrameMs = 0;
   static uint32_t lastTelemetryMs = 0;
   const uint32_t nowMs = millis();
+
+  // Initialize timing on first call
+  if (lastFrameMs == 0) {
+    lastFrameMs = nowMs;
+  }
+
+  // Maintain a stable game loop at the tick rate defined in config.h.
+  if (nowMs - lastFrameMs < game_tick_rate_ms) {
+    delay(1);
+    return;
+  }
+
   // Time delta (how much time elapsed since the last PhysicsEngine step())
   const float dt = (nowMs - lastFrameMs) / 1000.0f;
   lastFrameMs = nowMs;
@@ -121,7 +130,7 @@ void loop() {
 #endif
 
   // 1) Advance the active game by one frame (tilt -> physics -> cookie pickup).
-  gameEngine.update(sensorData.accelerometerX, sensorData.accelerometerY, dt);
+  gameEngine.update(sensorData.gyroscopeX, sensorData.gyroscopeY, dt);
 
   // 2) Render. A freshly built round requests a full redraw of the maze/HUD.
   if (gameEngine.consumeRedraw()) {
@@ -137,7 +146,7 @@ void loop() {
       gameEngine.state());
 
   // 3) Publish telemetry at a throttled rate (~2 Hz).
-  if (nowMs - lastTelemetryMs >= telemetry_interval_ms) {
+  if (nowMs - lastTelemetryMs >= telemetry_rate_ms) {
     lastTelemetryMs = nowMs;
 
     const GameState &gs = gameEngine.state();
@@ -154,7 +163,7 @@ void loop() {
 
     // Game Configuration
     telemetry.game_id = gameEngine.activeGameId();
-    telemetry.player_name = "Player 1";
+    telemetry.player_name = default_player_name;
     telemetry.target_cookies = (int)gameEngine.cookies().target();
     telemetry.screen_width = display_width;
     telemetry.screen_height = display_height;
@@ -194,8 +203,5 @@ void loop() {
     String payload = buildTelemetryJson(telemetry);
     mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
   }
-
-  // Aim for a ~50 Hz game loop (20 ms budget).
-  delay(20);
 #endif
 }
