@@ -267,8 +267,6 @@ void updateGameStep() {
  * Telemetry data is published at a fixed rate, and the task yields periodically to avoid starving other tasks.
  */
 void vNetworkTask(void *pvParameters) {
-  // // Subscribe to command topic once connection completes
-  // mqttManager.subscribe(mqtt_command_topic, 1);
   TickType_t lastTelemetryTime = xTaskGetTickCount();
 
   while (true) {

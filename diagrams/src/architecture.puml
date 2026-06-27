@@ -19,6 +19,9 @@ package "Entry Point (Core 1)" {
     class "esp32.ino" as Main {
         + setup() : void
         + loop() : void
+        - processIncomingCommands() : void
+        - updateGameStep() : void
+        - vNetworkTask(void *pvParameters) : void
         - gameBoard : uint8_t*
         - stateMutex : SemaphoreHandle_t
         - commandQueue : QueueHandle_t
@@ -60,25 +63,24 @@ package "Shared Data (Cross-Core)" {
 
     struct SharedStateData {
         + playerName : char[32]
+        + cookiesCount : int
+        + wallThicknessPx : int
+        + imuSensitivity : float
+        + bounceRestitution : float
+        + emaAlpha : float
+        + deadzoneThreshold : float
+        + ballPosX : float
+        + ballPosY : float
+        + velocityX : float
+        + velocityY : float
+        + accX : float
+        + accY : float
         + gameId : int
-        + (other parameters)
-        ' + cookiesCount : int
-        ' + wallThicknessPx : int
-        ' + imuSensitivity : float
-        ' + bounceRestitution : float
-        ' + emaAlpha : float
-        ' + deadzoneThreshold : float
-        ' + ballPosX : float
-        ' + ballPosY : float
-        ' + velocityX : float
-        ' + velocityY : float
-        ' + accX : float
-        ' + accY : float
-        ' + cookiesCollected : int
-        ' + cookiesRemaining : int
-        ' + currentRound : int
-        ' + elapsedTimeSec : float
-        ' + isRunning : bool
+        + cookiesCollected : int
+        + cookiesRemaining : int
+        + currentRound : int
+        + elapsedTimeSec : float
+        + isRunning : bool
     }
 
     class MutexLock <<utility>> {
@@ -263,16 +265,20 @@ package "Graphics (Core 1)" {
 }
 
 ' Orchestration and shared bindings
-Main --> SensorManager : "reads input"
+Main --> SensorManager : "manages/reads sensors"
 Main --> PhysicsEngine : "steps simulation"
-' Main --> CookieField : "tracks cookies"
-' Main --> MazeManager : "generates board"
-Main --> GraphicsManager : "owns / renders"
-' Main ..> JsonBuilder : "builds telemetry"
-' Main ..> MqttManager : "starts on Core 0"
+Main --> CookieField : "tracks cookies"
+Main --> MazeManager : "generates maze"
+Main --> GraphicsManager : "manages display"
+Main ..> JsonBuilder : "builds telemetry"
+Main ..> MqttManager : "handles communication"
 Main ..> Config : "reads settings"
-' Main ..> MutexLock : "locks shared state (RAII)"
-' Main ..> SharedStateData : "updates/reads game parameters"
+Main ..> MutexLock : "synchronizes state"
+Main ..> SharedStateData : "stores shared state"
+Main ..> CommandMsg : "receives commands"
+Main ..> WifiManager : "connects to WiFi"
+Main ..> TimeManager : "syncs NTP time"
+Main ..> TelemetryData : "populates metrics"
 
 ' Shared Data & Parser dependencies
 CommandMsg o--> CommandType : "uses"
@@ -310,6 +316,6 @@ MazeCookieSpawner ..> Cookie : "creates"
 GraphicsManager ..> PhysicsBody : "draws ball"
 GraphicsManager ..> Cookie : "draws cookies"
 GraphicsManager ..> GameState : "draws HUD"
-' GraphicsManager ..> MazeManager : "renders board"
+GraphicsManager ..> MazeManager : "renders board"
 
 @enduml
