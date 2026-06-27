@@ -2,7 +2,7 @@
 #define ENGINE_GAME_CONFIG_H
 
 #include <stdint.h>
-#include "../physics/core/PhysicsEngine.h" // PhysicsParams
+#include "../physics/core/PhysicsParams.h"
 #include "../../config.h"
 
 /**
@@ -12,11 +12,11 @@
  */
 struct GameConfig
 {
-    uint8_t gameId = 1;                                  ///< 1 = Labyrinth, 2 = Flatland.
-    uint16_t targetCookies = default_cookies_count;      ///< Score needed to win a round.
+    uint8_t gameId = default_game_id;                     ///< 1 = Labyrinth, 2 = Flatland.
+    uint16_t targetCookies = default_cookies_count;       ///< Score needed to win a round.
     uint8_t visibleCookies = default_max_visible_cookies; ///< k cookies on screen at once.
     uint8_t wallThicknessPx = default_wall_thickness_px;  ///< Maze block size (Game 1).
-    PhysicsParams physics;                               ///< Tunable physics parameters.
+    PhysicsParams physics;                                ///< Tunable physics parameters.
 };
 
 #endif // ENGINE_GAME_CONFIG_H

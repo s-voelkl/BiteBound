@@ -6,6 +6,7 @@
 #include "../cookies/MazeCookieSpawner.h"
 #include "../../maze/MazeManager.h"
 #include "../../physics/colliders/MazeCollider.h"
+#include "../../../config.h"
 
 /**
  * @brief Game 1: randomly generated maze.
@@ -31,7 +32,7 @@ public:
         _world = MazeCollider(board, playW, playH);
         // Spawner reads the maze's free-cell list, which is re-filled in place
         // on each generate(); the pointer stays valid across regenerations.
-        _spawner = MazeCookieSpawner(&_maze.getFreeCells(), kCookieRadius);
+        _spawner = MazeCookieSpawner(&_maze.getFreeCells(), default_cookie_radius);
     }
 
     const ICollider &collider() const override { return _world; }

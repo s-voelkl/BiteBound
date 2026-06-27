@@ -5,6 +5,7 @@
 #include "BaseGame.h"
 #include "../cookies/RectCookieSpawner.h"
 #include "../../physics/colliders/BorderCollider.h"
+#include "../../../config.h"
 
 /**
  * @brief Game 2: an open play-field limited only by the screen edges.
@@ -41,7 +42,7 @@ protected:
         _ball.y = _h * 0.5f;
         _ball.vx = 0.0f;
         _ball.vy = 0.0f;
-        _spawner = RectCookieSpawner((float)_w, (float)_h, kCookieRadius);
+        _spawner = RectCookieSpawner((float)_w, (float)_h, default_cookie_radius);
         _cookies.start(cfg.visibleCookies, cfg.targetCookies, _spawner, _ball);
     }
 

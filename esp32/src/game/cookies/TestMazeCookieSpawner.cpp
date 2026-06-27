@@ -1,8 +1,8 @@
 #include <AUnit.h>
 #include <vector>
 
-#include "src/game/cookies/MazeCookieSpawner.h"
-#include "src/game/cookies/CookieField.h"
+#include "MazeCookieSpawner.h"
+#include "CookieField.h"
 #include "src/maze/MazeManager.h"
 #include "src/physics/core/PhysicsBody.h"
 

@@ -35,8 +35,6 @@ public:
     const CookieField &cookies() const override { return _cookies; }
 
 protected:
-    static constexpr float kCookieRadius = 3.0f;
-
     /** @brief (Re)builds this game's level for the current round. */
     virtual void buildLevel(const GameConfig &cfg) = 0;
 
