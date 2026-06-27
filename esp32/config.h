@@ -49,6 +49,9 @@ const int default_cookies_count = 10;
 /** Default maximum number of visible cookies in the game. */
 const int default_max_visible_cookies = 4;
 
+/** Default cookie radius in pixels. */
+const float default_cookie_radius = 3.0f;
+
 /** ----- Display settings ----- */
 /** Display width in pixels. */
 const int display_width = 240;

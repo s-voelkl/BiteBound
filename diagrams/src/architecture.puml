@@ -163,6 +163,10 @@ package "Game (Core 1)" {
         + spawn(avoid : PhysicsBody&) : Cookie
     }
 
+    class MazeCookieSpawner {
+        + spawn(avoid : PhysicsBody&) : Cookie
+    }
+
     class CookieField {
         + start(visibleCount : uint8_t, target : uint16_t, 
             spawner : ICookieSpawner&, ball : PhysicsBody&) : void
@@ -227,6 +231,8 @@ CookieField ..> ICookieSpawner : "uses"
 CookieField ..> PhysicsBody : "pickup test"
 RectCookieSpawner ..|> ICookieSpawner : "implements"
 RectCookieSpawner ..> Cookie : "creates"
+MazeCookieSpawner ..|> ICookieSpawner : "implements"
+MazeCookieSpawner ..> Cookie : "creates"
 
 ' Graphics
 GraphicsManager ..> PhysicsBody : "draws ball"
