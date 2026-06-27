@@ -24,15 +24,6 @@ See [Usage Guide](USAGE.md) for detailed instructions on how to set up and run t
 
 The ESP32 firmware is split into self-contained, unit-tested modules under `esp32/src/`, orchestrated from the main sketch `esp32/esp32.ino`. All tunable values and hardware pins are centralized in `esp32/config.h`.
 
-| Module | Path | Responsibility |
-| --- | --- | --- |
-| Sensors | `src/sensors/` | Reads and smooths the IMU, battery and button (`SensorManager`, `SensorData`). |
-| Physics | `src/physics/` | Game-agnostic 2D simulation, integration and collision (`PhysicsEngine`, `PhysicsBody`, `ICollider`, `BorderCollider`, `Vec2`). |
-| Game | `src/game/` | Shared cookie/score logic (`Cookie`, `CookieField`, `ICookieSpawner`, `RectCookieSpawner`, `MazeCookieSpawner`, `GameState`). |
-| Maze | `src/maze/` | Procedural DFS maze generation (`MazeManager`). |
-| Graphics | `src/graphics/` | Optimized 50Hz rendering on the ST7789 display (`GraphicsManager`). |
-| Network | `src/network/` | WiFi, NTP time, secure MQTT and telemetry JSON (`WifiManager`, `TimeManager`, `MqttManager`, `JsonBuilder`). |
-
 See the component diagram in [diagrams/src/architecture.puml](diagrams/src/architecture.puml).
 
 ### Concurrency Model (ESP32-S3 Dual Core)
@@ -70,10 +61,13 @@ BiteBound/
 │   └── src/
 │       ├── sensors/          # SensorManager, SensorData
 │       ├── physics/          # PhysicsEngine, PhysicsBody, ICollider, BorderCollider, Vec2
-│       ├── game/             # Cookie, CookieField, ICookieSpawner, RectCookieSpawner, MazeCookieSpawner, GameState
+│       ├── game/             # GameState    
+│       │   ├── cookies/      # Cookie, CookieField, RectCookieSpawner, MazeCookieSpawner
+│       │   └── mode/         # BaseGame, IGame, Game1Labyrinth, Game2Flatland
+│       ├── engine/           # GameEngine, GameConfig
 │       ├── maze/             # MazeManager (procedural DFS)
 │       ├── graphics/         # GraphicsManager (ST7789 rendering)
-│       └── network/          # wifi-connection/, time/, mqtt/, json-builder/
+│       └── network/          # WifiManager, TimeManager, MqttManager, JsonBuilder
 ├── nodered/                  # Node-RED dashboard flow
 ├── prompts/                  # LLM chat transcripts (removed before publishing)
 ├── screenshots/              # UI / dashboard / flow screenshots
@@ -638,7 +632,7 @@ The round counter lives in each game, not the engine, so the two modes count ind
 - `update()` takes the raw tilt values rather than a `SensorData`, so the engine has no dependency on the sensor layer and can be tested without hardware.
 - After a round is built the engine raises a redraw flag. The sketch reads it with `consumeRedraw()` and asks the `GraphicsManager` for a full repaint; partial updates handle the frames in between.
 
-#### Basic Usage
+#### Basic Usage of GameEngine
 
 ```cpp
 #include "src/engine/GameEngine.h"
@@ -667,6 +661,8 @@ void loop() {
     // gameEngine.nextRound();       // advance to a new round (new maze for Game 1)
     // gameEngine.chooseGameMode(2); // switch to the open-field game (round back to 1)
 }
+```
+
 #### Basic Usage of MazeCookieSpawner
 
 ```cpp
