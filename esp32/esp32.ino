@@ -156,51 +156,52 @@ void loop() {
 void processIncomingCommands() {
   CommandMsg commandMsg;
   while (xQueueReceive(commandQueue, &commandMsg, 0) == pdPASS) {
-    MutexLock lock(stateMutex);
-    if (!lock.isLocked()) continue;
+    {
+      MutexLock lock(stateMutex);
+      if (lock.isLocked()) {
+        if (commandMsg.type == CommandType::START) {
+          GameConfig config;
+          config.gameId = commandMsg.gameId;
+          config.targetCookies = commandMsg.cookiesCount;
+          config.wallThicknessPx = commandMsg.wallThicknessPx;
+          config.physics.sensitivity = commandMsg.imuSensitivity;
+          config.physics.restitution = commandMsg.bounceRestitution;
+          config.physics.emaAlpha = commandMsg.emaAlpha;
+          config.physics.deadzone = commandMsg.deadzoneThreshold;
+          
+          gameEngine.applyConfig(config);
+          gameEngine.chooseGameMode(commandMsg.gameId);
+          
+          sharedState.runningStatus = RunningStatus::RUNNING;
+          sharedState.gameId = commandMsg.gameId;
+          strncpy(sharedState.playerName, commandMsg.playerName, sizeof(sharedState.playerName) - 1);
+        } 
+        else if (commandMsg.type == CommandType::STOP) {
+          sharedState.runningStatus = RunningStatus::IDLE;
+        } 
+        else if (commandMsg.type == CommandType::PARAM_CHANGE) {
+          GameConfig config;
+          config.physics.sensitivity = commandMsg.imuSensitivity;
+          config.physics.restitution = commandMsg.bounceRestitution;
+          config.physics.emaAlpha = commandMsg.emaAlpha;
+          config.physics.deadzone = commandMsg.deadzoneThreshold;
+          gameEngine.applyConfig(config);
+        }
+      }
+    }
 
+    // Debugging output for command processing is outside the critical lock
+    // section, as printing to Serial can be slow and blocking.
     if (commandMsg.type == CommandType::START) {
-      GameConfig config;
-      config.gameId = commandMsg.gameId;
-      config.targetCookies = commandMsg.cookiesCount;
-      config.wallThicknessPx = commandMsg.wallThicknessPx;
-      config.physics.sensitivity = commandMsg.imuSensitivity;
-      config.physics.restitution = commandMsg.bounceRestitution;
-      config.physics.emaAlpha = commandMsg.emaAlpha;
-      config.physics.deadzone = commandMsg.deadzoneThreshold;
-      
-      gameEngine.applyConfig(config);
-      gameEngine.chooseGameMode(commandMsg.gameId);
-      
-      sharedState.runningStatus = RunningStatus::RUNNING;
-      sharedState.gameId = commandMsg.gameId;
-      strncpy(sharedState.playerName, commandMsg.playerName, sizeof(sharedState.playerName) - 1);
-    } 
-    else if (commandMsg.type == CommandType::STOP) {
-      sharedState.runningStatus = RunningStatus::IDLE;
-    } 
-    else if (commandMsg.type == CommandType::PARAM_CHANGE) {
-      GameConfig config;
-      config.physics.sensitivity = commandMsg.imuSensitivity;
-      config.physics.restitution = commandMsg.bounceRestitution;
-      config.physics.emaAlpha = commandMsg.emaAlpha;
-      config.physics.deadzone = commandMsg.deadzoneThreshold;
-      gameEngine.applyConfig(config);
+      Serial.println("Command: Start game received.");
+    } else if (commandMsg.type == CommandType::STOP) {
+      Serial.println("Command: Stop game received.");
+    } else if (commandMsg.type == CommandType::PARAM_CHANGE) {
+      Serial.println("Command: Parameter Change received.");
+    } else {
+      Serial.println("Command: Unknown command type received.");
     }
   }
-
-  // Debugging output for command processing, moved out for faster execution of the critical section,
-  // as printing to Serial can be slow and blocking.
-  if (commandMsg.type == CommandType::START) {
-    Serial.println("Command: Start game received.");
-  } else if (commandMsg.type == CommandType::STOP) {
-    Serial.println("Command: Stop game received.");
-  } else if (commandMsg.type == CommandType::PARAM_CHANGE) {
-    Serial.println("Command: Parameter Change received.");
-  } else{
-    Serial.println("Command: Unknown command type received.");
-  }
-
 }
 
 /**
@@ -282,16 +283,19 @@ void updateGameStep() {
  */
 void vNetworkTask(void *pvParameters) {
   TickType_t lastTelemetryTime = xTaskGetTickCount();
-
   while (true) {
-    // Keep connection alive and process MQTT callbacks (which populate commandQueue).
-    mqttManager.connect();
+    // Process MQTT callbacks to populate commandQueue with incoming commands.
+    // Separated from the connect() call to avoid blocking the game loop for up to 
+    // 500ms on network I/O but still ensure keep-alive of the MQTT connection.
     mqttManager.loop();
 
     // Periodic telemetry publishing at 2Hz.
     TickType_t currentTick = xTaskGetTickCount();
     if ((currentTick - lastTelemetryTime) >= pdMS_TO_TICKS(telemetry_rate_ms)) {
       lastTelemetryTime = currentTick;
+
+      // Keep connection alive every 500ms is sufficient for session maintenance.
+      mqttManager.connect();
 
       SensorData sensorData = sensorManager.getLastData();
       TelemetryData telemetry;
