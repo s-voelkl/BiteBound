@@ -396,11 +396,11 @@ Commands received on the `mauc2026/group_03/game/command` topic are decoded by t
   "command": "start",
   "meta": {
     "source_ui": "NODE_RED",
-    "request_id": "req-9843-ad",
+    "request_id": "1234",
     "timestamp": "2024-06-08T11:50:00Z"
   },
   "player": {
-    "name": "Player 1"
+    "name": "Cookie-Lover"
   },
   "game": {
     "game_id": 1
@@ -749,4 +749,57 @@ mazeGenerator.generate(gameBoard);
 MazeCookieSpawner spawner(&mazeGenerator.getFreeCells(), /* cookieRadius */ default_cookie_radius);
 
 // 3. Initialize and start the cookie field, see same above.
+```
+
+### Main Orchestration (`esp32.ino`)
+
+The main entry point `esp32/esp32.ino` orchestrates the system's execution across both cores of the ESP32-S3 SoC using FreeRTOS (see above).
+
+#### Execution Topology
+
+- **Core 1 (Application & Game Thread):** Runs the standard Arduino runtime (`setup()` and `loop()`). It executes the high-frequency 50Hz (20ms) loop, processing incoming user commands via `processIncomingCommands()` and updating the physics and gameplay variables inside `updateGameStep()`.
+- **Core 0 (Network Thread):** Executes `vNetworkTask` as a dedicated background task pinned to Core 0. This task manages the background MQTT loop, secure SSL handshakes, and periodic 2Hz (500ms) telemetry serialization and publication.
+
+#### Pinned Background Tasks (vNetworkTask)
+
+The network manager loop and telemetry serialization are isolated within a dedicated FreeRTOS task, ensuring display updates on Core 1 are not delayed by latency from TLS handshakes or network congestion.
+
+```cpp
+void setup() {
+    // Display, WiFi, and Sensor initializations...
+
+    // Create the network manager task and pin it explicitly to Core 0 (core_network)
+    xTaskCreatePinnedToCore(
+        vNetworkTask,      // Function pointer to the task code
+        "NetworkTask",     // Diagnostic text name of the task
+        8192,              // Stack size allocated to the task (in words)
+        NULL,              // Task parameters (not used here)
+        1,                 // Priority (lower relative to core 1 game loop)
+        NULL,              // Task handle pointer
+        core_network       // Core ID (0)
+    );
+}
+```
+
+```cpp
+void vNetworkTask(void *pvParameters) {
+    TickType_t lastTelemetryTime = xTaskGetTickCount();
+
+    while (true) {
+        // Core 0 handles blocking MQTT reconnects and loop processing
+        mqttManager.connect();
+        mqttManager.loop();
+
+        // Configure telemetry rate from config.h (default: 500ms)
+        TickType_t currentTick = xTaskGetTickCount();
+        if ((currentTick - lastTelemetryTime) >= pdMS_TO_TICKS(telemetry_rate_ms)) {
+            lastTelemetryTime = currentTick;
+            
+            // Build and publish telemetry safely...
+        }
+
+        // Relinquish remaining slice time to prevent CPU Core 0 watchdog triggers
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+}
 ```
