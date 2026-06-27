@@ -299,6 +299,18 @@ Manages the secure (TLS) MQTT connection to the HiveMQ Cloud broker via `PubSubC
 
 Recommended defaults: **QoS 1** and **retain = false** (see `config.h`).
 
+##### 1. Command Topic
+
+``mauc2026/group_03/game/command``: Android / NodeRED --> ESP32. Commands to start/stop the game, set parameters, and control game state.
+
+##### 2. Telemetry Topic
+
+``mauc2026/group_03/game/telemetry``: ESP32 --> Android / NodeRED. Publishes telemetry data including sensor readings, game state, and physics simulation results.
+
+##### Internal Logic
+
+On game start or change: game round resets to 1.
+
 ### Telemetry JSON Builder
 
 The JSON builder compiles comprehensive telemetry data from sensors, game state, physics simulation, and device information into a structured JSON payload suitable for MQTT transmission.
@@ -321,7 +333,7 @@ Implemented in `esp32/src/network/json-builder/JsonBuilder.h` and `esp32/src/net
     "wifi_ssid": "MyWiFiNetwork"
   },
   "config": {
-    "game_id": 1,
+    "game_id": 1, // default for maze, 2 for plane.
     "player_name": "Player 1",
     "target_cookies": 15,
     "screen_width": 240,
@@ -376,21 +388,140 @@ String payload = buildTelemetryJson(telemetry);
 mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
 ```
 
-### MQTT Communication
+### Command JSON Parser
 
-#### Topics
+Commands received on the `mauc2026/group_03/game/command` topic are decoded by the `src/network/json-parser/CommandParser.cpp` based on the schema below:
 
-##### 1. Command Topic
+#### JSON Command Payload
 
-``mauc2026/group_03/game/command``: Android / NodeRED --> ESP32. Commands to start/stop the game, set parameters, and control game state.
+```json
+{
+  "command": "start",
+  "meta": {
+    "source_ui": "NODE_RED",
+    "request_id": "1234",
+    "timestamp": "2024-06-08T11:50:00Z"
+  },
+  "player": {
+    "name": "Cookie-Lover"
+  },
+  "game": {
+    "game_id": 1
+  },
+  "parameters": {
+    "cookies_count": 10,
+    "wall_thickness_px": 6
+  },
+  "physics": {
+    "imu_sensitivity_multiplier": 1.25,
+    "bounce_restitution": 0.75,
+    "ema_alpha": 0.25,
+    "deadzone_threshold": 0.04
+  }
+}
+```
 
-##### 2. Telemetry Topic
+#### Basic Usage
 
-``mauc2026/group_03/game/telemetry``: ESP32 --> Android / NodeRED. Publishes telemetry data including sensor readings, game state, and physics simulation results.
+Command parsing is managed by the static `CommandParser::parse` utility located in `src/network/json-parser/CommandParser.h`. This utility handles the conversion of flat character payloads into typed `CommandMsg` structures.
 
-#### Communication Logic
+To parse a payload from your MQTT subscription callback and pass it safely into the command queue by using the `MqttManager.onMessage()` callback.
 
-On game start or change: game round resets to 1.
+- **Accepted Actions (`command`):** `start`, `stop`, `param_change`.
+- **Dynamic Config Tuning:** Customizes physical variables (IMU sensitivity limits, damping offsets) and display specifications (wall thickness bounds, total game cookies) without restarting the system.
+
+### Concurrency Model (ESP32-S3 Dual Core)
+
+The ESP32-S3 contains a dual-core SoC, enabling isolation of timing-sensitive display/physics loops from blocking network I/O operations:
+
+- **Core 1 — Game Core (~50Hz / 20ms Budget):** Processes raw sensor inputs, updates the 2D physics simulation, resolves wall and cookie collisions, and paints updates to the ST7789 display controller.
+- **Core 0 — Network Core (~2Hz Telemetry & Commands):** Manages connection keep-alive, listens for command payloads from MQTT, and serializes/publishes telemetry data asynchronously.
+
+#### Shared Memory & IPC Primitives
+
+> Note: IPC = Inter-Process Communication: Mechanisms for processes to exchange data and synchronize actions in a multi-core environment. It ensures safe and efficient communication between concurrently running processes. Here, Core 0 and Core 1 are treated as separate processes with their own memory spaces, and IPC primitives (mutexes, queues) are used to safely share data between them (see [GeeksforGeeks Post](https://www.geeksforgeeks.org/operating-systems/inter-process-communication-ipc/))
+
+```text
+               +-----------------------------------------+
+               |  Core 0 (Network Core)                  |
+               |                                         |
+               |  +------------------+                   |
+               |  | MQTT Command Sub |                   |
+               |  +--------+---------+                   |
+               |           |                             |
+               |           v                             |
+               |    [CommandParser]                      |
+               |           |                             |
+               +-----------|-----------------------------+
+                           | (Queue push)
+                           v
+                     [Command Queue] (Length: 10)
+                           |
+                           | (Queue pop)
+               +-----------|-----------------------------+
+               |           v                             |
+               |  Core 1 (Game Core)                     |
+               |                                         |
+               |  +------------------+                   |
+               |  |   vGameTask      | <-----------------+
+               |  +--------+---------+                   |
+               |           |                             |
+               +-----------|-----------------------------+
+                           |
+                           v
+                =======[Mutex Lock]=======
+                [     SharedStateData    ] <==== Thread Safe Read/Write
+                ==========================
+```
+
+- **Shared State (`SharedStateData`):** Keeps track of variables (coordinate states, score levels, device configurations) accessed by both cores. This memory map is protected by a FreeRTOS Mutex (`SemaphoreHandle_t`) utilizing a C++ RAII guard wrapper class `MutexLock` to prevent race conditions.
+- **Command Routing (`CommandMsg`):** Input commands generated from Android or Node-RED dashboards are transferred safely to the Game Core utilizing a FreeRTOS Queue (`commandQueue`). This prevents lock contention on the active game loop.
+
+> Note: FreeRTOS: Real-Time Operating System (RTOS) for microcontrollers and small embedded systems. Provides task scheduling, inter-task communication, and synchronization primitives (e.g., semaphores, mutexes, queues) to manage concurrent execution. Here, the ESP32-S3 runs FreeRTOS to allow Core 0 and Core 1 to operate independently while sharing data safely (see [FreeRTOS](https://docs.espressif.com/projects/esp-idf/en/v4.3/esp32/api-reference/system/freertos.html)).
+
+#### Shared Data Management Usage
+
+To protect data accessed concurrently by both cores, shared variables are consolidated into a thread-safe structure (`SharedStateData`) and protected via an RAII-style mutex guard (`MutexLock`). The shared files are split modularly under `esp32/src/network/shared/`:
+
+- **`CommandType.h`**: Defines the `CommandType` enum class (`START`, `STOP`, `PARAM_CHANGE`, `UNKNOWN`).
+- **`CommandMsg.h`**: Represents incoming execution actions with variable settings.
+- **`MutexLock.h`**: Implements `MutexLock`, an RAII wrapper over FreeRTOS semaphores that automates lock release when going out of scope.
+- **`SharedStateData.h` / `SharedStateData.cpp`**: Houses `SharedStateData` which stores live telemetry metrics and game settings.
+
+> Note: RAII: Resource Acquisition Is Initialization, a C++ programming technique that binds the life cycle of a resource (e.g., allocated memory, open socket, locked mutex) to the lifetime of an object. Here, `MutexLock` automatically acquires the mutex in its constructor and releases it in its destructor, ensuring that the lock is always released when the object goes out of scope, even if an exception occurs. That means you don't have to manually unlock the mutex, which helps prevent deadlocks and resource leaks (see [cppreference](https://en.cppreference.com/cpp/language/raii)).
+
+##### Initializing Shared State
+
+Call `initSharedState` during the application setup to ensure predictable default values:
+
+```cpp
+#include "src/network/shared/SharedStateData.h"
+
+SharedStateData sharedState;
+
+void setup() {
+    // Fills sharedState with configuration defaults
+    initSharedState(sharedState);
+}
+```
+
+Wrap read and write accesses in a localized block to acquire and release the mutex lock predictably:
+
+```cpp
+#include "src/network/shared/MutexLock.h"
+#include "src/network/shared/SharedStateData.h"
+
+// Task writing to state
+void updateBallPosition(float x, float y) {
+    MutexLock lock(stateMutex);
+    if (lock.isLocked()) {
+        sharedState.ballPosX = x;
+        sharedState.ballPosY = y;
+    }
+    // Mutex is automatically released when lock goes out of scope
+    // e.g. at the end of this function on return or exception
+}
+```
 
 ### Display Manager
 
@@ -676,4 +807,57 @@ mazeGenerator.generate(gameBoard);
 MazeCookieSpawner spawner(&mazeGenerator.getFreeCells(), /* cookieRadius */ default_cookie_radius);
 
 // 3. Initialize and start the cookie field, see same above.
+```
+
+### Main Orchestration (`esp32.ino`)
+
+The main entry point `esp32/esp32.ino` orchestrates the system's execution across both cores of the ESP32-S3 SoC using FreeRTOS (see above).
+
+#### Execution Topology
+
+- **Core 1 (Application & Game Thread):** Runs the standard Arduino runtime (`setup()` and `loop()`). It executes the high-frequency 50Hz (20ms) loop, processing incoming user commands via `processIncomingCommands()` and updating the physics and gameplay variables inside `updateGameStep()`.
+- **Core 0 (Network Thread):** Executes `vNetworkTask` as a dedicated background task pinned to Core 0. This task manages the background MQTT loop, secure SSL handshakes, and periodic 2Hz (500ms) telemetry serialization and publication.
+
+#### Pinned Background Tasks (vNetworkTask)
+
+The network manager loop and telemetry serialization are isolated within a dedicated FreeRTOS task, ensuring display updates on Core 1 are not delayed by latency from TLS handshakes or network congestion.
+
+```cpp
+void setup() {
+    // Display, WiFi, and Sensor initializations...
+
+    // Create the network manager task and pin it explicitly to Core 0 (core_network)
+    xTaskCreatePinnedToCore(
+        vNetworkTask,      // Function pointer to the task code
+        "NetworkTask",     // Diagnostic text name of the task
+        8192,              // Stack size allocated to the task (in words)
+        NULL,              // Task parameters (not used here)
+        1,                 // Priority (lower relative to core 1 game loop)
+        NULL,              // Task handle pointer
+        core_network       // Core ID (0)
+    );
+}
+```
+
+```cpp
+void vNetworkTask(void *pvParameters) {
+    TickType_t lastTelemetryTime = xTaskGetTickCount();
+
+    while (true) {
+        // Core 0 handles blocking MQTT reconnects and loop processing
+        mqttManager.connect();
+        mqttManager.loop();
+
+        // Configure telemetry rate from config.h (default: 500ms)
+        TickType_t currentTick = xTaskGetTickCount();
+        if ((currentTick - lastTelemetryTime) >= pdMS_TO_TICKS(telemetry_rate_ms)) {
+            lastTelemetryTime = currentTick;
+            
+            // Build and publish telemetry safely...
+        }
+
+        // Relinquish remaining slice time to prevent CPU Core 0 watchdog triggers
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+}
 ```
