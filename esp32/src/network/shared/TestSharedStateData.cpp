@@ -2,6 +2,7 @@
 #include "SharedStateData.h"
 #include "MutexLock.h"
 #include "../../../config.h"
+#include "src/game/RunningStatus.h"
 
 test(SharedState_InitDefaults)
 {
@@ -15,8 +16,8 @@ test(SharedState_InitDefaults)
     assertEqual(state.bounceRestitution, default_bounce_restitution);
     assertEqual(state.emaAlpha, default_ema_alpha);
     assertEqual(state.deadzoneThreshold, default_deadzone_threshold);
-    assertFalse(state.isRunning);
     assertEqual(strcmp(state.playerName, default_player_name), 0);
+    assertTrue(state.runningStatus == RunningStatus::IDLE);
 }
 
 test(SharedState_MutexLockSuccess)

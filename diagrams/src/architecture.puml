@@ -80,7 +80,7 @@ package "Shared Data (Cross-Core)" {
         + cookiesRemaining : int
         + currentRound : int
         + elapsedTimeSec : float
-        + isRunning : bool
+        + runningStatus : RunningStatus
     }
 
     class MutexLock <<utility>> {
@@ -216,7 +216,7 @@ package "Game (Core 1)" {
     }
 
     struct GameState {
-        + status : const char*
+        + runningStatus : RunningStatus
         + cookiesCollected : int
         + cookiesRemaining : int
         + currentRound : int

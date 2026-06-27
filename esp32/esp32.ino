@@ -108,8 +108,8 @@ void setup() {
   {
       MutexLock lock(stateMutex);
       if (lock.isLocked()) {
-          sharedState.isRunning = true;
           sharedState.gameId = default_game_id;
+          sharedState.runningStatus = RunningStatus::RUNNING;
       }
   }
 
@@ -133,7 +133,8 @@ void setup() {
  */
 void loop() {
 #if RUN_TESTS
-  aunit::TestRunner::setTimeout(30);
+  // aunit::TestRunner::list(); // List all registered tests.
+  aunit::TestRunner::setTimeout(30); // Set a timeout of 30 seconds for tests.
   aunit::TestRunner::run();
 #else
   static TickType_t lastTickTime = xTaskGetTickCount();
@@ -153,77 +154,93 @@ void loop() {
  * @brief Processes incoming command structures transmitted from the network task.
  */
 void processIncomingCommands() {
-  CommandMsg cmd;
-  while (xQueueReceive(commandQueue, &cmd, 0) == pdPASS) {
-    MutexLock lock(stateMutex);
-    if (!lock.isLocked()) continue;
+  CommandMsg commandMsg;
+  while (xQueueReceive(commandQueue, &commandMsg, 0) == pdPASS) {
+    {
+      MutexLock lock(stateMutex);
+      if (lock.isLocked()) {
+        if (commandMsg.type == CommandType::START) {
+          GameConfig config;
+          config.gameId = commandMsg.gameId;
+          config.targetCookies = commandMsg.cookiesCount;
+          config.wallThicknessPx = commandMsg.wallThicknessPx;
+          config.physics.sensitivity = commandMsg.imuSensitivity;
+          config.physics.restitution = commandMsg.bounceRestitution;
+          config.physics.emaAlpha = commandMsg.emaAlpha;
+          config.physics.deadzone = commandMsg.deadzoneThreshold;
+          
+          gameEngine.applyConfig(config);
+          gameEngine.chooseGameMode(commandMsg.gameId);
+          
+          sharedState.runningStatus = RunningStatus::RUNNING;
+          sharedState.gameId = commandMsg.gameId;
+          strncpy(sharedState.playerName, commandMsg.playerName, sizeof(sharedState.playerName) - 1);
+        } 
+        else if (commandMsg.type == CommandType::STOP) {
+          sharedState.runningStatus = RunningStatus::IDLE;
+        } 
+        else if (commandMsg.type == CommandType::PARAM_CHANGE) {
+          GameConfig config;
+          config.physics.sensitivity = commandMsg.imuSensitivity;
+          config.physics.restitution = commandMsg.bounceRestitution;
+          config.physics.emaAlpha = commandMsg.emaAlpha;
+          config.physics.deadzone = commandMsg.deadzoneThreshold;
+          gameEngine.applyConfig(config);
+        }
+      }
+    }
 
-    if (cmd.type == CommandType::START) {
-      Serial.println("Logic: Applying START command.");
-      GameConfig config;
-      config.gameId = cmd.gameId;
-      config.targetCookies = cmd.cookiesCount;
-      config.wallThicknessPx = cmd.wallThicknessPx;
-      config.physics.sensitivity = cmd.imuSensitivity;
-      config.physics.restitution = cmd.bounceRestitution;
-      config.physics.emaAlpha = cmd.emaAlpha;
-      config.physics.deadzone = cmd.deadzoneThreshold;
-      
-      gameEngine.applyConfig(config);
-      gameEngine.chooseGameMode(cmd.gameId);
-      
-      sharedState.isRunning = true;
-      sharedState.gameId = cmd.gameId;
-      strncpy(sharedState.playerName, cmd.playerName, sizeof(sharedState.playerName) - 1);
-    } 
-    else if (cmd.type == CommandType::STOP) {
-      Serial.println("Logic: Game stopped via dashboard.");
-      sharedState.isRunning = false;
-    } 
-    else if (cmd.type == CommandType::PARAM_CHANGE) {
-      Serial.println("Logic: Dynamic parameter configurations received.");
-      GameConfig config;
-      config.physics.sensitivity = cmd.imuSensitivity;
-      config.physics.restitution = cmd.bounceRestitution;
-      config.physics.emaAlpha = cmd.emaAlpha;
-      config.physics.deadzone = cmd.deadzoneThreshold;
-      gameEngine.applyConfig(config);
+    // Debugging output for command processing is outside the critical lock
+    // section, as printing to Serial can be slow and blocking.
+    if (commandMsg.type == CommandType::START) {
+      Serial.println("Command: Start game received.");
+    } else if (commandMsg.type == CommandType::STOP) {
+      Serial.println("Command: Stop game received.");
+    } else if (commandMsg.type == CommandType::PARAM_CHANGE) {
+      Serial.println("Command: Parameter Change received.");
+    } else {
+      Serial.println("Command: Unknown command type received.");
     }
   }
 }
 
 /**
  * @brief Computes physics, game state transitions and rendering on Core 1.
+ *
+ * This function is called at a fixed rate (50Hz) to ensure smooth physics and rendering.
+ * It reads the latest sensor data, updates the game engine, renders the display, and updates
+ * the shared state for telemetry.
  */
 void updateGameStep() {
-  // Read sensor values (mock or real hardware)
+  // 1. Sensors: Read sensor values (mock or real hardware)
 #if MOCK_SENSORS
   SensorData sensorData = sensorManager.readMock();
 #else
   SensorData sensorData = sensorManager.read();
 #endif
 
+  // Avoid unnecessary updating of the game engine if the game is not running.
   bool isRunningStatus = false;
   {
       MutexLock lock(stateMutex);
       if (lock.isLocked()) {
-          isRunningStatus = sharedState.isRunning;
+          isRunningStatus = (sharedState.runningStatus == RunningStatus::RUNNING);
       }
   }
 
-  // Frame timing calculation
+  // 2. Time: Frame timing calculation
   static uint32_t lastFrameMs = 0;
   const uint32_t nowMs = millis();
   if (lastFrameMs == 0) lastFrameMs = nowMs;
   const float dt = (nowMs - lastFrameMs) / 1000.0f;
   lastFrameMs = nowMs;
 
-  // 1) Advance the active game by one physics frame if running.
+  // 3. Physics: Advance the active game by one physics frame if running.
   if (isRunningStatus) {
     gameEngine.update(sensorData.gyroscopeX, sensorData.gyroscopeY, dt);
   }
 
-  // 2) Render to the ST7789 display.
+  // 4. Display: Render the current game state to the display.
   if (gameEngine.consumeRedraw()) {
     graphicsManager.forceFullRedraw();
   }
@@ -236,7 +253,7 @@ void updateGameStep() {
       (int)gameEngine.cookies().count(),
       gameEngine.state());
 
-  // 3) Update shared state for the network core to publish as telemetry.
+  // 5. Telemetry: Update shared state for the network core to publish as telemetry.
   {
     MutexLock lock(stateMutex);
     if (lock.isLocked()) {
@@ -255,6 +272,7 @@ void updateGameStep() {
       sharedState.currentRound = gs.currentRound;
       sharedState.elapsedTimeSec = gs.elapsedTimeSec;
       sharedState.gameId = gameEngine.activeGameId();
+      sharedState.runningStatus = gs.runningStatus;
     }
   }
 }
@@ -265,16 +283,19 @@ void updateGameStep() {
  */
 void vNetworkTask(void *pvParameters) {
   TickType_t lastTelemetryTime = xTaskGetTickCount();
-
   while (true) {
-    // Keep connection alive and process MQTT callbacks (which populate commandQueue).
-    mqttManager.connect();
+    // Process MQTT callbacks to populate commandQueue with incoming commands.
+    // Separated from the connect() call to avoid blocking the game loop for up to 
+    // 500ms on network I/O but still ensure keep-alive of the MQTT connection.
     mqttManager.loop();
 
     // Periodic telemetry publishing at 2Hz.
     TickType_t currentTick = xTaskGetTickCount();
     if ((currentTick - lastTelemetryTime) >= pdMS_TO_TICKS(telemetry_rate_ms)) {
       lastTelemetryTime = currentTick;
+
+      // Keep connection alive every 500ms is sufficient for session maintenance.
+      mqttManager.connect();
 
       SensorData sensorData = sensorManager.getLastData();
       TelemetryData telemetry;
@@ -298,37 +319,45 @@ void vNetworkTask(void *pvParameters) {
 
       // Thread-safe capture of current game progress and physics state.
       {
-          MutexLock lock(stateMutex);
-          if (lock.isLocked()) {
-              telemetry.game_id = sharedState.gameId;
-              telemetry.player_name = sharedState.playerName;
-              telemetry.target_cookies = sharedState.cookiesCount;
-              telemetry.screen_width = display_width;
-              telemetry.screen_height = display_height;
-              telemetry.wall_thickness_px = sharedState.wallThicknessPx;
+        MutexLock lock(stateMutex);
+        if (lock.isLocked()) {
+          telemetry.game_id = sharedState.gameId;
+          telemetry.player_name = sharedState.playerName;
+          telemetry.target_cookies = sharedState.cookiesCount;
+          telemetry.screen_width = display_width;
+          telemetry.screen_height = display_height;
+          telemetry.wall_thickness_px = sharedState.wallThicknessPx;
 
-              // Map status boolean to telemetry string format.
-              telemetry.runningStatus = sharedState.isRunning ? "running" : "idle";
-              
-              telemetry.cookies_collected = sharedState.cookiesCollected;
-              telemetry.cookies_remaining = sharedState.cookiesRemaining;
-              telemetry.current_round = sharedState.currentRound;
-              telemetry.elapsed_time_sec = sharedState.elapsedTimeSec;
-
-              telemetry.ball_pos_x = sharedState.ballPosX;
-              telemetry.ball_pos_y = sharedState.ballPosY;
-              telemetry.velocity_x = sharedState.velocityX;
-              telemetry.velocity_y = sharedState.velocityY;
-              telemetry.acc_x = sharedState.accX;
-              telemetry.acc_y = sharedState.accY;
+          String runningStatusStr = "idle";
+          if (sharedState.runningStatus == RunningStatus::RUNNING) {
+              runningStatusStr = "running";
+          } else if (sharedState.runningStatus == RunningStatus::COMPLETED) {
+              runningStatusStr = "completed";
           }
+          telemetry.runningStatus = runningStatusStr;
+          
+          telemetry.cookies_collected = sharedState.cookiesCollected;
+          telemetry.cookies_remaining = sharedState.cookiesRemaining;
+          telemetry.current_round = sharedState.currentRound;
+          telemetry.elapsed_time_sec = sharedState.elapsedTimeSec;
+
+          telemetry.ball_pos_x = sharedState.ballPosX;
+          telemetry.ball_pos_y = sharedState.ballPosY;
+          telemetry.velocity_x = sharedState.velocityX;
+          telemetry.velocity_y = sharedState.velocityY;
+          telemetry.acc_x = sharedState.accX;
+          telemetry.acc_y = sharedState.accY;
+        }
       }
 
+      // Send telemetry JSON payload to MQTT broker
       String payload = buildTelemetryJson(telemetry);
       mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
     }
 
     // Short yield to feed the IDLE task and watchdogs.
+    // vTaskDelay(): Delays the task for a specified number of ticks. 
+    // pdMS_TO_TICKS(): Converts milliseconds to ticks.
     vTaskDelay(pdMS_TO_TICKS(10));
   }
 }
