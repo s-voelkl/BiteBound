@@ -71,6 +71,16 @@ public:
     SensorData readMock();
 
     /**
+     * @brief Returns the last read SensorData snapshot.
+     *
+     * @return SensorData snapshot containing the most recent readings.
+     */
+    SensorData getLastData() const
+    {
+        return _lastData;
+    }
+
+    /**
      * @brief Indicates whether begin() completed manager setup.
      *
      * @return true once basic sensor manager setup has run, false otherwise.
