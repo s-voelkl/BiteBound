@@ -422,33 +422,7 @@ Commands received on the `mauc2026/group_03/game/command` topic are decoded by t
 
 Command parsing is managed by the static `CommandParser::parse` utility located in `src/network/json-parser/CommandParser.h`. This utility handles the conversion of flat character payloads into typed `CommandMsg` structures.
 
-To parse a payload from your MQTT subscription callback and pass it safely into the command queue:
-
-```cpp
-#include "src/network/json-parser/CommandParser.h"
-#include "src/network/shared/CommandMsg.h"
-
-void handleMqttMessage(char* topic, byte* payload, unsigned int length) {
-    // Ensure null-termination of the incoming payload
-    char* cleanPayload = new char[length + 1];
-    memcpy(cleanPayload, payload, length);
-    cleanPayload[length] = '\0';
-
-    if (strcmp(topic, mqtt_command_topic) == 0) {
-        CommandMsg cmd;
-        // Parse raw string to structured message representation
-        if (CommandParser::parse(cleanPayload, cmd)) {
-            // Push payload to FreeRTOS queue for processing on Core 1
-            if (xQueueSend(commandQueue, &cmd, 0) != pdPASS) {
-                Serial.println("Queue overflow, command discarded");
-            }
-        } else {
-            Serial.println("Failed to parse command payload schema");
-        }
-    }
-    delete[] cleanPayload;
-}
-```
+To parse a payload from your MQTT subscription callback and pass it safely into the command queue by using the `MqttManager.onMessage()` callback.
 
 - **Accepted Actions (`command`):** `start`, `stop`, `param_change`.
 - **Dynamic Config Tuning:** Customizes physical variables (IMU sensitivity limits, damping offsets) and display specifications (wall thickness bounds, total game cookies) without restarting the system.
@@ -500,14 +474,16 @@ The ESP32-S3 contains a dual-core SoC, enabling isolation of timing-sensitive di
 - **Shared State (`SharedStateData`):** Keeps track of variables (coordinate states, score levels, device configurations) accessed by both cores. This memory map is protected by a FreeRTOS Mutex (`SemaphoreHandle_t`) utilizing a C++ RAII guard wrapper class `MutexLock` to prevent race conditions.
 - **Command Routing (`CommandMsg`):** Input commands generated from Android or Node-RED dashboards are transferred safely to the Game Core utilizing a FreeRTOS Queue (`commandQueue`). This prevents lock contention on the active game loop.
 
+> Note: FreeRTOS: Real-Time Operating System (RTOS) for microcontrollers and small embedded systems. Provides task scheduling, inter-task communication, and synchronization primitives (e.g., semaphores, mutexes, queues) to manage concurrent execution. Here, the ESP32-S3 runs FreeRTOS to allow Core 0 and Core 1 to operate independently while sharing data safely (see [FreeRTOS](https://docs.espressif.com/projects/esp-idf/en/v4.3/esp32/api-reference/system/freertos.html)).
+
 #### Shared Data Management Usage
 
-The shared state is modularized into dedicated header files under `src/network/shared/` to decouple structure definitions and access controls:
+To protect data accessed concurrently by both cores, shared variables are consolidated into a thread-safe structure (`SharedStateData`) and protected via an RAII-style mutex guard (`MutexLock`). The shared files are split modularly under `esp32/src/network/shared/`:
 
-- `CommandType.h`: Declares the `CommandType` enum class (`START`, `STOP`, `PARAM_CHANGE`, `UNKNOWN`).
-- `CommandMsg.h`: Holds parameters and payload definitions for incoming execution requests.
-- `MutexLock.h`: Implements the RAII-based (see below) mutex lock guard.
-- `SharedStateData.h` / `SharedStateData.cpp`: Structures the runtime telemetry/configuration data and provides `initSharedState()`.
+- **`CommandType.h`**: Defines the `CommandType` enum class (`START`, `STOP`, `PARAM_CHANGE`, `UNKNOWN`).
+- **`CommandMsg.h`**: Represents incoming execution actions with variable settings.
+- **`MutexLock.h`**: Implements `MutexLock`, an RAII wrapper over FreeRTOS semaphores that automates lock release when going out of scope.
+- **`SharedStateData.h` / `SharedStateData.cpp`**: Houses `SharedStateData` which stores live telemetry metrics and game settings.
 
 > Note: RAII: Resource Acquisition Is Initialization, a C++ programming technique that binds the life cycle of a resource (e.g., allocated memory, open socket, locked mutex) to the lifetime of an object. Here, `MutexLock` automatically acquires the mutex in its constructor and releases it in its destructor, ensuring that the lock is always released when the object goes out of scope, even if an exception occurs. That means you don't have to manually unlock the mutex, which helps prevent deadlocks and resource leaks (see [cppreference](https://en.cppreference.com/cpp/language/raii)).
 
@@ -521,11 +497,12 @@ Call `initSharedState` during the application setup to ensure predictable defaul
 SharedStateData sharedState;
 
 void setup() {
+    // Fills sharedState with configuration defaults
     initSharedState(sharedState);
 }
 ```
 
-To protect variables from race conditions, wrap critical sections inside a block using the MutexLock utility:
+Wrap read and write accesses in a localized block to acquire and release the mutex lock predictably:
 
 ```cpp
 #include "src/network/shared/MutexLock.h"

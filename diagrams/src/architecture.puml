@@ -93,6 +93,7 @@ package "Shared Data (Cross-Core)" {
 package "JSON Parser (Core 0)" {
     class CommandParser {
         + {static} parse(jsonPayload : const String&, outMsg : CommandMsg&) : bool
+        + {static} parse(const char *payload, size_t length, outMsg : CommandMsg&) : bool
     }
 }
 
@@ -152,6 +153,7 @@ package "Sensors (Core 1)" {
         + begin() : void
         + read() : SensorData
         + readMock() : SensorData
+        + getLastData() : SensorData
         + isInitialized() : bool
     }
 }
