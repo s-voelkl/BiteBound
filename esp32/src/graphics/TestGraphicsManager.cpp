@@ -1,5 +1,6 @@
 #include <AUnit.h>
 #include "GraphicsManager.h"
+#include "src/game/RunningStatus.h"
 
 /**
  * @class MockGFX
@@ -112,7 +113,7 @@ test(GraphicsManagerTest, FullVsPartialDrawTransitions)
     cookies[1] = Cookie(40.0f, 60.0f, 3.0f, true);
 
     GameState state;
-    state.status = "running";
+    state.runningStatus = RunningStatus::RUNNING;
     state.cookiesCollected = 0;
     state.cookiesRemaining = 2;
     state.currentRound = 1;

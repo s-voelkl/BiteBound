@@ -47,7 +47,7 @@ public:
      */
     void update(float tiltX, float tiltY, float dt);
 
-    /** @brief Current scoreboard meta (status, round, score, time). */
+    /** @brief Current scoreboard meta (runningStatus, round, score, time). */
     const GameState &state() const { return _state; }
 
     /** @brief Returns and clears the "needs full redraw" flag. */
@@ -61,12 +61,10 @@ public:
     const CookieField &cookies() const { return _active->cookies(); }
     uint8_t activeGameId() const { return _active ? _active->id() : 0; }
     uint16_t round() const { return _active ? _active->round() : 0; }
-    bool isRunning() const { return _status == Status::Running; }
+    bool isRunning() const { return _status == RunningStatus::RUNNING; }
 
 private:
-    enum class Status : uint8_t { Idle, Running, Completed };
-
-    /** @brief Post-build step for chooseGameMode/nextRound: status + meta. */
+    /** @brief Post-build step for chooseGameMode/nextRound: runningStatus + meta. */
     void afterBuild();
 
     PhysicsEngine _physics;
@@ -82,7 +80,7 @@ private:
     int _playH = 0;
 
     float _elapsedSec = 0.0f;
-    Status _status = Status::Idle;
+    RunningStatus _status = RunningStatus::IDLE;
     bool _needsFullRedraw = false;
 };
 

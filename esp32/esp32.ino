@@ -13,13 +13,13 @@
 
 // Set to 1 to use mock sensor data instead of real hardware
 #ifndef MOCK_SENSORS
-#define MOCK_SENSORS 1
+#define MOCK_SENSORS 0
 #endif
 
 // Set to 1 to run AUnit tests; set 0 for main functionality.
 // Can be overridden at compile time via -DRUN_TESTS=1 (used by CI).
 #ifndef RUN_TESTS
-#define RUN_TESTS 1
+#define RUN_TESTS 0
 #endif
 
 // Global Graphics Setup
@@ -160,8 +160,14 @@ void loop() {
     telemetry.screen_height = display_height;
     telemetry.wall_thickness_px = default_wall_thickness_px;
 
+    String runningStatusStr = "idle";
+    if (gs.runningStatus == RunningStatus::RUNNING) {
+      runningStatusStr = "running";
+    } else if (gs.runningStatus == RunningStatus::COMPLETED) {
+      runningStatusStr = "completed";
+    } 
     // Game State (from the engine)
-    telemetry.status = gs.status;
+    telemetry.runningStatus = runningStatusStr;
     telemetry.cookies_collected = gs.cookiesCollected;
     telemetry.cookies_remaining = gs.cookiesRemaining;
     telemetry.current_round = gs.currentRound;

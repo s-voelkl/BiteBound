@@ -329,7 +329,7 @@ Implemented in `esp32/src/network/json-builder/JsonBuilder.h` and `esp32/src/net
     "wall_thickness_px": 6 // min: 6, max: 40 --> ball size 1/2
   },
   "state": {
-    "status": "running", // idle, running, completed
+    "runningStatus": "running", // idle, running, completed
     "cookies_collected": 4,
     "cookies_remaining": 11,
     "current_round": 2, // game init: 1. game change: reset to 1. 

@@ -29,7 +29,7 @@ struct TelemetryData
     int wall_thickness_px;
 
     // Game State
-    String status;
+    String runningStatus;
     int cookies_collected;
     int cookies_remaining;
     int current_round;

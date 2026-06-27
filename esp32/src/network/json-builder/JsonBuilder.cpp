@@ -23,7 +23,7 @@ String buildTelemetryJson(const TelemetryData &data)
 
     // Game State
     JsonObject state = doc["state"].to<JsonObject>();
-    state["status"] = data.status;
+    state["runningStatus"] = data.runningStatus;
     state["cookies_collected"] = data.cookies_collected;
     state["cookies_remaining"] = data.cookies_remaining;
     state["current_round"] = data.current_round;
@@ -75,7 +75,7 @@ String buildTelemetryJsonTest()
     testData.wall_thickness_px = 6;
 
     // Game State
-    testData.status = "running";
+    testData.runningStatus = "running";
     testData.cookies_collected = 4;
     testData.cookies_remaining = 11;
     testData.current_round = 2;

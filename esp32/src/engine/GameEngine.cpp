@@ -11,8 +11,8 @@ void GameEngine::begin(int playWidth, int playHeight)
     // Both games share one play board; only the active game writes it.
     _game1.init(_board, playWidth, playHeight, _config.wallThicknessPx);
     _game2.init(_board, playWidth, playHeight, _config.wallThicknessPx);
-    _status = Status::Idle;
-    _state.status = "idle";
+    _status = RunningStatus::IDLE;
+    _state.runningStatus = RunningStatus::IDLE;
 }
 
 void GameEngine::applyConfig(const GameConfig &cfg)
@@ -26,8 +26,8 @@ void GameEngine::chooseGameMode(uint8_t gameId)
     _active = (gameId == 1) ? static_cast<IGame *>(&_game1)
                             : static_cast<IGame *>(&_game2);
     _config.gameId = gameId;
-    _physics.reset();          // drop carried-over input filter state
-    _active->start(_config);   // game resets its own round to 1 + builds the level
+    _physics.reset();        // drop carried-over input filter state
+    _active->start(_config); // game resets its own round to 1 + builds the level
     afterBuild();
 }
 
@@ -45,10 +45,10 @@ void GameEngine::nextRound()
 void GameEngine::afterBuild()
 {
     _elapsedSec = 0.0f;
-    _status = Status::Running;
+    _status = RunningStatus::RUNNING;
     _needsFullRedraw = true; // freshly built level -> renderer repaints everything
 
-    _state.status = "running";
+    _state.runningStatus = RunningStatus::RUNNING;
     _state.currentRound = (int)_active->round();
     _state.cookiesCollected = (int)_active->cookies().collected();
     _state.cookiesRemaining = (int)_active->cookies().remaining();
@@ -57,7 +57,7 @@ void GameEngine::afterBuild()
 
 void GameEngine::update(float tiltX, float tiltY, float dt)
 {
-    if (_status != Status::Running || _active == nullptr || dt <= 0.0f)
+    if (_status != RunningStatus::RUNNING || _active == nullptr || dt <= 0.0f)
     {
         return;
     }
@@ -74,8 +74,8 @@ void GameEngine::update(float tiltX, float tiltY, float dt)
 
     if (_active->finished())
     {
-        _status = Status::Completed;
-        _state.status = "completed";
+        _status = RunningStatus::COMPLETED;
+        _state.runningStatus = RunningStatus::COMPLETED;
     }
 }
 
