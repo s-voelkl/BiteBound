@@ -9,25 +9,29 @@
  */
 struct SharedStateData
 {
-    // Identity & parameters
+    // Identity
     char playerName[32];
-    int gameId;
+
+    // Parameters
     int cookiesCount;
     int wallThicknessPx;
 
-    // Engine parameter configs
+    // Physics configs
     float imuSensitivity;
     float bounceRestitution;
     float emaAlpha;
     float deadzoneThreshold;
 
-    // Simulation outputs
+    // physics body state
     float ballPosX;
     float ballPosY;
     float velocityX;
     float velocityY;
     float accX;
     float accY;
+
+    // game state
+    int gameId;
     int cookiesCollected;
     int cookiesRemaining;
     int currentRound;
