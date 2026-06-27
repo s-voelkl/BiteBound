@@ -40,6 +40,17 @@ const int mqtt_qos = 1;
 const bool mqtt_retain = false;
 
 /** ----- Game settings ----- */
+
+/** Game ID for the maze game. */
+const int game_id_maze = 1;
+/** Game ID for the plane game. */
+const int game_id_plane = 2;
+/** Default game id. */
+const int default_game_id = game_id_maze;
+
+/** Default player name. */
+const char *const default_player_name = "Cookie-Lover";
+
 /** Default game duration in seconds. */
 const int default_game_duration_sec = 120;
 
@@ -51,6 +62,9 @@ const int default_max_visible_cookies = 4;
 
 /** Default cookie radius in pixels. */
 const float default_cookie_radius = 3.0f;
+
+/** Default physics body (sphere/ball) radius in pixels. */
+const float default_physics_body_radius = 4.0f;
 
 /** ----- Display settings ----- */
 /** Display width in pixels. */
