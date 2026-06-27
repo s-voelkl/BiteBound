@@ -13,7 +13,7 @@ bool CommandParser::parse(const String &jsonPayload, CommandMsg &outMsg)
 
     if (error)
     {
-        Serial.print(F("deserializeJson() failed: "));
+        Serial.print(F("JSON Deserialization Failure: "));
         Serial.println(error.f_str());
         return false;
     }
@@ -74,4 +74,21 @@ bool CommandParser::parse(const String &jsonPayload, CommandMsg &outMsg)
     outMsg.deadzoneThreshold = doc["physics"]["deadzone_threshold"] | default_deadzone_threshold;
 
     return true;
+}
+
+bool CommandParser::parse(const byte *payload, unsigned int length, CommandMsg &outMsg)
+{
+    if (payload == nullptr || length == 0)
+    {
+        return false;
+    }
+
+    String jsonStr;
+    jsonStr.reserve(length + 1);
+    for (unsigned int i = 0; i < length; ++i)
+    {
+        jsonStr += (char)payload[i];
+    }
+
+    return parse(jsonStr, outMsg);
 }
