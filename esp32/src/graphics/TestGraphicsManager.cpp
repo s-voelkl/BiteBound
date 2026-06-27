@@ -99,18 +99,18 @@ test(GraphicsManagerTest, FullVsPartialDrawTransitions)
     MockGFX mockGfx(240, 280);
     gm.begin(&mockGfx);
 
-    uint8_t grid[100] = {0};
+    uint8_t grid[1000] = {0};
     grid[5] = 1;
     grid[15] = 2; // Add walls
 
     PhysicsBody ball;
-    ball.x = 50.0f;
-    ball.y = 50.0f;
-    ball.radius = 4.0f;
+    ball.x = 5.0f;
+    ball.y = 5.0f;
+    ball.radius = 2.0f;
 
     Cookie cookies[2];
-    cookies[0] = Cookie(20.0f, 30.0f, 3.0f, true);
-    cookies[1] = Cookie(40.0f, 60.0f, 3.0f, true);
+    cookies[0] = Cookie(2.0f, 3.0f, 1.0f, true);
+    cookies[1] = Cookie(4.0f, 6.0f, 1.0f, true);
 
     GameState state;
     state.runningStatus = RunningStatus::RUNNING;
@@ -120,7 +120,7 @@ test(GraphicsManagerTest, FullVsPartialDrawTransitions)
     state.elapsedTimeSec = 0.0f;
 
     // First iteration: Trigger Full Redraw
-    gm.update(grid, 10, 10, ball, cookies, 2, state);
+    gm.update(grid, 10, 100, ball, cookies, 2, state);
 
     // Check that we performed exactly one full screen clear
     assertEqual(mockGfx.fullScreenClearCount, 1);
@@ -130,8 +130,8 @@ test(GraphicsManagerTest, FullVsPartialDrawTransitions)
     int preUpdateFastHLineCount = mockGfx.writeFastHLineCount;
 
     // Tick 2: Move the ball slightly (triggers Partial Redraw)
-    ball.x = 52.0f;
-    gm.update(grid, 10, 10, ball, cookies, 2, state);
+    ball.x = 6.0f;
+    gm.update(grid, 10, 100, ball, cookies, 2, state);
 
     // Verify that the screen was NOT cleared again
     assertEqual(mockGfx.fullScreenClearCount, 1);

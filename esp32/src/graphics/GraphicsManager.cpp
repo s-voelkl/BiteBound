@@ -124,11 +124,14 @@ void GraphicsManager::eraseRegion(int cx, int cy, int radius, const uint8_t *maz
     if (!_gfx || !mazeGrid)
         return;
 
+    // Map play-area relative cy to screen coordinates
+    int sy = cy + ui_header_height;
+
     // Define localized bounding box surrounding the shape
     int minX = max(0, cx - radius - 1);
     int maxX = min(_width - 1, cx + radius + 1);
-    int minY = max(ui_header_height, cy - radius - 1);
-    int maxY = min(_height - 1, cy + radius + 1);
+    int minY = max(ui_header_height, sy - radius - 1);
+    int maxY = min(_height - 1, sy + radius + 1);
 
     for (int y = minY; y <= maxY; ++y)
     {
@@ -162,14 +165,14 @@ void GraphicsManager::drawCookie(const Cookie &cookie)
 {
     if (!_gfx || !cookie.active)
         return;
-    _gfx->fillCircle((int16_t)cookie.x, (int16_t)cookie.y, (int16_t)cookie.radius, color_cookie);
+    _gfx->fillCircle((int16_t)cookie.x, (int16_t)(cookie.y + ui_header_height), (int16_t)cookie.radius, color_cookie);
 }
 
 void GraphicsManager::drawSphere(const PhysicsBody &ball)
 {
     if (!_gfx)
         return;
-    _gfx->fillCircle((int16_t)ball.x, (int16_t)ball.y, (int16_t)ball.radius, color_sphere);
+    _gfx->fillCircle((int16_t)ball.x, (int16_t)(ball.y + ui_header_height), (int16_t)ball.radius, color_sphere);
 }
 
 void GraphicsManager::update(
