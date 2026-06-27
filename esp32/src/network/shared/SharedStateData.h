@@ -2,6 +2,7 @@
 #define SHARED_STATE_DATA_H
 
 #include <Arduino.h>
+#include "src/game/RunningStatus.h"
 
 /**
  * @brief Synchronized game state and configurations accessed by both CPU cores.
@@ -36,7 +37,7 @@ struct SharedStateData
     int cookiesRemaining;
     int currentRound;
     float elapsedTimeSec;
-    bool isRunning;
+    RunningStatus runningStatus;
 };
 
 /**

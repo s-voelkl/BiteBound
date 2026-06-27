@@ -1,5 +1,6 @@
 #include "SharedStateData.h"
 #include "../../../config.h"
+#include "src/game/RunningStatus.h"
 
 void initSharedState(SharedStateData &state)
 {
@@ -12,5 +13,5 @@ void initSharedState(SharedStateData &state)
     state.bounceRestitution = default_bounce_restitution;
     state.emaAlpha = default_ema_alpha;
     state.deadzoneThreshold = default_deadzone_threshold;
-    state.isRunning = false;
+    state.runningStatus = RunningStatus::IDLE;
 }
