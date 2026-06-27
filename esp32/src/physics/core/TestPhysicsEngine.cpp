@@ -1,7 +1,8 @@
 #include "PhysicsEngine.h"
+#include "PhysicsBody.h"
+#include "PhysicsParams.h"
 #include "../colliders/BorderCollider.h"
 #include "../colliders/ICollider.h"
-#include "PhysicsBody.h"
 
 #include <math.h>
 #include <AUnit.h>
@@ -264,7 +265,7 @@ test(physics_step_bounceReflectsNormalScaledByRestitution)
 
     engine.step(b, Vec2(0.0f, 0.0f), 0.1f, borders);
 
-    assertNear(b.vx, -45.0f, 1e-3f);                  // -e * 60 = -45
+    assertNear(b.vx, -45.0f, 1e-3f);                   // -e * 60 = -45
     assertLessOrEqual(b.x + b.radius, 240.0f + 1e-3f); // back inside bounds
 }
 
