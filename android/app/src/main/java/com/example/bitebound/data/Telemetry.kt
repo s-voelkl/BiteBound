@@ -78,20 +78,20 @@ data class GameConfig(
 }
 
 data class GameState(
-    val status: String,
+    val runningStatus: String,
     val cookiesCollected: Int,
     val cookiesRemaining: Int,
     val currentRound: Int,
     val elapsedTimeSec: Double,
 ) {
-    val isRunning: Boolean get() = status.equals("running", ignoreCase = true)
-    val isFinished: Boolean get() = status.equals("finished", ignoreCase = true)
+    val isRunning: Boolean get() = runningStatus.equals("running", ignoreCase = true)
+    val isFinished: Boolean get() = runningStatus.equals("completed", ignoreCase = true)
 
     companion object {
         fun from(o: JSONObject?): GameState {
             val j = o ?: JSONObject()
             return GameState(
-                status = j.optString("status", "idle"),
+                runningStatus = j.optString("runningStatus", "idle"),
                 cookiesCollected = j.optInt("cookies_collected", 0),
                 cookiesRemaining = j.optInt("cookies_remaining", 0),
                 currentRound = j.optInt("current_round", 0),

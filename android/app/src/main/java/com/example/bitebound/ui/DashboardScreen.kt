@@ -179,7 +179,7 @@ private fun ScoreCard(telemetry: Telemetry) {
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
-            HeroStat("Status", telemetry.state.status.replaceFirstChar { it.uppercase() }, statusColor(telemetry.state.status))
+            HeroStat("Status", telemetry.state.runningStatus.replaceFirstChar { it.uppercase() }, runningStatusColor(telemetry.state.runningStatus))
             HeroStat("Round", telemetry.state.currentRound.toString(), ChocolateChip)
             HeroStat("Time", formatDuration(telemetry.state.elapsedTimeSec), ChocolateChip)
         }
@@ -328,9 +328,9 @@ private fun InfoRow(label: String, value: String) {
     }
 }
 
-private fun statusColor(status: String): Color = when (status.lowercase()) {
+private fun runningStatusColor(runningStatus: String): Color = when (runningStatus.lowercase()) {
     "running" -> MintGreen
-    "finished" -> Honey
+    "completed" -> Honey
     "stopped", "idle" -> ChocolateChip
     else -> ChocolateChip
 }
