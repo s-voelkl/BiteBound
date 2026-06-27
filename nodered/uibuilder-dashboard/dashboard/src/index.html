@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../uibuilder/images/uib-world.svg" type="image/svg+xml">
+
+    <title>BiteBound Dashboard</title>
+    <meta name="description" content="BiteBound web dashboard driven by Node-RED uibuilder and MQTT telemetry.">
+
+    <link type="text/css" rel="stylesheet" href="./index.css" media="all">
+
+    <script defer src="../uibuilder/uibuilder.iife.min.js">/* THE UIBUILDER LIBRARY MUST BE IN THE HTML! DO NOT REMOVE */</script>
+    <script type="module" defer src="./index.js">/* Main dashboard app */</script>
+</head>
+<body>
+    <div class="page-shell">
+        <header class="topbar card">
+            <div>
+                <p class="eyebrow">BiteBound</p>
+                <h1>Cookie Dashboard</h1>
+            </div>
+            <div class="topbar-status">
+                <span id="connection-status" class="status-badge connecting">Connecting</span>
+                <span id="message-count" class="muted">0 updates</span>
+            </div>
+        </header>
+
+        <main class="dashboard-grid">
+            <section class="card hero-card">
+                <h2>Cookie Score</h2>
+                <div class="hero-content">
+                    <div id="cookie-progress" class="cookie-progress" style="--progress: 0%;">
+                        <div class="cookie-center">
+                            <div class="cookie-value"><span id="cookies-collected">0</span></div>
+                            <div class="cookie-subtitle">of <span id="cookies-target">10</span></div>
+                        </div>
+                    </div>
+
+                    <div class="hero-stats">
+                        <article class="tile">
+                            <p class="tile-label">Status</p>
+                            <p id="status-value" class="tile-value">Idle</p>
+                        </article>
+                        <article class="tile">
+                            <p class="tile-label">Round</p>
+                            <p id="round-value" class="tile-value">0</p>
+                        </article>
+                        <article class="tile">
+                            <p class="tile-label">Time</p>
+                            <p id="time-value" class="tile-value">0s</p>
+                        </article>
+                    </div>
+                </div>
+                <p id="player-summary" class="muted">Player: Player 1 · Remaining: 10</p>
+            </section>
+
+            <section class="card controls-card">
+                <h2>Game Controls</h2>
+                <p class="muted">Commands are sent through uibuilder to Node-RED and then MQTT out.</p>
+
+                <div class="form-grid">
+                    <label>
+                        <span>Player name</span>
+                        <input id="player-name" type="text" value="Player 1" maxlength="40">
+                    </label>
+                    <label>
+                        <span>Cookies to collect</span>
+                        <input id="cookies-count" type="number" value="10" min="1" max="999">
+                    </label>
+                    <label>
+                        <span>Game ID</span>
+                        <input id="game-id" type="number" value="1" min="1" max="999999">
+                    </label>
+                    <label>
+                        <span>Wall thickness (px)</span>
+                        <input id="wall-thickness" type="number" value="6" min="1" max="48">
+                    </label>
+                </div>
+
+                <details class="physics-details">
+                    <summary>Physics defaults used in command payload</summary>
+                    <ul>
+                        <li>imu_sensitivity_multiplier: 1.25</li>
+                        <li>bounce_restitution: 0.75</li>
+                        <li>ema_alpha: 0.25</li>
+                        <li>deadzone_threshold: 0.04</li>
+                    </ul>
+                </details>
+
+                <div class="actions">
+                    <button id="start-game" class="btn btn-primary" type="button">Start</button>
+                    <button id="stop-game" class="btn btn-danger" type="button">Stop</button>
+                </div>
+                <p id="connection-error" class="muted">No connection errors.</p>
+            </section>
+
+            <section class="card board-card">
+                <h2>Live Board</h2>
+                <div class="board-wrap">
+                    <div id="board-area" class="board-area">
+                        <div id="board-ball" class="board-ball" aria-hidden="true"></div>
+                        <p id="board-empty" class="board-empty">Waiting for telemetry from the ESP32.</p>
+                    </div>
+                </div>
+
+                <div class="stats-grid three-up">
+                    <article class="tile"><p class="tile-label">Pos X</p><p id="board-pos-x" class="tile-value">0</p></article>
+                    <article class="tile"><p class="tile-label">Pos Y</p><p id="board-pos-y" class="tile-value">0</p></article>
+                    <article class="tile"><p class="tile-label">Collision</p><p id="board-collision" class="tile-value">No</p></article>
+                    <article class="tile"><p class="tile-label">Vel X</p><p id="board-vel-x" class="tile-value">0</p></article>
+                    <article class="tile"><p class="tile-label">Vel Y</p><p id="board-vel-y" class="tile-value">0</p></article>
+                    <article class="tile"><p class="tile-label">Acc X</p><p id="board-acc-x" class="tile-value">0</p></article>
+                </div>
+            </section>
+
+            <section class="card sensors-card">
+                <h2>IMU Sensors</h2>
+                <div class="stats-grid four-up">
+                    <article class="tile"><p class="tile-label">Accel X</p><p id="sensor-acc-x" class="tile-value">0</p></article>
+                    <article class="tile"><p class="tile-label">Accel Y</p><p id="sensor-acc-y" class="tile-value">0</p></article>
+                    <article class="tile"><p class="tile-label">Accel Z</p><p id="sensor-acc-z" class="tile-value">0</p></article>
+                    <article class="tile"><p class="tile-label">Gyro X</p><p id="sensor-gyro-x" class="tile-value">0</p></article>
+                    <article class="tile"><p class="tile-label">Gyro Y</p><p id="sensor-gyro-y" class="tile-value">0</p></article>
+                    <article class="tile"><p class="tile-label">Gyro Z</p><p id="sensor-gyro-z" class="tile-value">0</p></article>
+                    <article class="tile"><p class="tile-label">Battery (V)</p><p id="sensor-battery" class="tile-value">0</p></article>
+                    <article class="tile"><p class="tile-label">Button</p><p id="sensor-button" class="tile-value">Released</p></article>
+                </div>
+            </section>
+
+            <section class="card device-card">
+                <h2>Device</h2>
+                <div class="info-list">
+                    <p><span>Client ID</span><strong id="device-client-id">—</strong></p>
+                    <p><span>Hardware</span><strong id="device-hardware">—</strong></p>
+                    <p><span>Firmware</span><strong id="device-firmware">—</strong></p>
+                    <p><span>Wi-Fi</span><strong id="device-wifi">—</strong></p>
+                    <p><span>Uptime</span><strong id="device-uptime">0s</strong></p>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

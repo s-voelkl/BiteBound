@@ -1,0 +1,4 @@
+.config/**
+package.json
+package-lock.json
+package.json.bak
