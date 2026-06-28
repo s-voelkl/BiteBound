@@ -235,6 +235,7 @@ void GraphicsManager::update(
         {
             drawCookie(cookies[i]);
             _prevCookieActiveStates[i] = cookies[i].active;
+            _prevCookies[i] = cookies[i];
         }
         _prevCookieCount = min(cookieCount, max_rendered_cookies);
 
@@ -275,21 +276,31 @@ void GraphicsManager::update(
             }
         }
 
-        // 3. Process changes in cookie states (erase newly collected, render respawned)
+        // 3. Process cookie changes: erase eaten ones and (re)draw new or respawned
+        // ones. A respawn keeps the cookie active but moves it to a new spot, so we
+        // also have to treat a position change as "needs redraw" - that case was
+        // missing before, which is why respawned cookies never showed up.
         for (int i = 0; i < cookieCount && i < max_rendered_cookies; ++i)
         {
+            const Cookie &cur = cookies[i];
+            const Cookie &prev = _prevCookies[i];
             bool wasActive = (i < _prevCookieCount) ? _prevCookieActiveStates[i] : false;
-            bool isActive = cookies[i].active;
+            bool isActive = cur.active;
+            bool moved = ((int)prev.x != (int)cur.x) || ((int)prev.y != (int)cur.y);
 
-            if (wasActive && !isActive)
+            // Erase the old drawing if the cookie was visible and has now gone or moved.
+            if (wasActive && (!isActive || moved))
             {
-                eraseRegion((int)cookies[i].x, (int)cookies[i].y, (int)cookies[i].radius, mazeGrid, gridWidth, gridHeight);
+                eraseRegion((int)prev.x, (int)prev.y, (int)prev.radius, mazeGrid, gridWidth, gridHeight);
             }
-            else if (!wasActive && isActive)
+            // Draw at the current spot if it is visible and just appeared or moved.
+            if (isActive && (!wasActive || moved))
             {
-                drawCookie(cookies[i]);
+                drawCookie(cur);
             }
+
             _prevCookieActiveStates[i] = isActive;
+            _prevCookies[i] = cur;
         }
         _prevCookieCount = min(cookieCount, max_rendered_cookies);
 

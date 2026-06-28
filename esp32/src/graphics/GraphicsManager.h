@@ -79,6 +79,9 @@ private:
     // Local registers tracking changes between consecutive frames
     PhysicsBody _prevBall;
     bool _prevCookieActiveStates[max_rendered_cookies];
+    // Previous cookie positions, so a respawn (cookie stays active but moves)
+    // can be erased at the old spot and redrawn at the new one.
+    Cookie _prevCookies[max_rendered_cookies];
     int _prevCookieCount;
     GameState _prevGameState;
 
