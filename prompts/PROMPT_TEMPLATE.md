@@ -1,13 +1,16 @@
-# Prompt Title
+\subsection{Prompt Title}
 
-Prompt:
-
-```txt
+\textbf{Prompt:}
+\begin{lstlisting}[language={}, breaklines=true]
 Prompt
-```
+\end{lstlisting}
 
-Answer with Gemini Flash 3.5 Thinking:
+% \textbf{Context:}
+% \begin{lstlisting}[language={}, breaklines=true]
+% Optional context
+% \end{lstlisting}
 
-```txt
+\textbf{Answer:}
+\begin{lstlisting}[language={}, breaklines=true]
 Answer
-```
+\end{lstlisting}

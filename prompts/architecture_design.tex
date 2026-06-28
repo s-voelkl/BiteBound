@@ -1,8 +1,7 @@
-# Architecture Design Proposal
+\subsection{Architecture Design Proposal}
 
-Prompt:
-
-```txt
+\textbf{Prompt:}
+\begin{lstlisting}[language={}, breaklines=true]
 I need a professional system architecture proposal for an embedded IoT project called "BiteBound".
 
 Hardware: Waveshare ESP32-S3 1.69" Touch Display Board (ST7789V2 LCD, QMI8658 IMU).
@@ -17,12 +16,11 @@ Requirements:
 - Bidirectional MQTT communication layout using JSON payloads (telemetry from ESP32, configuration commands from dashboards).
 - Brief mention of core algorithms needed for the 2D physics engine and maze generation.
 
-Please provide a structural overview only—do not generate any implementation code yet.
-```
+Please provide a structural overview only -- do not generate any implementation code yet.
+\end{lstlisting}
 
-Answer with Gemini Flash 3.5 Thinking:
-
-```txt
+\textbf{Answer:}
+\begin{lstlisting}[language={}, breaklines=true]
 # SYSTEM ARCHITECTURE PROPOSAL: PROJECT BITEBOUND
 Target Hardware: Waveshare ESP32-S3 1.69" Touch Display Board
 
@@ -48,35 +46,34 @@ To maintain deterministic 60 FPS gameplay while managing non-blocking network I/
 ## 3. PROJECT FOLDER STRUCTURE
 A standardized, modular PlatformIO directory layout ensures clean encapsulation of drivers, business logic, and assets.
 
-bitebound/
-├── firmware/                        # ESP32-S3 Arduino C++ Firmware Project
-│   ├── include/                     # Public Header Files
-│   │   ├── config.h                 # Wi-Fi/MQTT credentials and hardware pinouts
-│   │   ├── game_engine.h            # State machine and 2D physics definitions
-│   │   ├── maze_gen.h               # Grid-based maze generation declarations
-│   │   ├── mqtt_handler.h           # MQTTS client and JSON parser wrappers
-│   │   └── periph_imu.h             # QMI8658 driver abstraction
-│   ├── src/                         # Source Implementations
-│   │   ├── main.cpp                 # FreeRTOS task initialization and setups
-│   │   ├── game_engine.cpp          # Physics loop and GFX rendering calls
-│   │   ├── maze_gen.cpp             # Maze generation algorithm execution
-│   │   ├── mqtt_handler.cpp         # HiveMQ connection and callback handling
-│   │   └── periph_imu.cpp           # IMU calibration and raw-to-tilt conversion
-│   ├── lib/                         # Local/Custom helper libraries
-│   └── platformio.ini               # Dependency management (GFX, ArduinoJson, PubSubClient)
-├── dashboards/                      # Ecosystem Ecosystem Controllers
-│   ├── node-red/
-│   │   └── flows.json               # Node-RED web dashboard layout and MQTT nodes
-│   └── android/                     # Mobile Application Component
-│       └── app/                     # Native Android studio project source files
-└── docs/                            # Architectural schemas and communication schemas
+\texttt{bitebound/}
+\begin{itemize}[label=]
+\item firmware/ -- ESP32-S3 Arduino C++ Project
+  \begin{itemize}[label=]
+  \item include/ -- Headers
+    \begin{itemize}[label=]
+    \item config.h, game\_engine.h, maze\_gen.h, mqtt\_handler.h, periph\_imu.h
+    \end{itemize}
+  \item src/ -- Implementations
+    \begin{itemize}[label=]
+    \item main.cpp, game\_engine.cpp, maze\_gen.cpp, mqtt\_handler.cpp, periph\_imu.cpp
+    \end{itemize}
+  \item platformio.ini -- Dependencies
+  \end{itemize}
+\item dashboards/
+  \begin{itemize}[label=]
+  \item node-red/ -- flows.json
+  \item android/ -- Native app
+  \end{itemize}
+\item docs/ -- Architecture schemas
+\end{itemize}
 
 ## 4. BIDIRECTIONAL MQTT COMMUNICATION LAYOUT
 All messaging routes securely through HiveMQ Cloud over TLS (Port 8883) using JSON string payloads.
 
 ### Topic Namespace Strategy
-- bitebound/{device_id}/telemetry — Published by ESP32-S3 to Cloud (Interval: 1Hz or on Game Over)
-- bitebound/{device_id}/config    — Subscribed by ESP32-S3; Published by Node-RED/Android App
+- bitebound/{device_id}/telemetry -- Published by ESP32-S3 to Cloud (Interval: 1Hz or on Game Over)
+- bitebound/{device_id}/config    -- Subscribed by ESP32-S3; Published by Node-RED/Android App
 
 ### Payload Data Schemas
 #### A. Telemetry Schema (Device -> Cloud)
@@ -127,3 +124,5 @@ JSON
 - **Algorithm:** Randomized Depth-First Search (Recursive Backtracker) operating on a discrete mathematical grid mapped to the ST7789V2 LCD layout (e.g., $16 \times 16$ cell matrix).
 - **Process Flow:** 1. Initialize all grid spaces as unvisited with walls intact on all four faces. 2. Choose a random starting cell, mark it as visited, and push it onto a tracking stack. 3. While the stack is not empty: pop a cell, check for unvisited neighbors. If found, pick one at random, knock down the shared wall between them, mark the new cell as visited, and push both cells back onto the stack.
 - **Physics Interaction:** The 2D physics engine reads the generated cell wall array to execute static line-segment coordinate checks against the ball's radius vector to deny passage.
+
+\end{lstlisting}

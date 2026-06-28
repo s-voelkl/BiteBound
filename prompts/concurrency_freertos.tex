@@ -1,19 +1,17 @@
-# Concurrency and FreeRTOS
+\subsection{Concurrency and FreeRTOS}
 
-Prompt:
-
-```txt
+\textbf{Prompt:}
+\begin{lstlisting}[language={}, breaklines=true]
 I am developing an embedded 2D game on an ESP32-S3. The application has two main components with vastly different timing requirements: a high-frequency game loop running at circa 50Hz (handling low-pass filtered IMU input, physics sub-stepping, collision resolution, and display rendering) and a low-frequency network stack running at circa 2Hz (handling blocking MQTT connections, TLS handshakes, and telemetry JSON serialization).
 
 Running these sequentially stalls the frame rate whenever the network blocks. Since the ESP32-S3 is a dual-core SoC, I want to use a way to separate these workloads across Core 0 and Core 1.
 
-Can you provide a high-level architectural pattern using a library or a possible solution that is state of the art and industry standard? 
+Can you provide a high-level architectural pattern using a library or a possible solution that is state of the art and industry standard?
 Also compare possible solutions. Provide a problem-agnostic explanation and boilerplate code demonstrating how to set this up in C++ with Arduino on an ESP32-S3.
-```
+\end{lstlisting}
 
-Answer with Gemini Flash 3.5 Thinking:
-
-```txt
+\textbf{Answer:}
+\begin{lstlisting}[language={}, breaklines=true]
 The industry-standard, state-of-the-art pattern for this architecture on the ESP32-S3 is **Dual-Core Task Pinning with Thread-Safe Inter-Process Communication (IPC)** using the native FreeRTOS SDK embedded in the Arduino core.
 
 ## Architectural Pattern: Asymmetric Core Isolation
@@ -43,7 +41,7 @@ For IPC, **FreeRTOS Queues** are the standard choice for decoupling telemetry da
 
 Here is a problem-agnostic template demonstrating how to pin tasks to separate cores and safely stream telemetry data from your 50Hz game loop to a 2Hz network stack.
 
-#include <Arduino.h>
+# include <Arduino.h>
 
 // Structure for cross-core telemetry data sharing
 struct TelemetryData {
@@ -101,5 +99,4 @@ void networkTaskLoop(void *pvParameters) {
         }
     }
 }
-
-```
+\end{lstlisting}
