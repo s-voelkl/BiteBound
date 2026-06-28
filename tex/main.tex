@@ -145,6 +145,25 @@
 	\today\\[2.5cm]
 \end{center}
 
+% logo of the project and device picture
+\begin{figure}[h]
+	\centering
+	\begin{minipage}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{../assets/logo/logo.png}
+		\caption[BiteBound Project Logo]{Project Logo of the BiteBound Game. Designed by Simon Völkl.}
+		\label{fig:bitebound_logo}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[b]{0.45\linewidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{../assets/esp32-s3-display.png}
+		\caption[Waveshare ESP32-S3]{Waveshare ESP32-S3 1.69inch Touch Display. Source: waveshare.com}
+		\label{fig:esp32_s3_display}
+	\end{minipage}
+\end{figure}
+\clearpage
+
 \tableofcontents
 
 \clearpage
@@ -159,9 +178,10 @@
 \input{sec_evaluation}
 \input{sec_summary}
 
-\appendix
-\input{sec_prompts}
-\input{sec_esp32_code}
+% TODO: Inclide the appendix section!
+% \appendix
+% \input{sec_prompts}
+% \input{sec_esp32_code}
 
 % -------------------------
 % \begin{figure}[h]
