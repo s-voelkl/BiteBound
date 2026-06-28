@@ -237,7 +237,8 @@ void updateGameStep() {
 
   // 3. Physics: Advance the active game by one physics frame if running.
   if (isRunningStatus) {
-    gameEngine.update(sensorData.gyroscopeX, sensorData.gyroscopeY, dt);
+    // Coordinate system is rotated by 90 degrees.
+    gameEngine.update(-sensorData.accelerometerY, sensorData.accelerometerX, dt);
   }
 
   // 4. Display: Render the current game state to the display.
