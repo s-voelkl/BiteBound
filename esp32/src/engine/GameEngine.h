@@ -39,6 +39,19 @@ public:
     /** @brief Advances to the next round of the active game (regenerates Game 1s maze). */
     void nextRound();
 
+    /** @brief Stops the active game and drops the engine back to idle.
+     *  Needed so a STOP command actually sticks - otherwise update() keeps the
+     *  state RUNNING and the telemetry overwrites the idle flag again. */
+    void stop();
+
+    /** @brief Resumes a paused (idle) game right where it left off, keeping the
+     *  ball, cookies, round and timer. Unlike chooseGameMode() it does NOT rebuild
+     *  the level. Does nothing if there's no game or it already finished. */
+    void resume();
+
+    /** @brief True when there's a paused game that resume() could pick back up. */
+    bool canResume() const { return _active != nullptr && _status == RunningStatus::IDLE; }
+
     /**
      * @brief Advances the active game by one frame.
      * @param tiltX In-plane tilt input (e.g. accelerometer X).

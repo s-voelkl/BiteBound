@@ -106,6 +106,12 @@ private:
      * @brief Draws the sphere.
      */
     void drawSphere(const PhysicsBody &ball);
+
+    /**
+     * @brief Draws a "paused" symbol (two vertical bars, like a stopped video)
+     * centered over the play area. Shown while the game is idle/paused.
+     */
+    void drawPauseOverlay();
 };
 
 #endif // GRAPHICS_MANAGER_H

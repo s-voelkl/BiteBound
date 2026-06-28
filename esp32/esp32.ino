@@ -177,8 +177,19 @@ void processIncomingCommands() {
           strncpy(sharedState.playerName, commandMsg.playerName, sizeof(sharedState.playerName) - 1);
         } 
         else if (commandMsg.type == CommandType::STOP) {
+          // Tell the engine to stop too, not just the shared flag. Otherwise the
+          // game step writes the running state back from the engine next frame.
+          gameEngine.stop();
           sharedState.runningStatus = RunningStatus::IDLE;
-        } 
+        }
+        else if (commandMsg.type == CommandType::RESUME) {
+          // Continue a paused game right where it left off (no rebuild). resume()
+          // ignores it if there's no paused game, so a stray resume is harmless.
+          if (gameEngine.canResume()) {
+            gameEngine.resume();
+            sharedState.runningStatus = RunningStatus::RUNNING;
+          }
+        }
         else if (commandMsg.type == CommandType::PARAM_CHANGE) {
           GameConfig config;
           config.physics.sensitivity = commandMsg.imuSensitivity;
@@ -196,6 +207,8 @@ void processIncomingCommands() {
       Serial.println("Command: Start game received.");
     } else if (commandMsg.type == CommandType::STOP) {
       Serial.println("Command: Stop game received.");
+    } else if (commandMsg.type == CommandType::RESUME) {
+      Serial.println("Command: Resume game received.");
     } else if (commandMsg.type == CommandType::PARAM_CHANGE) {
       Serial.println("Command: Parameter Change received.");
     } else {

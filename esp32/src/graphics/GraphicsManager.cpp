@@ -175,6 +175,26 @@ void GraphicsManager::drawSphere(const PhysicsBody &ball)
     _gfx->fillCircle((int16_t)ball.x, (int16_t)(ball.y + ui_header_height), (int16_t)ball.radius, color_sphere);
 }
 
+void GraphicsManager::drawPauseOverlay()
+{
+    if (!_gfx)
+        return;
+
+    const int barWidth = 14;
+    const int barHeight = 56;
+    const int gap = 16;
+
+    int centerX = _width / 2;
+    int centerY = ui_header_height + (_height - ui_header_height) / 2;
+    int top = centerY - barHeight / 2;
+
+    int leftX = centerX - gap / 2 - barWidth;
+    int rightX = centerX + gap / 2;
+
+    _gfx->fillRect(leftX, top, barWidth, barHeight, color_frosting_white);
+    _gfx->fillRect(rightX, top, barWidth, barHeight, color_frosting_white);
+}
+
 void GraphicsManager::update(
     const uint8_t *mazeGrid,
     int gridWidth,
@@ -196,6 +216,15 @@ void GraphicsManager::update(
         _needsFullRedraw = true;
     }
 
+    // While paused (idle) the ball is frozen. Draw one full frame with the pause
+    // bars on top, then leave the screen untouched on later ticks so the partial
+    // update path doesn't erase the overlay.
+    bool paused = (state.runningStatus == RunningStatus::IDLE);
+    if (paused && !_needsFullRedraw)
+    {
+        return;
+    }
+
     if (_needsFullRedraw)
     {
         // Redraw display from scratch
@@ -211,6 +240,12 @@ void GraphicsManager::update(
 
         drawSphere(ball);
         drawUI(state, true);
+
+        // Lay the pause bars over everything else while idle.
+        if (paused)
+        {
+            drawPauseOverlay();
+        }
 
         // Store structures
         _prevBall = ball;
