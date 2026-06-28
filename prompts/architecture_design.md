@@ -1,0 +1,129 @@
+# Architecture Design Proposal
+
+Prompt:
+
+```txt
+I need a professional system architecture proposal for an embedded IoT project called "BiteBound".
+
+Hardware: Waveshare ESP32-S3 1.69" Touch Display Board (ST7789V2 LCD, QMI8658 IMU).
+Firmware: Arduino framework (C++) with GFX library to build two tilt-controlled games (a random maze game and an open-arena ball game with wall reflections).
+Connectivity: Bidirectional MQTTS via HiveMQ Cloud.
+Dashboards: Synchronized Node-RED web dashboard and an Android app.
+
+Requirements:
+
+- High-level architecture design separating game loops and network tasks.
+- Clean project folder structure for submission.
+- Bidirectional MQTT communication layout using JSON payloads (telemetry from ESP32, configuration commands from dashboards).
+- Brief mention of core algorithms needed for the 2D physics engine and maze generation.
+
+Please provide a structural overview only—do not generate any implementation code yet.
+```
+
+Answer with Gemini Flash 3.5 Thinking:
+
+```txt
+# SYSTEM ARCHITECTURE PROPOSAL: PROJECT BITEBOUND
+Target Hardware: Waveshare ESP32-S3 1.69" Touch Display Board
+
+
+## 1. SYSTEM OVERVIEW
+Project "BiteBound" is an IoT-enabled, tilt-controlled physical gaming platform built on an embedded microcontroller architecture. Utilizing an onboard IMU for precise tilt-sensing and a round/rectangular TFT display for visualization, the system offers real-time physics and maze-based gameplay. Concurrent bidirectional cloud communication via MQTTS enables remote dashboard monitoring, operational synchronization, and over-the-air parameter configuration.
+
+## 2. HIGH-LEVEL ARCHITECTURE (FIRMWARE & NETWORK SEPARATION)
+To maintain deterministic 60 FPS gameplay while managing non-blocking network I/O, the firmware exploits the dual-core architecture of the ESP32-S3 via FreeRTOS.
+
+### Core Allocation Strategy
+* **Core 1: Real-Time Game & Perception Loop (High Priority)**
+    * **Responsibilities:** IMU sensor polling, 2D physics integration, collision detection, maze wall logic, and high-speed GFX frame-buffer rendering.
+    * **Execution Model:** Fixed time-step loop (e.g., 16.6ms for 60Hz target) to guarantee consistent physical interactions.
+* **Core 0: Network & Asynchronous Telemetry Loop (Low-to-Medium Priority)**
+    * **Responsibilities:** Wi-Fi connection state machine, Secure MQTT (MQTTS) keep-alives, inbound JSON command parsing, and outbound JSON telemetry serialization.
+    * **Execution Model:** Event-driven/blocked state, awakening upon received network packets or when notified by Core 1 telemetry triggers.
+
+### Inter-Task Communication (ITC)
+* **Telemetry Queue (Core 1 -> Core 0):** A thread-safe FreeRTOS Queue passing bounded structs containing current game states, scores, and active frame metrics.
+* **Configuration Mutex/Shared Structure (Core 0 -> Core 1):** A shared configuration block protected by a lightweight Mutex, updated when dashboards publish new gameplay variables (e.g., gravity scalar, difficulty).
+
+## 3. PROJECT FOLDER STRUCTURE
+A standardized, modular PlatformIO directory layout ensures clean encapsulation of drivers, business logic, and assets.
+
+bitebound/
+├── firmware/                        # ESP32-S3 Arduino C++ Firmware Project
+│   ├── include/                     # Public Header Files
+│   │   ├── config.h                 # Wi-Fi/MQTT credentials and hardware pinouts
+│   │   ├── game_engine.h            # State machine and 2D physics definitions
+│   │   ├── maze_gen.h               # Grid-based maze generation declarations
+│   │   ├── mqtt_handler.h           # MQTTS client and JSON parser wrappers
+│   │   └── periph_imu.h             # QMI8658 driver abstraction
+│   ├── src/                         # Source Implementations
+│   │   ├── main.cpp                 # FreeRTOS task initialization and setups
+│   │   ├── game_engine.cpp          # Physics loop and GFX rendering calls
+│   │   ├── maze_gen.cpp             # Maze generation algorithm execution
+│   │   ├── mqtt_handler.cpp         # HiveMQ connection and callback handling
+│   │   └── periph_imu.cpp           # IMU calibration and raw-to-tilt conversion
+│   ├── lib/                         # Local/Custom helper libraries
+│   └── platformio.ini               # Dependency management (GFX, ArduinoJson, PubSubClient)
+├── dashboards/                      # Ecosystem Ecosystem Controllers
+│   ├── node-red/
+│   │   └── flows.json               # Node-RED web dashboard layout and MQTT nodes
+│   └── android/                     # Mobile Application Component
+│       └── app/                     # Native Android studio project source files
+└── docs/                            # Architectural schemas and communication schemas
+
+## 4. BIDIRECTIONAL MQTT COMMUNICATION LAYOUT
+All messaging routes securely through HiveMQ Cloud over TLS (Port 8883) using JSON string payloads.
+
+### Topic Namespace Strategy
+- bitebound/{device_id}/telemetry — Published by ESP32-S3 to Cloud (Interval: 1Hz or on Game Over)
+- bitebound/{device_id}/config    — Subscribed by ESP32-S3; Published by Node-RED/Android App
+
+### Payload Data Schemas
+#### A. Telemetry Schema (Device -> Cloud)
+
+{
+  "timestamp": 1782631200,
+  "device_id": "esp32s3_bb_01",
+  "status": "PLAYING",
+  "active_game": "OPEN_ARENA",
+  "metrics": {
+    "score": 1420,
+    "level": 3,
+    "elapsed_sec": 45.2
+  },
+  "dynamics": {
+    "tilt_x": -0.12,
+    "tilt_y": 0.45,
+    "ball_vel_x": 3.4,
+    "ball_vel_y": -1.2
+  }
+}
+
+#### B. Configuration Command Schema (Cloud -> Device)
+
+JSON
+{
+  "command_id": "cmd_9921",
+  "target_game": "MAZE",
+  "settings": {
+    "physics_sensitivity": 1.5,
+    "restitution_coeff": 0.85,
+    "display_brightness": 255
+  },
+  "control": {
+    "reset_game": false,
+    "force_pause": false
+  }
+}
+
+## 5. CORE ALGORITHMS SPECIFICATION
+### A. 2D Physics Engine
+
+- **Input Mapping:** Read linear accelerations ($A_x, A_y$) from the QMI8658 IMU. Transform raw values into screen-space directional force vectors through a low-pass complementary filter to eliminate high-frequency hand tremors.
+- **Numerical Integration:** Apply explicit Euler integration at a fixed time-step ($\Delta t$):$$\vec{v}_{new} = \vec{v}_{old} + (\vec{A}_{mapped} \cdot \Delta t)$$$$\vec{p}_{new} = \vec{p}_{old} + (\vec{v}_{new} \cdot \Delta t)$$
+- **Collision Response (Open Arena Reflection):** Implement axis-aligned bounding box (AABB) or circle-vs-line boundaries. When a display border violation occurs, the respective velocity vector component is inverted and scaled by a coefficient of restitution ($e$):$$v_x = -v_x \cdot e \quad \text{(On Vertical Wall Impact)}$$
+
+### B. Maze Generation
+- **Algorithm:** Randomized Depth-First Search (Recursive Backtracker) operating on a discrete mathematical grid mapped to the ST7789V2 LCD layout (e.g., $16 \times 16$ cell matrix).
+- **Process Flow:** 1. Initialize all grid spaces as unvisited with walls intact on all four faces. 2. Choose a random starting cell, mark it as visited, and push it onto a tracking stack. 3. While the stack is not empty: pop a cell, check for unvisited neighbors. If found, pick one at random, knock down the shared wall between them, mark the new cell as visited, and push both cells back onto the stack.
+- **Physics Interaction:** The 2D physics engine reads the generated cell wall array to execute static line-segment coordinate checks against the ball's radius vector to deny passage.
