@@ -1,48 +1,112 @@
 \section{Hardware}
 \label{sec:hardware}
-Written in Arduino. \cite{ArduinoLanguageReference}
+The firmware of the BiteBound platform is written in C++ using the Arduino framework~\cite{ArduinoLanguageReference}.
+The code operates on a dual-core microcontroller to separate timing-sensitive game updates from network Input/Output (I/O) activities.
 
-% \begin{figure}[h]
-%     \centering
-%     \includegraphics[width=0.9\linewidth]{../diagrams/out/architecture/architecture.png}
-%     \caption[BiteBound Architecture]{System architecture diagram displaying modular firmware packages, cross-core memory boundaries, and execution contexts.}
-%     \label{fig:architecture}
-% \end{figure}
-
-% sideways figure for better readability
 \begin{sidewaysfigure}[p]
     \centering
     \includegraphics[width=\textheight]{../diagrams/out/hardware-architecture/hardware-architecture.png}
-    \caption[BiteBound Hardware Architecture]{Hardware architecture UML diagram..}
+    \caption[BiteBound Hardware Architecture]{Hardware architecture UML diagram.}
     \label{fig:hardware-architecture}
 \end{sidewaysfigure}
 
 \subsection{ESP32-S3 Microcontroller}
 \label{subsec:esp32_s3_microcontroller}
-% TODO: write ESP32-S3 Microcontroller
-% Describe the hardware components in detail, especially the ESP32-S3.
-ESP32-S3: \cite{wavesharedoku}
+The core processing unit is a Waveshare ESP32-S3 1.69-inch Touch LCD development board~\cite{wavesharedoku2026}.
+Onboard peripherals integrated on the board include a QMI8658 six-axis Inertial Measurement Unit (IMU), a Real-Time Clock (RTC), and an ST7789-driven 240$\times$280 pixel Liquid Crystal Display (LCD).
+Dedicated hardware pins and interface buses (I2C for sensors, SPI for the display) are managed centrally via the \texttt{config.h} configuration file~\cite{waveshare2026pinconfig}.
 
 \subsection{Concurrency}
+\label{subsec:concurrency}
+
+Execution is distributed across both processor cores using FreeRTOS tasks to maintain stable game loop execution rates~\cite{freertos2026esp32}:
+
+\begin{itemize}
+    \item Core 1 (Game Core): Runs the main application thread executing the game loop at approximately 50\,Hz (20\,ms loop budget). This core is responsible for sensor readings, physics steps, collision resolution, game engine updates, and display rendering. It is designed to be non-blocking and deterministic to ensure smooth gameplay.
+    \item Core 0 (Network Core): Executes the background network task (\texttt{vNetworkTask}) at approximately 2\,Hz. This core handles secure TLS handshakes, manages the MQTT client connection, and serializes and publishes telemetry data.
+\end{itemize}
+
+Inter-process communication (IPC) between cores utilizes two distinct mechanisms to ensure thread safety and avoid race conditions~\cite{ipc2026}:
+
+\begin{itemize}
+    \item Mutex Synchronization: The global state structure (\texttt{SharedStateData}) is protected with a FreeRTOS semaphore. Access is managed through a C++ Resource Acquisition Is Initialization (RAII) helper class (\texttt{MutexLock}) to automate the lock release cycle and avoid deadlock states~\cite{cppreference2026raii}.
+    \item Command Queue: Unidirectional commands from Core 0 are transferred to Core 1 using a thread-safe FreeRTOS queue (\texttt{commandQueue}) with a length of 10. This structure prevents network tasks from causing latency or stalling the rendering pipeline~\cite{freertos2026esp32}.
+\end{itemize}
 
 \subsection{Sensor Data Acquisition}
 \label{subsec:sensor_data_acquisition}
-% TODO: write Sensor Data Acquisition
-% Detail the data acquisition from the sensors and filtering.
+
+Onboard data collection is managed by the \texttt{SensorManager} class, which reads physical values from the QMI8658 IMU over I2C and samples battery voltage through an internal Analog-to-Digital Converter (ADC). The raw accelerometer ($a_x, a_y, a_z$) and gyroscope ($\omega_x, \omega_y, \omega_z$) readings are structured inside the \texttt{SensorData} format.
+
+To filter out high-frequency noise and mechanical vibrations, the raw tilt inputs are smoothed using an Exponential Moving Average (EMA) filter~\cite{klinker2011exponential}:
+
+\begin{equation}
+    S_t = \alpha \cdot Y_t + (1 - \alpha) \cdot S_{t-1}
+\end{equation}
+
+where $S_t$ is the filtered value, $Y_t$ is the current sensor input, and $\alpha$ is the smoothing coefficient (\texttt{ema\_alpha} in configuration).
+A deadzone threshold is then applied to the output; inputs falling below this range are registered as zero, preventing drifting movement when the controller is resting.
+
+% HERE: FIND SOURCE. 
 
 \subsection{Physics Simulation \& Game Logic}
 \label{subsec:physics_simulation_game_logic}
-% TODO: write Physics Simulation & Game Logic
-% Explain the physics simulation with its mathematical formulas.
-% EMA usage for default_ema_alpha: \cite{klinker2011exponential}
-% Bounce restitution: \cite{wang2017bounce}
+
+The two-dimensional physics simulation is implemented inside the \texttt{PhysicsEngine} class. It is parameterized via the \texttt{PhysicsParams} structure, enabling real-time adjustments. The ball is modeled as a \texttt{PhysicsBody} with position $\vec{x}$, velocity $\vec{v}$, and radius $r$.
+
+The engine uses semi-implicit Euler integration~\cite{TRNKA1997277} with a constant time step ($dt = 0.02$\,s) to update kinematics:
+
+\begin{equation}
+    \vec{v}_{t+1} = \vec{v}_t + \vec{a} \cdot dt
+\end{equation}
+
+\begin{equation}
+    \vec{x}_{t+1} = \vec{x}_t + \vec{v}_{t+1} \cdot dt
+\end{equation}
+
+where $\vec{a}$ is the scaled acceleration derived from the filtered tilt values. The velocity is capped at a configurable \texttt{maxSpeed} threshold. To prevent tunneling errors when dealing with fast movements or thin boundaries, sub-stepping is utilized during collision detection.
+
+Collisions with the environment are resolved via the \texttt{ICollider} strategy interface. The \texttt{BorderCollider} class checks for rectangular screen boundary crossings, while the \texttt{MazeCollider} evaluates pixel-level collisions against the generated layout grid.
+Upon detecting a collision, the engine extracts the normal vector $\hat{n}$ and calculates the updated velocity according to a restitution model~\cite{wang2017bounce}:
+
+\begin{equation}
+    \vec{v}_{\text{new}} = \vec{v} - (1 + e)(\vec{v} \cdot \hat{n})\hat{n}
+\end{equation}
+
+where $e \in [0, 1]$ represents the bounce restitution factor. The tangential velocity remains unaffected, permitting the ball to slide along walls.
+
+Collectibles are modeled using the \texttt{CookieField} class.
+When the physical body of the ball overlaps with an active cookie coordinate within a configured pickup radius, the score is incremented and the \texttt{ICookieSpawner} strategy interface instantiates a new cookie.
+The \texttt{RectCookieSpawner} places cookies within random bounds for the open field, whereas the \texttt{MazeCookieSpawner} identifies walkable coordinates within the maze layout using generated cell lists.
 
 \subsection{Display}
 \label{subsec:display}
-% TODO: write Display
-% Detail the display logic and game mechanics with screenshots.
+
+The rendering of the interface is performed by the \texttt{GraphicsManager} using the Adafruit GFX-compatible \texttt{Arduino\_GFX} library~\cite{arduino2026gfx}.
+Transmitting a full 16-bit color frame ($240 \times 280$ pixels) requires writing 131.25\,KB of data, which requires approximately 40\,ms of transmission time over a standard 27\,MHz SPI bus.
+This exceeds the 20\,ms limit of the 50\,Hz game loop.
+
+To achieve a consistent frame rate, the display module utilizes a hybrid update scheme:
+
+\begin{itemize}
+    \item Full Redraw: Performed only at round transitions or configuration resets. Static elements such as borders and the complete maze layout are rendered entirely. Horizontally adjacent pixels are drawn as unified spans to minimize SPI transaction overhead.
+    \item Partial Redraw: Used during active game updates. On every tick, the manager clears only the bounding box representing the ball's previous position. It recovers the background texture or any overlapping cookie graphics, then draws the ball at its new coordinate. This limits the active data transfer to approximately 1\,KB per frame, keeping SPI communication time under 1\,ms.
+\end{itemize}
+
+Volatile HUD elements, such as the score and elapsed time, are cached and updated only when their internal values change.
 
 \subsection{MQTT Communication}
 \label{subsec:mqtt_communication}
-% TODO: write MQTT Communication
-% Describe the MQTT communication setup, topics, and payloads.
+The network layer connects to a HiveMQ Cloud broker over an encrypted TLS connection~\cite{mqtt2026}. Network credentials and SSL certificates are compiled from the git-ignored \texttt{wifi\_mqtt\_secrets.h} file. Certificate validation is supported by synchronization with the NTP server pool via the \texttt{TimeManager} during initialization.
+
+The device establishes two main communication paths:
+
+\begin{itemize}
+    \item Command Topic (\texttt{mauc2026/group\_03/game/command}):
+          Receives control payloads from external dashboards.
+          The incoming JSON content is processed by the static \texttt{CommandParser} class to adjust gameplay states or update physical and visual parameters on the fly~\cite{json2026}.
+    \item Telemetry Topic (\texttt{mauc2026/group\_03/game/telemetry}):
+          Publishes state reports at a 2\,Hz interval.
+          The \texttt{JsonBuilder} class structures the combined hardware information, configuration records, game progress, physics parameters, and raw sensor readings into a unified JSON format.
+\end{itemize}
+All communication packets default to Quality of Service 1 (QoS 1) with the retain flag set to false to avoid processing stale telemetry.
