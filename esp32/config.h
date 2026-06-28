@@ -61,10 +61,10 @@ const int default_cookies_count = 10;
 const int default_max_visible_cookies = 4;
 
 /** Default cookie radius in pixels. */
-const float default_cookie_radius = 3.0f;
+const float default_cookie_radius = 5.0f;
 
 /** Default physics body (sphere/ball) radius in pixels. */
-const float default_physics_body_radius = 3.0f;
+const float default_physics_body_radius = 5.0f;
 
 /** ----- Display settings ----- */
 /** Display width in pixels. */
@@ -74,7 +74,7 @@ const int display_width = 240;
 const int display_height = 280;
 
 /** Default wall thickness in pixels. */
-const int default_wall_thickness_px = 10;
+const int default_wall_thickness_px = 15;
 
 /** Top HUD header height in pixels. */
 const int ui_header_height = 20;
@@ -96,12 +96,12 @@ const uint16_t color_mint_green = 0x4C6B;     // MintGreen (0x4C8C5A)
 const uint16_t color_honey = 0xF5C9;          // Honey (0xF2B84B)
 
 /** ----- Main Game Mapping (Backward Compatible Names) ----- */
-const uint16_t color_background = color_dark_cocoa;    // Espresso Brown base
-const uint16_t color_wall_type_1 = color_cookie_dough; // Golden Dough paths
-const uint16_t color_wall_type_2 = color_cinnamon;     // Cinnamon pathways
-const uint16_t color_sphere = color_berry_red;         // Jam Red Sphere
-const uint16_t color_cookie = color_honey;             // Honey Yellow dots
-const uint16_t color_ui_text = color_milk_cream;       // Warm milk HUD text
+const uint16_t color_background = color_cinnamon;
+const uint16_t color_wall_type_1 = color_cookie_dough;
+const uint16_t color_wall_type_2 = color_dark_cocoa;
+const uint16_t color_sphere = color_berry_red;   // Jam Red Sphere
+const uint16_t color_cookie = color_honey;       // Honey Yellow dots
+const uint16_t color_ui_text = color_milk_cream; // Warm milk HUD text
 
 /** ----- Physics settings ----- */
 /** IMU sensitivity multiplier (IMU = Inertial Measurement Units) */
