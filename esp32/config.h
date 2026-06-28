@@ -52,7 +52,7 @@ const int default_game_id = game_id_maze;
 const char *const default_player_name = "Cookie-Lover";
 
 /** Default game duration in seconds. */
-const int default_game_duration_sec = 120;
+// const int default_game_duration_sec = 120;
 
 /** Default maximum number of cookies in the game. */
 const int default_cookies_count = 10;
@@ -105,7 +105,7 @@ const uint16_t color_ui_text = color_milk_cream;       // Warm milk HUD text
 
 /** ----- Physics settings ----- */
 /** IMU sensitivity multiplier (IMU = Inertial Measurement Units) */
-const float default_imu_sensitivity_multiplier = 1.25f;
+const float default_imu_sensitivity_multiplier = 100.0f;
 
 /** Bounce restitution coefficient.
  * This coefficient determines how much energy is conserved in a collision.
@@ -115,14 +115,15 @@ const float default_imu_sensitivity_multiplier = 1.25f;
  * which results in a realistic bounce effect for the ball in the game.
  * This value can be adjusted based on the desired game feel and physics behavior.
  */
-const float default_bounce_restitution = 0.75f;
+const float default_bounce_restitution = 0.3f;
 
 /** Exponential moving average alpha.
  * This is the smoothing factor for the exponential moving average filter applied to the sensor data.
  * A higher alpha gives more weight to recent data points, while a lower alpha gives more weight to older data points.
  * new_value = alpha * new_measurement + (1 - alpha) * old_value
+ * So, having a low alpha reduces the need for sudden movements in order to move the ball.
  */
-const float default_ema_alpha = 0.25f;
+const float default_ema_alpha = 0.5f;
 
 /** Deadzone threshold for sensor measurements.
  * This threshold defines the minimum change in sensor readings that will be considered significant.
@@ -130,10 +131,10 @@ const float default_ema_alpha = 0.25f;
  * This helps to create a more stable and enjoyable gaming experience by filtering out small, insignificant
  * movements of the device, e.g. when the player is holding the device still or making very slight movements.
  */
-const float default_deadzone_threshold = 0.05f;
+const float default_deadzone_threshold = 0.04f;
 
 /** Maximum speed for the ball [px/s] to travel per second.*/
-const float default_max_speed = 400.0f;
+const float default_max_speed = 300.0f;
 
 /** Continuous drag [1/s].
  * Default 0 means NO permanent damping, so the ball
