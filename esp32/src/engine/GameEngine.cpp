@@ -55,6 +55,29 @@ void GameEngine::afterBuild()
     _state.elapsedTimeSec = 0.0f;
 }
 
+void GameEngine::stop()
+{
+    // Park the engine in idle. update() bails out while not RUNNING, so the ball
+    // freezes and the next telemetry frame reports "idle" instead of "running".
+    _status = RunningStatus::IDLE;
+    _state.runningStatus = RunningStatus::IDLE;
+}
+
+void GameEngine::resume()
+{
+    // Only pick up a game that's actually paused. Don't "resume" a finished game
+    // or one that was never started - that would need a fresh chooseGameMode().
+    if (_active == nullptr || _status != RunningStatus::IDLE)
+    {
+        return;
+    }
+    // Flip back to running without touching ball/cookies/round/time, so the game
+    // continues exactly where it was paused.
+    _status = RunningStatus::RUNNING;
+    _state.runningStatus = RunningStatus::RUNNING;
+    _needsFullRedraw = true; // repaint over the pause overlay
+}
+
 void GameEngine::update(float tiltX, float tiltY, float dt)
 {
     if (_status != RunningStatus::RUNNING || _active == nullptr || dt <= 0.0f)

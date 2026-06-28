@@ -27,6 +27,7 @@ bool CommandParser::parse(const String &jsonPayload, CommandMsg &outMsg)
     // Assignment of command type based on the string value
     // "start" --> CommandType::START
     // "stop" --> CommandType::STOP
+    // "resume" --> CommandType::RESUME
     // "param_change" --> CommandType::PARAM_CHANGE
     // else --> CommandType::UNKNOWN
     if (strcmp(commandStr, "start") == 0)
@@ -36,6 +37,10 @@ bool CommandParser::parse(const String &jsonPayload, CommandMsg &outMsg)
     else if (strcmp(commandStr, "stop") == 0)
     {
         outMsg.type = CommandType::STOP;
+    }
+    else if (strcmp(commandStr, "resume") == 0)
+    {
+        outMsg.type = CommandType::RESUME;
     }
     else if (strcmp(commandStr, "param_change") == 0)
     {
