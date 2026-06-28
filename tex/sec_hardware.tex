@@ -47,8 +47,6 @@ To filter out high-frequency noise and mechanical vibrations, the raw tilt input
 where $S_t$ is the filtered value, $Y_t$ is the current sensor input, and $\alpha$ is the smoothing coefficient (\texttt{ema\_alpha} in configuration).
 A deadzone threshold is then applied to the output; inputs falling below this range are registered as zero, preventing drifting movement when the controller is resting.
 
-% HERE: FIND SOURCE. 
-
 \subsection{Physics Simulation \& Game Logic}
 \label{subsec:physics_simulation_game_logic}
 
