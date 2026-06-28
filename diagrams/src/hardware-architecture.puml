@@ -1,4 +1,4 @@
-@startuml architecture
+@startuml hardware-architecture
 top to bottom direction
 ' skinparam classAttributeIconSize 0
 ' skinparam monochrome true
@@ -318,4 +318,4 @@ GraphicsManager ..> Cookie : "draws cookies"
 GraphicsManager ..> GameState : "draws HUD"
 GraphicsManager ..> MazeManager : "renders board"
 
-@enduml
+@endumlP
