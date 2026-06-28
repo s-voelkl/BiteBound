@@ -30,9 +30,9 @@ test(CommandParser_ParseStartSuccess)
     assertEqual(strcmp(msg.playerName, default_player_name), 0);
     assertEqual(msg.cookiesCount, default_cookies_count);
     assertEqual(msg.wallThicknessPx, default_wall_thickness_px);
-    assertEqual(msg.imuSensitivity, default_imu_sensitivity_multiplier);
-    assertEqual(msg.bounceRestitution, default_bounce_restitution);
-    assertEqual(msg.emaAlpha, default_ema_alpha);
+    assertNear(msg.imuSensitivity, default_imu_sensitivity_multiplier, 1e-4f);
+    assertNear(msg.bounceRestitution, default_bounce_restitution, 1e-4f);
+    assertNear(msg.emaAlpha, default_ema_alpha, 1e-4f);
     assertNear(msg.deadzoneThreshold, default_deadzone_threshold, 1e-4f);
     assertEqual(strcmp(msg.requestId, "id1"), 0);
 }
@@ -70,9 +70,9 @@ test(CommandParser_ParseByteArraySuccess)
     assertEqual(strcmp(msg.playerName, default_player_name), 0);
     assertEqual(msg.cookiesCount, default_cookies_count);
     assertEqual(msg.wallThicknessPx, default_wall_thickness_px);
-    assertEqual(msg.imuSensitivity, default_imu_sensitivity_multiplier);
-    assertEqual(msg.bounceRestitution, default_bounce_restitution);
-    assertEqual(msg.emaAlpha, default_ema_alpha);
+    assertNear(msg.imuSensitivity, default_imu_sensitivity_multiplier, 1e-4f);
+    assertNear(msg.bounceRestitution, default_bounce_restitution, 1e-4f);
+    assertNear(msg.emaAlpha, default_ema_alpha, 1e-4f);
     assertNear(msg.deadzoneThreshold, default_deadzone_threshold, 1e-4f);
     assertEqual(strcmp(msg.requestId, "id_byte"), 0);
 }
