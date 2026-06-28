@@ -63,8 +63,9 @@ import com.example.bitebound.ui.theme.MintGreen
 @Composable
 fun DashboardScreen(
     state: UiState,
-    onStart: (playerName: String, gameId: Int, cookiesCount: Int, wallThickness: Int, restitution: Double) -> Unit,
-    onStop: () -> Unit,
+    onStart: (playerName: String, cookies: Int) -> Unit,
+    onStop: (playerName: String) -> Unit,
+    onResume: (playerName: String) -> Unit,
     onDisconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -118,6 +119,7 @@ fun DashboardScreen(
                 connected = state.connection is ConnectionState.Connected,
                 onStart = onStart,
                 onStop = onStop,
+                onResume = onResume,
             )
 
             if (telemetry != null) {
@@ -218,8 +220,9 @@ private fun ControlsCard(
     defaultWall: Int,
     defaultRestitution: Double,
     connected: Boolean,
-    onStart: (String, Int, Int, Int, Double) -> Unit,
-    onStop: () -> Unit,
+    onStart: (String, Int) -> Unit,
+    onStop: (String) -> Unit,
+    onResume: (String) -> Unit,
 ) {
     var player by remember { mutableStateOf(defaultPlayer) }
     var cookies by remember { mutableStateOf(defaultCookies.toString()) }
@@ -347,6 +350,19 @@ private fun ControlsCard(
                 Spacer(Modifier.width(6.dp))
                 Text("Stop", fontWeight = FontWeight.Bold)
             }
+        }
+        Spacer(Modifier.height(10.dp))
+        // Continue a paused game (the ESP keeps the ball/score while stopped).
+        Button(
+            onClick = { onResume(player.trim().ifBlank { "Player 1" }) },
+            enabled = connected,
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Honey, contentColor = Color.White),
+        ) {
+            Icon(Icons.Filled.PlayArrow, contentDescription = null)
+            Spacer(Modifier.width(6.dp))
+            Text("Resume", fontWeight = FontWeight.Bold)
         }
     }
 }

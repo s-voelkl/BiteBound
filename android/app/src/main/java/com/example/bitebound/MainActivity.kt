@@ -49,6 +49,7 @@ private fun BiteBoundApp(viewModel: BiteBoundViewModel = viewModel()) {
                     )
                 },
                 onStop = viewModel::stopGame,
+                onResume = viewModel::resumeGame,
                 onDisconnect = viewModel::disconnect,
                 modifier = Modifier.fillMaxSize(),
             )

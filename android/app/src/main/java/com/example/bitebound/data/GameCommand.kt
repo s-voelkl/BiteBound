@@ -32,6 +32,13 @@ object GameCommand {
         wallThicknessPx: Int,
     ): String = build("stop", playerName, gameId, cookiesCount, wallThicknessPx)
 
+    fun resume(
+        playerName: String,
+        gameId: Int,
+        cookiesCount: Int,
+        wallThicknessPx: Int = 6,
+    ): String = build("resume", playerName, gameId, cookiesCount, wallThicknessPx)
+
     private fun build(
         command: String,
         playerName: String,

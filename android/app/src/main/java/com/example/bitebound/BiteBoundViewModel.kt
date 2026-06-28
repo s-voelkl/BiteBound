@@ -138,6 +138,17 @@ class BiteBoundViewModel(app: Application) : AndroidViewModel(app) {
         )
     }
 
+    fun resumeGame(playerName: String) {
+        val credentials = _uiState.value.credentials
+        val telemetry = _uiState.value.telemetry
+        val gameId = telemetry?.config?.gameId ?: 1
+        val cookiesCount = telemetry?.config?.targetCookies ?: 10
+        mqtt.publish(
+            credentials.commandTopic,
+            GameCommand.resume(playerName, gameId, cookiesCount),
+        )
+    }
+
     override fun onCleared() {
         mqtt.disconnect()
         super.onCleared()
