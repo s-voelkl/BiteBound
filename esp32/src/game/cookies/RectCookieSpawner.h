@@ -3,6 +3,7 @@
 
 #include <Arduino.h> // for random()
 #include "CookieField.h"
+#include "../../../config.h"
 
 /**
  * @brief Game 2 spawner: a random position inside [0, width] x [0, height],
@@ -11,7 +12,7 @@
 class RectCookieSpawner : public ICookieSpawner
 {
 public:
-    RectCookieSpawner(float width = 0.0f, float height = 0.0f, float cookieRadius = 3.0f)
+    RectCookieSpawner(float width = 0.0f, float height = 0.0f, float cookieRadius = default_cookie_radius)
         : _w(width), _h(height), _r(cookieRadius) {}
 
     Cookie spawn(const PhysicsBody &avoid) const override
@@ -22,9 +23,12 @@ public:
         {
             c.x = m + (random(1001) / 1000.0f) * (_w - 2.0f * m);
             c.y = m + (random(1001) / 1000.0f) * (_h - 2.0f * m);
+
+            // TODO: Check if the usage of the default value is fine here. Changed 3.0f to constant.
             const float dx = c.x - avoid.x;
             const float dy = c.y - avoid.y;
-            const float minD = avoid.radius + _r + 6.0f;
+            const float minD = avoid.radius + _r + default_cookie_radius;
+
             if (dx * dx + dy * dy >= minD * minD)
             {
                 break;

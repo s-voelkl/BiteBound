@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.bitebound.R
 import com.example.bitebound.UiState
@@ -63,8 +64,8 @@ import com.example.bitebound.ui.theme.MintGreen
 @Composable
 fun DashboardScreen(
     state: UiState,
-    onStart: (playerName: String, cookies: Int) -> Unit,
-    onStop: (playerName: String) -> Unit,
+    onStart: (playerName: String, gameId: Int, cookiesCount: Int, wallThickness: Int) -> Unit,
+    onStop: () -> Unit,
     onDisconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -104,7 +105,7 @@ fun DashboardScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            ConnectionBanner(state.connection, state.messageCount)
+            ConnectionBanner(state.connection, state.messageCount, state.telemetry?.state?.runningStatus)
 
             val telemetry = state.telemetry
             if (telemetry == null) {
@@ -114,8 +115,10 @@ fun DashboardScreen(
             }
 
             ControlsCard(
-                defaultPlayer = telemetry?.config?.playerName?.takeIf { it != "—" } ?: "Player 1",
-                defaultCookies = telemetry?.config?.targetCookies?.takeIf { it > 0 } ?: 10,
+                defaultPlayer = state.credentials.playerName,
+                defaultCookies = state.credentials.cookiesCount,
+                defaultGameId = state.credentials.gameId,
+                defaultWall = state.credentials.wallThickness,
                 connected = state.connection is ConnectionState.Connected,
                 onStart = onStart,
                 onStop = onStop,
@@ -132,9 +135,12 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun ConnectionBanner(connection: ConnectionState, messageCount: Int) {
+private fun ConnectionBanner(connection: ConnectionState, messageCount: Int, runningStatus: String?) {
     val (color, label) = when (connection) {
-        ConnectionState.Connected -> MintGreen to "Connected · $messageCount updates"
+        ConnectionState.Connected -> {
+            val status = runningStatus?.replaceFirstChar { it.uppercase() } ?: "Unknown"
+            MintGreen to "$status · $messageCount updates"
+        }
         ConnectionState.Connecting -> Honey to "Connecting…"
         is ConnectionState.Failed -> BerryRed to "Disconnected · ${connection.reason}"
         ConnectionState.Disconnected -> ChocolateChip to "Disconnected"
@@ -165,7 +171,7 @@ private fun WaitingForOven() {
     CookieCard(title = "Warming up the oven", emoji = "⏳") {
         Text(
             "Connected — waiting for the first telemetry message from the ESP32.\n" +
-                "Start a game below, or run the mock sender in tests/mqtt_mock.",
+                "Start the game below.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -186,9 +192,8 @@ private fun ScoreCard(telemetry: Telemetry) {
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
-            HeroStat("Status", telemetry.state.status.replaceFirstChar { it.uppercase() }, statusColor(telemetry.state.status))
-            HeroStat("Round", telemetry.state.currentRound.toString(), ChocolateChip)
-            HeroStat("Time", formatDuration(telemetry.state.elapsedTimeSec), ChocolateChip)
+            HeroStat("Round", telemetry.state.currentRound.toString(), Honey)
+            HeroStat("Time", formatDuration(telemetry.state.elapsedTimeSec), MintGreen)
         }
         Spacer(Modifier.height(10.dp))
         Text(
@@ -196,6 +201,7 @@ private fun ScoreCard(telemetry: Telemetry) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
         )
     }
 }
@@ -212,12 +218,16 @@ private fun HeroStat(label: String, value: String, color: Color) {
 private fun ControlsCard(
     defaultPlayer: String,
     defaultCookies: Int,
+    defaultGameId: Int,
+    defaultWall: Int,
     connected: Boolean,
-    onStart: (String, Int) -> Unit,
-    onStop: (String) -> Unit,
+    onStart: (String, Int, Int, Int) -> Unit,
+    onStop: () -> Unit,
 ) {
     var player by remember { mutableStateOf(defaultPlayer) }
     var cookies by remember { mutableStateOf(defaultCookies.toString()) }
+    var gameId by remember { mutableStateOf(defaultGameId) }
+    var wall by remember { mutableStateOf(defaultWall.toString()) }
 
     CookieCard(title = "Game Controls", emoji = "🎮") {
         OutlinedTextField(
@@ -229,19 +239,65 @@ private fun ControlsCard(
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(10.dp))
-        OutlinedTextField(
-            value = cookies,
-            onValueChange = { cookies = it.filter(Char::isDigit) },
-            label = { Text("Cookies to collect") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier.fillMaxWidth(),
-        )
+        
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = { gameId = 1 },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (gameId == 1) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = if (gameId == 1) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Labyrinth")
+            }
+            Button(
+                onClick = { gameId = 2 },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (gameId == 2) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = if (gameId == 2) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Flatland")
+            }
+        }
+        
+        Spacer(Modifier.height(10.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = cookies,
+                onValueChange = { cookies = it.filter(Char::isDigit) },
+                label = { Text("Cookies") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.weight(1f),
+            )
+            OutlinedTextField(
+                value = wall,
+                onValueChange = { wall = it.filter(Char::isDigit) },
+                label = { Text("Wall Px") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.weight(1f),
+            )
+        }
+        
         Spacer(Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Button(
-                onClick = { onStart(player.trim().ifBlank { "Player 1" }, cookies.toIntOrNull() ?: 10) },
+                onClick = { 
+                    onStart(
+                        player.trim().ifBlank { "Cookie-Lover" }, 
+                        gameId,
+                        cookies.toIntOrNull()?.coerceIn(1, 1000) ?: 10,
+                        wall.toIntOrNull()?.coerceIn(5, 40) ?: 10
+                    ) 
+                },
                 enabled = connected,
                 modifier = Modifier.weight(1f).height(50.dp),
                 shape = RoundedCornerShape(16.dp),
@@ -252,7 +308,7 @@ private fun ControlsCard(
                 Text("Start", fontWeight = FontWeight.Bold)
             }
             Button(
-                onClick = { onStop(player.trim().ifBlank { "Player 1" }) },
+                onClick = { onStop() },
                 enabled = connected,
                 modifier = Modifier.weight(1f).height(50.dp),
                 shape = RoundedCornerShape(16.dp),
@@ -269,38 +325,65 @@ private fun ControlsCard(
 @Composable
 private fun BoardCard(telemetry: Telemetry) {
     CookieCard(title = "Live Board", emoji = "🎯") {
-        MiniGameBoard(
-            ballX = telemetry.physics.ballPosX,
-            ballY = telemetry.physics.ballPosY,
-            screenWidth = telemetry.config.screenWidth,
-            screenHeight = telemetry.config.screenHeight,
-            collision = telemetry.physics.collisionDetected,
-        )
-        Spacer(Modifier.height(12.dp))
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            MiniGameBoard(
+                ballX = telemetry.physics.ballPosX,
+                ballY = telemetry.physics.ballPosY,
+                velocityX = telemetry.physics.velocityX,
+                velocityY = telemetry.physics.velocityY,
+                screenWidth = telemetry.config.screenWidth,
+                screenHeight = telemetry.config.screenHeight,
+                collision = telemetry.physics.collisionDetected,
+                modifier = Modifier.fillMaxWidth(0.8f)
+            )
+        }
+
+        /*
+        Spacer(Modifier.height(16.dp))
+        
         StatGrid(
             stats = listOf(
-                "Pos X" to fmt(telemetry.physics.ballPosX, 0),
-                "Pos Y" to fmt(telemetry.physics.ballPosY, 0),
+                "Pos X" to fmt(telemetry.physics.ballPosX, 2),
+                "Pos Y" to fmt(telemetry.physics.ballPosY, 2),
                 "Collision" to if (telemetry.physics.collisionDetected) "Yes 💥" else "No",
                 "Vel X" to fmt(telemetry.physics.velocityX, 2),
                 "Vel Y" to fmt(telemetry.physics.velocityY, 2),
-                "Acc X" to fmt(telemetry.physics.accX, 2),
+                "Accel X" to fmt(telemetry.physics.accX, 2),
             ),
         )
+        */
     }
 }
 
 @Composable
 private fun SensorsCard(telemetry: Telemetry) {
-    CookieCard(title = "IMU Sensors", emoji = "📡") {
+    CookieCard(title = "Sensors", emoji = "📡") {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            HeroStat(
+                label = "Battery",
+                value = "${fmt(telemetry.sensors.batteryVoltage, 2)}V",
+                color = if (telemetry.sensors.batteryVoltage < 3.4) BerryRed else MintGreen
+            )
+            HeroStat(
+                label = "Button",
+                value = if (telemetry.sensors.button) "Pressed" else "Released",
+                color = if (telemetry.sensors.button) Honey else Color.White
+            )
+        }
+
+        Spacer(Modifier.height(16.dp))
+
         StatGrid(
             stats = listOf(
                 "Accel X" to fmt(telemetry.sensors.accelX, 2),
                 "Accel Y" to fmt(telemetry.sensors.accelY, 2),
                 "Accel Z" to fmt(telemetry.sensors.accelZ, 2),
-                "Gyro X" to fmt(telemetry.sensors.gyroX, 3),
-                "Gyro Y" to fmt(telemetry.sensors.gyroY, 3),
-                "Gyro Z" to fmt(telemetry.sensors.gyroZ, 3),
+                "Gyro X" to fmt(telemetry.sensors.gyroX, 2),
+                "Gyro Y" to fmt(telemetry.sensors.gyroY, 2),
+                "Gyro Z" to fmt(telemetry.sensors.gyroZ, 2),
             ),
         )
     }
@@ -335,9 +418,9 @@ private fun InfoRow(label: String, value: String) {
     }
 }
 
-private fun statusColor(status: String): Color = when (status.lowercase()) {
+private fun runningStatusColor(runningStatus: String): Color = when (runningStatus.lowercase()) {
     "running" -> MintGreen
-    "finished" -> Honey
+    "completed" -> Honey
     "stopped", "idle" -> ChocolateChip
     else -> ChocolateChip
 }

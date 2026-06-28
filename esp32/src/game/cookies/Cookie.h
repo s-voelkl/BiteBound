@@ -1,7 +1,7 @@
 #ifndef COOKIE_H
 #define COOKIE_H
 
-#include "../../config.h"
+#include "../../../config.h"
 
 /**
  * @brief A single collectible cookie.

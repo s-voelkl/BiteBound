@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 #include "Cookie.h"
-#include "../physics/PhysicsBody.h" // for PhysicsBody in checkPickup
-#include "../../config.h"
+#include "../../physics/core/PhysicsBody.h" // for PhysicsBody in checkPickup
+#include "../../../config.h"
 
 // Max count of cookies
 static const int kMaxVisibleCookies = default_max_visible_cookies;
@@ -64,6 +64,7 @@ public:
 
     uint8_t count() const { return _count; } // visible cookies (for rendering)
     const Cookie &at(uint8_t i) const { return _cookies[i]; }
+    const Cookie *data() const { return _cookies; } // contiguous array (for rendering)
 
 private:
     Cookie _cookies[kMaxVisibleCookies]; // fixed size -> no heap (MCU-friendly)

@@ -22,7 +22,7 @@ function emptyTelemetry() {
             wall_thickness_px: 6,
         },
         state: {
-            status: 'idle',
+            runningStatus: 'idle',
             cookies_collected: 0,
             cookies_remaining: 0,
             current_round: 0,

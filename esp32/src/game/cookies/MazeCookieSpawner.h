@@ -4,7 +4,8 @@
 #include <Arduino.h> // for random()
 #include <vector>
 #include "CookieField.h"            // ICookieSpawner, Cookie, PhysicsBody
-#include "../maze/MazeManager.h"    // MazeManager::FreeCell
+#include "../../maze/MazeManager.h" // MazeManager::FreeCell
+#include "../../../config.h"
 
 /**
  * @brief Game 1 spawner: places cookies only on carved maze corridors.
@@ -20,7 +21,7 @@ class MazeCookieSpawner : public ICookieSpawner
 {
 public:
     MazeCookieSpawner(const std::vector<MazeManager::FreeCell> *cells = nullptr,
-                      float cookieRadius = 3.0f)
+                      float cookieRadius = default_cookie_radius)
         : _cells(cells), _r(cookieRadius) {}
 
     Cookie spawn(const PhysicsBody &avoid) const override
@@ -30,8 +31,9 @@ public:
             return Cookie(0.0f, 0.0f, _r, false); // no maze -> inactive cookie
         }
 
+        // TODO: Check if the usage of the default value is fine here. Changed 3.0f to constant.
         const std::vector<MazeManager::FreeCell> &cells = *_cells;
-        const float minD = avoid.radius + _r + 6.0f;
+        const float minD = avoid.radius + _r + 2 * default_cookie_radius;
 
         Cookie c(0.0f, 0.0f, _r, true);
         for (int t = 0; t < 20; ++t) // retry until far enough from the ball

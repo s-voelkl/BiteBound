@@ -24,15 +24,6 @@ See [Usage Guide](USAGE.md) for detailed instructions on how to set up and run t
 
 The ESP32 firmware is split into self-contained, unit-tested modules under `esp32/src/`, orchestrated from the main sketch `esp32/esp32.ino`. All tunable values and hardware pins are centralized in `esp32/config.h`.
 
-| Module | Path | Responsibility |
-| --- | --- | --- |
-| Sensors | `src/sensors/` | Reads and smooths the IMU, battery and button (`SensorManager`, `SensorData`). |
-| Physics | `src/physics/` | Game-agnostic 2D simulation, integration and collision (`PhysicsEngine`, `PhysicsBody`, `ICollider`, `BorderCollider`, `Vec2`). |
-| Game | `src/game/` | Shared cookie/score logic (`Cookie`, `CookieField`, `ICookieSpawner`, `RectCookieSpawner`, `MazeCookieSpawner`, `GameState`). |
-| Maze | `src/maze/` | Procedural DFS maze generation (`MazeManager`). |
-| Graphics | `src/graphics/` | Optimized 50Hz rendering on the ST7789 display (`GraphicsManager`). |
-| Network | `src/network/` | WiFi, NTP time, secure MQTT and telemetry JSON (`WifiManager`, `TimeManager`, `MqttManager`, `JsonBuilder`). |
-
 See the component diagram in [diagrams/src/architecture.puml](diagrams/src/architecture.puml).
 
 ### Concurrency Model (ESP32-S3 Dual Core)
@@ -70,10 +61,13 @@ BiteBound/
 │   └── src/
 │       ├── sensors/          # SensorManager, SensorData
 │       ├── physics/          # PhysicsEngine, PhysicsBody, ICollider, BorderCollider, Vec2
-│       ├── game/             # Cookie, CookieField, ICookieSpawner, RectCookieSpawner, MazeCookieSpawner, GameState
+│       ├── game/             # GameState    
+│       │   ├── cookies/      # Cookie, CookieField, RectCookieSpawner, MazeCookieSpawner
+│       │   └── mode/         # BaseGame, IGame, Game1Labyrinth, Game2Flatland
+│       ├── engine/           # GameEngine, GameConfig
 │       ├── maze/             # MazeManager (procedural DFS)
 │       ├── graphics/         # GraphicsManager (ST7789 rendering)
-│       └── network/          # wifi-connection/, time/, mqtt/, json-builder/
+│       └── network/          # WifiManager, TimeManager, MqttManager, JsonBuilder
 ├── nodered/                  # Node-RED dashboard flow
 ├── prompts/                  # LLM chat transcripts (removed before publishing)
 ├── screenshots/              # UI / dashboard / flow screenshots
@@ -305,6 +299,18 @@ Manages the secure (TLS) MQTT connection to the HiveMQ Cloud broker via `PubSubC
 
 Recommended defaults: **QoS 1** and **retain = false** (see `config.h`).
 
+##### 1. Command Topic
+
+``mauc2026/group_03/game/command``: Android / NodeRED --> ESP32. Commands to start/stop the game, set parameters, and control game state.
+
+##### 2. Telemetry Topic
+
+``mauc2026/group_03/game/telemetry``: ESP32 --> Android / NodeRED. Publishes telemetry data including sensor readings, game state, and physics simulation results.
+
+##### Internal Logic
+
+On game start or change: game round resets to 1.
+
 ### Telemetry JSON Builder
 
 The JSON builder compiles comprehensive telemetry data from sensors, game state, physics simulation, and device information into a structured JSON payload suitable for MQTT transmission.
@@ -327,7 +333,7 @@ Implemented in `esp32/src/network/json-builder/JsonBuilder.h` and `esp32/src/net
     "wifi_ssid": "MyWiFiNetwork"
   },
   "config": {
-    "game_id": 1,
+    "game_id": 1, // default for maze, 2 for plane.
     "player_name": "Player 1",
     "target_cookies": 15,
     "screen_width": 240,
@@ -335,7 +341,7 @@ Implemented in `esp32/src/network/json-builder/JsonBuilder.h` and `esp32/src/net
     "wall_thickness_px": 6 // min: 6, max: 40 --> ball size 1/2
   },
   "state": {
-    "status": "running", // idle, running, completed
+    "runningStatus": "running", // idle, running, completed
     "cookies_collected": 4,
     "cookies_remaining": 11,
     "current_round": 2, // game init: 1. game change: reset to 1. 
@@ -382,21 +388,140 @@ String payload = buildTelemetryJson(telemetry);
 mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
 ```
 
-### MQTT Communication
+### Command JSON Parser
 
-#### Topics
+Commands received on the `mauc2026/group_03/game/command` topic are decoded by the `src/network/json-parser/CommandParser.cpp` based on the schema below:
 
-##### 1. Command Topic
+#### JSON Command Payload
 
-``mauc2026/group_03/game/command``: Android / NodeRED --> ESP32. Commands to start/stop the game, set parameters, and control game state.
+```json
+{
+  "command": "start",
+  "meta": {
+    "source_ui": "NODE_RED",
+    "request_id": "1234",
+    "timestamp": "2024-06-08T11:50:00Z"
+  },
+  "player": {
+    "name": "Cookie-Lover"
+  },
+  "game": {
+    "game_id": 1
+  },
+  "parameters": {
+    "cookies_count": 10,
+    "wall_thickness_px": 6
+  },
+  "physics": {
+    "imu_sensitivity_multiplier": 1.25,
+    "bounce_restitution": 0.75,
+    "ema_alpha": 0.25,
+    "deadzone_threshold": 0.04
+  }
+}
+```
 
-##### 2. Telemetry Topic
+#### Basic Usage
 
-``mauc2026/group_03/game/telemetry``: ESP32 --> Android / NodeRED. Publishes telemetry data including sensor readings, game state, and physics simulation results.
+Command parsing is managed by the static `CommandParser::parse` utility located in `src/network/json-parser/CommandParser.h`. This utility handles the conversion of flat character payloads into typed `CommandMsg` structures.
 
-#### Communication Logic
+To parse a payload from your MQTT subscription callback and pass it safely into the command queue by using the `MqttManager.onMessage()` callback.
 
-On game start or change: game round resets to 1.
+- **Accepted Actions (`command`):** `start`, `stop`, `param_change`.
+- **Dynamic Config Tuning:** Customizes physical variables (IMU sensitivity limits, damping offsets) and display specifications (wall thickness bounds, total game cookies) without restarting the system.
+
+### Concurrency Model (ESP32-S3 Dual Core)
+
+The ESP32-S3 contains a dual-core SoC, enabling isolation of timing-sensitive display/physics loops from blocking network I/O operations:
+
+- **Core 1 — Game Core (~50Hz / 20ms Budget):** Processes raw sensor inputs, updates the 2D physics simulation, resolves wall and cookie collisions, and paints updates to the ST7789 display controller.
+- **Core 0 — Network Core (~2Hz Telemetry & Commands):** Manages connection keep-alive, listens for command payloads from MQTT, and serializes/publishes telemetry data asynchronously.
+
+#### Shared Memory & IPC Primitives
+
+> Note: IPC = Inter-Process Communication: Mechanisms for processes to exchange data and synchronize actions in a multi-core environment. It ensures safe and efficient communication between concurrently running processes. Here, Core 0 and Core 1 are treated as separate processes with their own memory spaces, and IPC primitives (mutexes, queues) are used to safely share data between them (see [GeeksforGeeks Post](https://www.geeksforgeeks.org/operating-systems/inter-process-communication-ipc/))
+
+```text
+               +-----------------------------------------+
+               |  Core 0 (Network Core)                  |
+               |                                         |
+               |  +------------------+                   |
+               |  | MQTT Command Sub |                   |
+               |  +--------+---------+                   |
+               |           |                             |
+               |           v                             |
+               |    [CommandParser]                      |
+               |           |                             |
+               +-----------|-----------------------------+
+                           | (Queue push)
+                           v
+                     [Command Queue] (Length: 10)
+                           |
+                           | (Queue pop)
+               +-----------|-----------------------------+
+               |           v                             |
+               |  Core 1 (Game Core)                     |
+               |                                         |
+               |  +------------------+                   |
+               |  |   vGameTask      | <-----------------+
+               |  +--------+---------+                   |
+               |           |                             |
+               +-----------|-----------------------------+
+                           |
+                           v
+                =======[Mutex Lock]=======
+                [     SharedStateData    ] <==== Thread Safe Read/Write
+                ==========================
+```
+
+- **Shared State (`SharedStateData`):** Keeps track of variables (coordinate states, score levels, device configurations) accessed by both cores. This memory map is protected by a FreeRTOS Mutex (`SemaphoreHandle_t`) utilizing a C++ RAII guard wrapper class `MutexLock` to prevent race conditions.
+- **Command Routing (`CommandMsg`):** Input commands generated from Android or Node-RED dashboards are transferred safely to the Game Core utilizing a FreeRTOS Queue (`commandQueue`). This prevents lock contention on the active game loop.
+
+> Note: FreeRTOS: Real-Time Operating System (RTOS) for microcontrollers and small embedded systems. Provides task scheduling, inter-task communication, and synchronization primitives (e.g., semaphores, mutexes, queues) to manage concurrent execution. Here, the ESP32-S3 runs FreeRTOS to allow Core 0 and Core 1 to operate independently while sharing data safely (see [FreeRTOS](https://docs.espressif.com/projects/esp-idf/en/v4.3/esp32/api-reference/system/freertos.html)).
+
+#### Shared Data Management Usage
+
+To protect data accessed concurrently by both cores, shared variables are consolidated into a thread-safe structure (`SharedStateData`) and protected via an RAII-style mutex guard (`MutexLock`). The shared files are split modularly under `esp32/src/network/shared/`:
+
+- **`CommandType.h`**: Defines the `CommandType` enum class (`START`, `STOP`, `PARAM_CHANGE`, `UNKNOWN`).
+- **`CommandMsg.h`**: Represents incoming execution actions with variable settings.
+- **`MutexLock.h`**: Implements `MutexLock`, an RAII wrapper over FreeRTOS semaphores that automates lock release when going out of scope.
+- **`SharedStateData.h` / `SharedStateData.cpp`**: Houses `SharedStateData` which stores live telemetry metrics and game settings.
+
+> Note: RAII: Resource Acquisition Is Initialization, a C++ programming technique that binds the life cycle of a resource (e.g., allocated memory, open socket, locked mutex) to the lifetime of an object. Here, `MutexLock` automatically acquires the mutex in its constructor and releases it in its destructor, ensuring that the lock is always released when the object goes out of scope, even if an exception occurs. That means you don't have to manually unlock the mutex, which helps prevent deadlocks and resource leaks (see [cppreference](https://en.cppreference.com/cpp/language/raii)).
+
+##### Initializing Shared State
+
+Call `initSharedState` during the application setup to ensure predictable default values:
+
+```cpp
+#include "src/network/shared/SharedStateData.h"
+
+SharedStateData sharedState;
+
+void setup() {
+    // Fills sharedState with configuration defaults
+    initSharedState(sharedState);
+}
+```
+
+Wrap read and write accesses in a localized block to acquire and release the mutex lock predictably:
+
+```cpp
+#include "src/network/shared/MutexLock.h"
+#include "src/network/shared/SharedStateData.h"
+
+// Task writing to state
+void updateBallPosition(float x, float y) {
+    MutexLock lock(stateMutex);
+    if (lock.isLocked()) {
+        sharedState.ballPosX = x;
+        sharedState.ballPosY = y;
+    }
+    // Mutex is automatically released when lock goes out of scope
+    // e.g. at the end of this function on return or exception
+}
+```
 
 ### Display Manager
 
@@ -562,6 +687,7 @@ The physics is a shared, game-agnostic 2D simulation under `esp32/src/physics/`.
 - **`PhysicsEngine`** — holds the parameters and EMA filter state and provides the integration and collision-resolution algorithms.
 - **`ICollider` / `Contact`** — strategy interface returning the deepest current `Contact` (out-facing `normal`, `penetration` depth, `hit` flag).
 - **`BorderCollider`** — keeps the ball inside the axis-aligned play-field rectangle (used by Game 2).
+- **`MazeCollider`** — circle-vs-wall collision against the maze board, treating any non-zero pixel as solid (used by Game 1). The maze's outer wall ring means this also bounds the ball, so Game 1 needs no `BorderCollider`.
 
 #### Simulation Pipeline
 
@@ -575,8 +701,8 @@ The method `step()` returns `true` when at least one collision was resolved (map
 #### Basic Usage
 
 ```cpp
-#include "src/physics/PhysicsEngine.h"
-#include "src/physics/BorderCollider.h"
+#include "src/physics/core/PhysicsEngine.h"
+#include "src/physics/colliders/BorderCollider.h"
 
 PhysicsEngine engine;
 PhysicsBody ball{ /* x */ 120, /* y */ 140 };
@@ -602,8 +728,8 @@ The collectible/score logic under `esp32/src/game/` is shared between both games
 #### Basic Usage of RectCookieSpawner and CookieField
 
 ```cpp
-#include "src/game/CookieField.h"
-#include "src/game/RectCookieSpawner.h"
+#include "src/game/cookies/CookieField.h"
+#include "src/game/cookies/RectCookieSpawner.h"
 
 RectCookieSpawner spawner(play_width, play_height, /* cookieRadius */ default_cookie_radius);
 CookieField field;
@@ -612,6 +738,60 @@ field.start(/* visibleCount */ default_max_visible_cookies, /* target */ default
 // Per tick, after moving the ball:
 field.checkPickup(ball);
 if (field.finished()) { /* round complete */ }
+```
+
+### Game Engine
+
+The `GameEngine` (`esp32/src/engine/`) runs both games through a single loop. It owns the shared `PhysicsEngine` and the active `GameConfig`, holds both games as members, and points at whichever one is active. The per-frame work — read the tilt, step the physics, collect cookies, update the telemetry state — lives in the engine, so the games themselves stay small.
+
+Each game implements `IGame` and inherits the common parts from `BaseGame` (the ball, the cookie field, the pickup and win checks). A game only provides what actually differs between modes:
+
+- **`Game1Labyrinth`** — a `MazeManager`, a `MazeCollider` over the generated board, and the maze cookie spawner. Its `buildLevel()` generates a fresh maze, so a new layout appears whenever the round (re)starts.
+- **`Game2Flatland`** — a `BorderCollider` and `RectCookieSpawner` on an open, wall-free board.
+
+#### Choosing a mode and counting rounds
+
+- `chooseGameMode(id)` selects a game and starts it. The chosen game resets its round to 1, so switching modes — or re-selecting the same one — always begins at round 1.
+- `nextRound()` advances the active game: it bumps that game's own round counter and rebuilds the level. For Game 1 that is a new maze; Game 2 counts rounds the same way without one.
+
+The round counter lives in each game, not the engine, so the two modes count independently. Both entry points run through the game's `buildLevel()`, which is why the maze regenerates on a mode change and on a new round without any special-casing.
+
+#### Implementation decisions
+
+- Both games are members and are never allocated or freed on a switch, which keeps the MCU heap from fragmenting. They share one play board: Game 1 writes a maze into it, Game 2 clears it to open space.
+- `MazeCollider` does circle-vs-wall collision per pixel (0 = corridor, non-zero = wall). The generated maze already has a solid border ring, so the collider keeps the ball on the board by itself.
+- `update()` takes the raw tilt values rather than a `SensorData`, so the engine has no dependency on the sensor layer and can be tested without hardware.
+- After a round is built the engine raises a redraw flag. The sketch reads it with `consumeRedraw()` and asks the `GraphicsManager` for a full repaint; partial updates handle the frames in between.
+
+#### Basic Usage of GameEngine
+
+```cpp
+#include "src/engine/GameEngine.h"
+
+GameEngine gameEngine;
+
+void setup() {
+    // ...display, WiFi, sensors, MQTT...
+    gameEngine.begin(play_width, play_height);
+    gameEngine.chooseGameMode(1); // start the labyrinth at round 1
+}
+
+void loop() {
+    SensorData s = sensorManager.read();
+    gameEngine.update(s.accelerometerX, s.accelerometerY, dt);
+
+    if (gameEngine.consumeRedraw()) {
+        graphicsManager.forceFullRedraw();
+    }
+    graphicsManager.update(
+        gameEngine.board(), play_width, play_height,
+        gameEngine.ball(),
+        gameEngine.cookies().data(), gameEngine.cookies().count(),
+        gameEngine.state());
+
+    // gameEngine.nextRound();       // advance to a new round (new maze for Game 1)
+    // gameEngine.chooseGameMode(2); // switch to the open-field game (round back to 1)
+}
 ```
 
 #### Basic Usage of MazeCookieSpawner
@@ -627,4 +807,57 @@ mazeGenerator.generate(gameBoard);
 MazeCookieSpawner spawner(&mazeGenerator.getFreeCells(), /* cookieRadius */ default_cookie_radius);
 
 // 3. Initialize and start the cookie field, see same above.
+```
+
+### Main Orchestration (`esp32.ino`)
+
+The main entry point `esp32/esp32.ino` orchestrates the system's execution across both cores of the ESP32-S3 SoC using FreeRTOS (see above).
+
+#### Execution Topology
+
+- **Core 1 (Application & Game Thread):** Runs the standard Arduino runtime (`setup()` and `loop()`). It executes the high-frequency 50Hz (20ms) loop, processing incoming user commands via `processIncomingCommands()` and updating the physics and gameplay variables inside `updateGameStep()`.
+- **Core 0 (Network Thread):** Executes `vNetworkTask` as a dedicated background task pinned to Core 0. This task manages the background MQTT loop, secure SSL handshakes, and periodic 2Hz (500ms) telemetry serialization and publication.
+
+#### Pinned Background Tasks (vNetworkTask)
+
+The network manager loop and telemetry serialization are isolated within a dedicated FreeRTOS task, ensuring display updates on Core 1 are not delayed by latency from TLS handshakes or network congestion.
+
+```cpp
+void setup() {
+    // Display, WiFi, and Sensor initializations...
+
+    // Create the network manager task and pin it explicitly to Core 0 (core_network)
+    xTaskCreatePinnedToCore(
+        vNetworkTask,      // Function pointer to the task code
+        "NetworkTask",     // Diagnostic text name of the task
+        8192,              // Stack size allocated to the task (in words)
+        NULL,              // Task parameters (not used here)
+        1,                 // Priority (lower relative to core 1 game loop)
+        NULL,              // Task handle pointer
+        core_network       // Core ID (0)
+    );
+}
+```
+
+```cpp
+void vNetworkTask(void *pvParameters) {
+    TickType_t lastTelemetryTime = xTaskGetTickCount();
+
+    while (true) {
+        // Core 0 handles blocking MQTT reconnects and loop processing
+        mqttManager.connect();
+        mqttManager.loop();
+
+        // Configure telemetry rate from config.h (default: 500ms)
+        TickType_t currentTick = xTaskGetTickCount();
+        if ((currentTick - lastTelemetryTime) >= pdMS_TO_TICKS(telemetry_rate_ms)) {
+            lastTelemetryTime = currentTick;
+            
+            // Build and publish telemetry safely...
+        }
+
+        // Relinquish remaining slice time to prevent CPU Core 0 watchdog triggers
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+}
 ```

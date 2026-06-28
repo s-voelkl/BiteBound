@@ -1,8 +1,8 @@
 #ifndef PHYSICS_ICOLLIDER_H
 #define PHYSICS_ICOLLIDER_H
 
-#include "Vec2.h"
-#include "PhysicsBody.h"
+#include "../core/Vec2.h"
+#include "../core/PhysicsBody.h"
 
 /**
  * @brief Result of a collision query for a body against an environment.

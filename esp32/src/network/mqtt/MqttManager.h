@@ -121,6 +121,10 @@ private:
      * Logs the topic and payload length to the serial console. The payload is
      * not null-terminated; the provided length must be respected when reading
      * it.
+     *
+     * If the topic matches the configured command topic, the payload is parsed
+     * as a command message and the resulting CommandMsg is enqueued for the
+     * main loop to process using the shared state. Else the message is not further processed.
      */
     void onMessage(char *topic, byte *payload, unsigned int length);
 

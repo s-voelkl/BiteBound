@@ -4,9 +4,9 @@
 #include <Arduino.h>
 #include <Arduino_GFX_Library.h>
 #include "../../config.h"
-#include "../game/Cookie.h"
-#include "../game/Cookie.h"
-#include "../physics/PhysicsBody.h"
+#include "../game/cookies/Cookie.h"
+#include "../game/cookies/Cookie.h"
+#include "../physics/core/PhysicsBody.h"
 #include "../game/GameState.h"
 
 /**

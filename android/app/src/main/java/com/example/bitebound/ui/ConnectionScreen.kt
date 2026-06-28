@@ -62,10 +62,19 @@ fun ConnectionScreen(
     var port by remember { mutableStateOf(credentials.port.toString()) }
     var username by remember { mutableStateOf(credentials.username) }
     var password by remember { mutableStateOf(credentials.password) }
+    var playerName by remember { mutableStateOf(credentials.playerName) }
+    var gameId by remember { mutableStateOf(credentials.gameId) }
+    var cookiesCount by remember { mutableStateOf(credentials.cookiesCount.toString()) }
+    var wallThickness by remember { mutableStateOf(credentials.wallThickness.toString()) }
     var telemetryTopic by remember { mutableStateOf(credentials.telemetryTopic) }
     var commandTopic by remember { mutableStateOf(credentials.commandTopic) }
+    var imuSensitivity by remember { mutableStateOf(credentials.imuSensitivity.toString()) }
+    var restitution by remember { mutableStateOf(credentials.restitution.toString()) }
+    var emaAlpha by remember { mutableStateOf(credentials.emaAlpha.toString()) }
+    var deadzone by remember { mutableStateOf(credentials.deadzone.toString()) }
     var showPassword by remember { mutableStateOf(false) }
-    var showAdvanced by remember { mutableStateOf(false) }
+    var showTopics by remember { mutableStateOf(false) }
+    var showPhysics by remember { mutableStateOf(false) }
 
     val connecting = connection is ConnectionState.Connecting
 
@@ -94,35 +103,155 @@ fun ConnectionScreen(
                 color = MaterialTheme.colorScheme.primary,
             )
             Text(
-                "Connect to your cookie game",
+                "The sweetest connection in IoT",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(28.dp))
 
+            // Game Settings Section
+            Text(
+                "Game Settings",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                fontWeight = FontWeight.Bold
+            )
+
+            CredentialField(
+                value = playerName,
+                onValueChange = { playerName = it },
+                label = "Player Name",
+                enabled = !connecting,
+            )
+            
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = { gameId = 1 },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (gameId == 1) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (gameId == 1) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Labyrinth")
+                }
+                Button(
+                    onClick = { gameId = 2 },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (gameId == 2) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (gameId == 2) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Flatland")
+                }
+            }
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CredentialField(
+                    value = cookiesCount,
+                    onValueChange = { cookiesCount = it.filter(Char::isDigit) },
+                    label = "Cookies (1-1000)",
+                    keyboardType = KeyboardType.Number,
+                    enabled = !connecting,
+                    modifier = Modifier.weight(1f)
+                )
+                CredentialField(
+                    value = wallThickness,
+                    onValueChange = { wallThickness = it.filter(Char::isDigit) },
+                    label = "Wall Px (5-40)",
+                    keyboardType = KeyboardType.Number,
+                    enabled = !connecting,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            TextButton(
+                onClick = { showPhysics = !showPhysics },
+                modifier = Modifier.align(Alignment.Start),
+            ) {
+                Icon(
+                    if (showPhysics) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = null,
+                )
+                Spacer(Modifier.width(4.dp))
+                Text("Physics Parameters")
+            }
+            AnimatedVisibility(visible = showPhysics) {
+                Column {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        CredentialField(
+                            value = imuSensitivity,
+                            onValueChange = { imuSensitivity = it },
+                            label = "Sensitivity",
+                            keyboardType = KeyboardType.Decimal,
+                            enabled = !connecting,
+                            modifier = Modifier.weight(1f)
+                        )
+                        CredentialField(
+                            value = restitution,
+                            onValueChange = { restitution = it },
+                            label = "Restitution",
+                            keyboardType = KeyboardType.Decimal,
+                            enabled = !connecting,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        CredentialField(
+                            value = emaAlpha,
+                            onValueChange = { emaAlpha = it },
+                            label = "EMA Alpha",
+                            keyboardType = KeyboardType.Decimal,
+                            enabled = !connecting,
+                            modifier = Modifier.weight(1f)
+                        )
+                        CredentialField(
+                            value = deadzone,
+                            onValueChange = { deadzone = it },
+                            label = "Deadzone",
+                            keyboardType = KeyboardType.Decimal,
+                            enabled = !connecting,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+            // Server Connection Section
+            Text(
+                "Server Connection",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                fontWeight = FontWeight.Bold
+            )
+
             CredentialField(
                 value = host,
                 onValueChange = { host = it },
-                label = "Broker host",
+                label = "Broker Host Address",
                 enabled = !connecting,
             )
             CredentialField(
                 value = port,
                 onValueChange = { port = it.filter(Char::isDigit) },
-                label = "Port",
+                label = "Port (default 8883)",
                 keyboardType = KeyboardType.Number,
                 enabled = !connecting,
             )
             CredentialField(
                 value = username,
                 onValueChange = { username = it },
-                label = "Username",
+                label = "Username for Connection",
                 enabled = !connecting,
             )
             CredentialField(
                 value = password,
                 onValueChange = { password = it },
-                label = "Password",
+                label = "Password for Connection",
                 enabled = !connecting,
                 keyboardType = KeyboardType.Password,
                 visualTransformation = if (showPassword) {
@@ -141,38 +270,42 @@ fun ConnectionScreen(
             )
 
             TextButton(
-                onClick = { showAdvanced = !showAdvanced },
+                onClick = { showTopics = !showTopics },
                 modifier = Modifier.align(Alignment.Start),
             ) {
                 Icon(
-                    if (showAdvanced) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    if (showTopics) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                     contentDescription = null,
                 )
                 Spacer(Modifier.width(4.dp))
-                Text("Topics & advanced")
+                Text("Connection Topics")
             }
-            AnimatedVisibility(visible = showAdvanced) {
+            AnimatedVisibility(visible = showTopics) {
                 Column {
                     CredentialField(
                         value = telemetryTopic,
                         onValueChange = { telemetryTopic = it },
-                        label = "Telemetry topic (subscribe)",
+                        label = "Telemetry topic",
                         enabled = !connecting,
                     )
                     CredentialField(
                         value = commandTopic,
                         onValueChange = { commandTopic = it },
-                        label = "Command topic (publish)",
+                        label = "Command topic",
                         enabled = !connecting,
                     )
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(16.dp))
 
             val parsedPort = port.toIntOrNull() ?: -1
+            val parsedCookies = cookiesCount.toIntOrNull() ?: 10
+            val parsedWall = wallThickness.toIntOrNull() ?: 10
+            
             val canConnect = host.isNotBlank() && parsedPort in 1..65535 &&
-                username.isNotBlank() && password.isNotBlank() && !connecting
+                username.isNotBlank() && password.isNotBlank() && 
+                playerName.isNotBlank() && !connecting
 
             Button(
                 onClick = {
@@ -184,6 +317,14 @@ fun ConnectionScreen(
                             password = password,
                             telemetryTopic = telemetryTopic.trim(),
                             commandTopic = commandTopic.trim(),
+                            playerName = playerName.trim(),
+                            gameId = gameId,
+                            cookiesCount = parsedCookies.coerceIn(1, 1000),
+                            wallThickness = parsedWall.coerceIn(5, 40),
+                            imuSensitivity = imuSensitivity.toDoubleOrNull() ?: credentials.imuSensitivity,
+                            restitution = restitution.toDoubleOrNull() ?: credentials.restitution,
+                            emaAlpha = emaAlpha.toDoubleOrNull() ?: credentials.emaAlpha,
+                            deadzone = deadzone.toDoubleOrNull() ?: credentials.deadzone
                         ),
                     )
                 },
@@ -244,6 +385,7 @@ private fun CredentialField(
     keyboardType: KeyboardType = KeyboardType.Text,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     trailingIcon: @Composable (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
 ) {
     OutlinedTextField(
         value = value,
@@ -255,7 +397,7 @@ private fun CredentialField(
         visualTransformation = visualTransformation,
         trailingIcon = trailingIcon,
         shape = RoundedCornerShape(14.dp),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
     )

@@ -1,10 +1,10 @@
 #include <AUnit.h>
 #include <vector>
 
-#include "src/game/MazeCookieSpawner.h"
-#include "src/game/CookieField.h"
+#include "MazeCookieSpawner.h"
+#include "CookieField.h"
 #include "src/maze/MazeManager.h"
-#include "src/physics/PhysicsBody.h"
+#include "src/physics/core/PhysicsBody.h"
 
 // Shared small maze geometry: even wall thickness keeps cell centers integral,
 // so a pixel center maps exactly onto a board index.
@@ -53,8 +53,7 @@ test(MazeCookieSpawnerTest, spawn_alwaysLandsOnCorridor)
 }
 
 /**
- * @test On pickup the spawner respawns at a fresh corridor cell, mirroring the
- * rect spawner's k-cookies-respawn model (no fixed/unique placement).
+ * @test On pickup the spawner respawns at a fresh corridor cell.
  */
 test(MazeCookieSpawnerTest, spawn_respawnsOnCorridorAfterPickup)
 {

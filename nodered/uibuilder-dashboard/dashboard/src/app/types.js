@@ -24,7 +24,7 @@
 
 /**
  * @typedef {Object} TelemetryState
- * @property {string} status
+ * @property {string} runningStatus
  * @property {number} cookies_collected
  * @property {number} cookies_remaining
  * @property {number} current_round
