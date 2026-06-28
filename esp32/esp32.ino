@@ -98,6 +98,8 @@ void setup() {
   // Setup MQTT client
   graphicsManager.drawLoadingScreen("Starting MQTT...");
   mqttManager.begin();
+  mqttManager.connect(); // initial connection attempt
+  mqttManager.loop(); // once to verify connection
 
   // Initialize the game engine and start in idle mode.
   graphicsManager.drawLoadingScreen("Creating Maze...");
@@ -285,75 +287,82 @@ void updateGameStep() {
 void vNetworkTask(void *pvParameters) {
   TickType_t lastTelemetryTime = xTaskGetTickCount();
   while (true) {
-    // Process MQTT callbacks to populate commandQueue with incoming commands.
-    // Separated from the connect() call to avoid blocking the game loop for up to 
-    // 500ms on network I/O but still ensure keep-alive of the MQTT connection.
-    mqttManager.loop();
+    // 1. Service MQTT loop and maintain connection status
+    // Must be called frequently to handle keep-alives and incoming messages.
+    if (wifiManager.isConnected()) {
+      mqttManager.loop();
+    }
 
-    // Periodic telemetry publishing at 2Hz.
+    // 2. Periodic telemetry publishing
     TickType_t currentTick = xTaskGetTickCount();
     if ((currentTick - lastTelemetryTime) >= pdMS_TO_TICKS(telemetry_rate_ms)) {
       lastTelemetryTime = currentTick;
 
-      // Keep connection alive every 500ms is sufficient for session maintenance.
-      mqttManager.connect();
+      // Check WiFi and MQTT connection before publishing
+      if (wifiManager.isConnected()) {
+        if (!mqttManager.isConnected()) {
+          mqttManager.connect();
+        }
 
-      SensorData sensorData = sensorManager.getLastData();
-      TelemetryData telemetry;
+        if (mqttManager.isConnected()) {
+          SensorData sensorData = sensorManager.getLastData();
+          TelemetryData telemetry;
 
-      // Populate hardware information.
-      telemetry.client_id = device_id;
-      telemetry.hardware = device_hardware;
-      telemetry.firmware_version = device_firmware_version;
-      telemetry.uptime_ms = millis();
-      telemetry.wifi_ssid = wifiManager.getSSID();
+          // Populate hardware information.
+          telemetry.client_id = device_id;
+          telemetry.hardware = device_hardware;
+          telemetry.firmware_version = device_firmware_version;
+          telemetry.uptime_ms = millis();
+          telemetry.wifi_ssid = wifiManager.getSSID();
 
-      // Populate raw sensor readings.
-      telemetry.accel_x = sensorData.accelerometerX;
-      telemetry.accel_y = sensorData.accelerometerY;
-      telemetry.accel_z = sensorData.accelerometerZ;
-      telemetry.gyro_x = sensorData.gyroscopeX;
-      telemetry.gyro_y = sensorData.gyroscopeY;
-      telemetry.gyro_z = sensorData.gyroscopeZ;
-      telemetry.battery_voltage = sensorData.batteryVoltage;
-      telemetry.button = sensorData.button;
+          // Populate raw sensor readings.
+          telemetry.accel_x = sensorData.accelerometerX;
+          telemetry.accel_y = sensorData.accelerometerY;
+          telemetry.accel_z = sensorData.accelerometerZ;
+          telemetry.gyro_x = sensorData.gyroscopeX;
+          telemetry.gyro_y = sensorData.gyroscopeY;
+          telemetry.gyro_z = sensorData.gyroscopeZ;
+          telemetry.battery_voltage = sensorData.batteryVoltage;
+          telemetry.button = sensorData.button;
 
-      // Thread-safe capture of current game progress and physics state.
-      {
-        MutexLock lock(stateMutex);
-        if (lock.isLocked()) {
-          telemetry.game_id = sharedState.gameId;
-          telemetry.player_name = sharedState.playerName;
-          telemetry.target_cookies = sharedState.cookiesCount;
-          telemetry.screen_width = display_width;
-          telemetry.screen_height = display_height;
-          telemetry.wall_thickness_px = sharedState.wallThicknessPx;
+          // Thread-safe capture of current game progress and physics state.
+          {
+            MutexLock lock(stateMutex);
+            if (lock.isLocked()) {
+              telemetry.game_id = sharedState.gameId;
+              telemetry.player_name = sharedState.playerName;
+              telemetry.target_cookies = sharedState.cookiesCount;
+              telemetry.screen_width = display_width;
+              telemetry.screen_height = display_height;
+              telemetry.wall_thickness_px = sharedState.wallThicknessPx;
 
-          String runningStatusStr = "idle";
-          if (sharedState.runningStatus == RunningStatus::RUNNING) {
-              runningStatusStr = "running";
-          } else if (sharedState.runningStatus == RunningStatus::COMPLETED) {
-              runningStatusStr = "completed";
+              String runningStatusStr = "idle";
+              if (sharedState.runningStatus == RunningStatus::RUNNING) {
+                runningStatusStr = "running";
+              } else if (sharedState.runningStatus == RunningStatus::COMPLETED) {
+                runningStatusStr = "completed";
+              }
+              telemetry.runningStatus = runningStatusStr;
+
+              telemetry.cookies_collected = sharedState.cookiesCollected;
+              telemetry.cookies_remaining = sharedState.cookiesRemaining;
+              telemetry.current_round = sharedState.currentRound;
+              telemetry.elapsed_time_sec = sharedState.elapsedTimeSec;
+
+              telemetry.ball_pos_x = sharedState.ballPosX;
+              telemetry.ball_pos_y = sharedState.ballPosY;
+              telemetry.velocity_x = sharedState.velocityX;
+              telemetry.velocity_y = sharedState.velocityY;
+              telemetry.acc_x = sharedState.accX;
+              telemetry.acc_y = sharedState.accY;
+            }
           }
-          telemetry.runningStatus = runningStatusStr;
-          
-          telemetry.cookies_collected = sharedState.cookiesCollected;
-          telemetry.cookies_remaining = sharedState.cookiesRemaining;
-          telemetry.current_round = sharedState.currentRound;
-          telemetry.elapsed_time_sec = sharedState.elapsedTimeSec;
 
-          telemetry.ball_pos_x = sharedState.ballPosX;
-          telemetry.ball_pos_y = sharedState.ballPosY;
-          telemetry.velocity_x = sharedState.velocityX;
-          telemetry.velocity_y = sharedState.velocityY;
-          telemetry.acc_x = sharedState.accX;
-          telemetry.acc_y = sharedState.accY;
+          // Send telemetry JSON payload to MQTT broker
+          String payload = buildTelemetryJson(telemetry);
+          mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
         }
       }
-
-      // Send telemetry JSON payload to MQTT broker
-      String payload = buildTelemetryJson(telemetry);
-      mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
     }
 
     // Short yield to feed the IDLE task and watchdogs.
