@@ -46,6 +46,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.bitebound.UiState
+import com.example.bitebound.data.BallType
+import com.example.bitebound.data.GameConfigConstants
 import com.example.bitebound.data.Telemetry
 import com.example.bitebound.mqtt.ConnectionState
 import com.example.bitebound.ui.components.CookieCard
@@ -61,8 +63,9 @@ import com.example.bitebound.ui.theme.MintGreen
 @Composable
 fun DashboardScreen(
     state: UiState,
-    onStart: (playerName: String, gameId: Int, cookiesCount: Int, wallThickness: Int) -> Unit,
-    onStop: () -> Unit,
+    onStart: (playerName: String, cookies: Int) -> Unit,
+    onStop: (playerName: String) -> Unit,
+    onResume: (playerName: String) -> Unit,
     onDisconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -112,9 +115,11 @@ fun DashboardScreen(
                 defaultCookies = state.credentials.cookiesCount,
                 defaultGameId = state.credentials.gameId,
                 defaultWall = state.credentials.wallThickness,
+                defaultRestitution = state.credentials.restitution,
                 connected = state.connection is ConnectionState.Connected,
                 onStart = onStart,
                 onStop = onStop,
+                onResume = onResume,
             )
 
             if (telemetry != null) {
@@ -213,14 +218,17 @@ private fun ControlsCard(
     defaultCookies: Int,
     defaultGameId: Int,
     defaultWall: Int,
+    defaultRestitution: Double,
     connected: Boolean,
-    onStart: (String, Int, Int, Int) -> Unit,
-    onStop: () -> Unit,
+    onStart: (String, Int) -> Unit,
+    onStop: (String) -> Unit,
+    onResume: (String) -> Unit,
 ) {
     var player by remember { mutableStateOf(defaultPlayer) }
     var cookies by remember { mutableStateOf(defaultCookies.toString()) }
     var gameId by remember { mutableStateOf(defaultGameId) }
     var wall by remember { mutableStateOf(defaultWall.toString()) }
+    var ballType by remember { mutableStateOf(BallType.fromRestitution(defaultRestitution)) }
 
     CookieCard(title = "Game Controls", emoji = "🎮") {
         OutlinedTextField(
@@ -254,42 +262,73 @@ private fun ControlsCard(
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Flatland")
+                Text("Baking Tray")
+            }
+        }
+
+        Spacer(Modifier.height(10.dp))
+        // Wall thickness only matters for the Labyrinth - the Baking Tray has no walls.
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = cookies,
+                onValueChange = { cookies = clampCookieInput(it) },
+                label = { Text("Cookies (1-20)") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.weight(1f),
+            )
+            if (gameId == 1) {
+                OutlinedTextField(
+                    value = wall,
+                    onValueChange = { wall = clampWallInput(it) },
+                    label = { Text("Wall Px (5-40)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.weight(1f),
+                )
+            } else {
+                Spacer(Modifier.weight(1f))
             }
         }
         
         Spacer(Modifier.height(10.dp))
+        // Ball type picks the bounce (restitution) sent with the next start.
+        Text(
+            "Ball Type",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 4.dp),
+        )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
-                value = cookies,
-                onValueChange = { cookies = it.filter(Char::isDigit) },
-                label = { Text("Cookies") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.weight(1f),
-            )
-            OutlinedTextField(
-                value = wall,
-                onValueChange = { wall = it.filter(Char::isDigit) },
-                label = { Text("Wall Px") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.weight(1f),
-            )
+            BallType.entries.forEach { ball ->
+                val selected = ballType == ball
+                Button(
+                    onClick = { ballType = ball },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(ball.label)
+                }
+            }
         }
-        
+
         Spacer(Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Button(
-                onClick = { 
+                onClick = {
                     onStart(
-                        player.trim().ifBlank { "Cookie-Lover" }, 
+                        player.trim().ifBlank { "Cookie-Lover" },
                         gameId,
-                        cookies.toIntOrNull()?.coerceIn(1, 1000) ?: 10,
-                        wall.toIntOrNull()?.coerceIn(5, 40) ?: 10
-                    ) 
+                        cookies.toIntOrNull()?.coerceIn(1, 20) ?: 10,
+                        wall.toIntOrNull()?.coerceIn(5, 40) ?: 10,
+                        ballType.restitution
+                    )
                 },
                 enabled = connected,
                 modifier = Modifier.weight(1f).height(50.dp),
@@ -312,6 +351,19 @@ private fun ControlsCard(
                 Text("Stop", fontWeight = FontWeight.Bold)
             }
         }
+        Spacer(Modifier.height(10.dp))
+        // Continue a paused game (the ESP keeps the ball/score while stopped).
+        Button(
+            onClick = { onResume(player.trim().ifBlank { "Player 1" }) },
+            enabled = connected,
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Honey, contentColor = Color.White),
+        ) {
+            Icon(Icons.Filled.PlayArrow, contentDescription = null)
+            Spacer(Modifier.width(6.dp))
+            Text("Resume", fontWeight = FontWeight.Bold)
+        }
     }
 }
 
@@ -326,25 +378,9 @@ private fun BoardCard(telemetry: Telemetry) {
                 velocityY = telemetry.physics.velocityY,
                 screenWidth = telemetry.config.screenWidth,
                 screenHeight = telemetry.config.screenHeight,
-                collision = telemetry.physics.collisionDetected,
                 modifier = Modifier.fillMaxWidth(0.8f)
             )
         }
-
-        /*
-        Spacer(Modifier.height(16.dp))
-        
-        StatGrid(
-            stats = listOf(
-                "Pos X" to fmt(telemetry.physics.ballPosX, 2),
-                "Pos Y" to fmt(telemetry.physics.ballPosY, 2),
-                "Collision" to if (telemetry.physics.collisionDetected) "Yes 💥" else "No",
-                "Vel X" to fmt(telemetry.physics.velocityX, 2),
-                "Vel Y" to fmt(telemetry.physics.velocityY, 2),
-                "Accel X" to fmt(telemetry.physics.accX, 2),
-            ),
-        )
-        */
     }
 }
 
@@ -362,8 +398,10 @@ private fun SensorsCard(telemetry: Telemetry) {
             )
             HeroStat(
                 label = "Button",
+                // Was Color.White before, which is invisible on the light card -
+                // use a theme colour so "Released" is actually readable.
                 value = if (telemetry.sensors.button) "Pressed" else "Released",
-                color = if (telemetry.sensors.button) Honey else Color.White
+                color = if (telemetry.sensors.button) Honey else MaterialTheme.colorScheme.onSurface
             )
         }
 
@@ -411,11 +449,23 @@ private fun InfoRow(label: String, value: String) {
     }
 }
 
-private fun runningStatusColor(runningStatus: String): Color = when (runningStatus.lowercase()) {
-    "running" -> MintGreen
-    "completed" -> Honey
-    "stopped", "idle" -> ChocolateChip
-    else -> ChocolateChip
+// Keep only digits and clamp to the cookie max as you type, so e.g. 20000 turns
+// into 20 right in the field. Empty stays empty so the box can be cleared;
+// over-long numbers (too big for Int) are treated as over the max.
+private fun clampCookieInput(raw: String): String {
+    val digits = raw.filter(Char::isDigit)
+    if (digits.isEmpty()) return ""
+    val value = digits.toIntOrNull() ?: GameConfigConstants.MAX_COOKIES
+    return value.coerceAtMost(GameConfigConstants.MAX_COOKIES).toString()
+}
+
+// Live max-clamp for wall thickness. Minimum (5) is left to the Start coerceIn
+// so you can still type "40" without the first digit jumping to the minimum.
+private fun clampWallInput(raw: String): String {
+    val digits = raw.filter(Char::isDigit)
+    if (digits.isEmpty()) return ""
+    val value = digits.toIntOrNull() ?: GameConfigConstants.MAX_WALL_THICKNESS
+    return value.coerceAtMost(GameConfigConstants.MAX_WALL_THICKNESS).toString()
 }
 
 private fun fmt(value: Double, decimals: Int): String = "%.${decimals}f".format(value)
