@@ -8,9 +8,9 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Builds the JSON command payloads sent to the ESP32 on
- * `mauc2026/group_03/game/command`. The shape mirrors
- * `tests/mqtt_mock/subscribe_command_example.json`.
+ * Builds the JSON we publish to the command topic (start / stop). The field
+ * layout has to line up with what CommandParser on the ESP32 reads, see
+ * tests/mqtt_mock/subscribe_command_example.json for the reference shape.
  */
 object GameCommand {
 

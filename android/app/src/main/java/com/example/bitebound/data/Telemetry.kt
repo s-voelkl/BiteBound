@@ -3,11 +3,10 @@ package com.example.bitebound.data
 import org.json.JSONObject
 
 /**
- * Strongly-typed view of a telemetry message published by the ESP32 on
- * `mauc2026/group_03/game/telemetry`.
+ * The telemetry JSON coming from the ESP32, parsed into plain Kotlin objects.
  *
- * Parsing is deliberately defensive: any missing field falls back to a neutral
- * default so a malformed or partial payload never crashes the dashboard.
+ * Every field falls back to a default if it's missing, so a half-broken message
+ * just shows zeros on the dashboard instead of crashing the whole thing.
  */
 data class Telemetry(
     val device: Device,

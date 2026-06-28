@@ -39,7 +39,15 @@ private fun BiteBoundApp(viewModel: BiteBoundViewModel = viewModel()) {
         ConnectionState.Connected -> {
             DashboardScreen(
                 state = state,
-                onStart = viewModel::startGame,
+                onStart = { player, gameId, cookies, wall, restitution ->
+                    viewModel.startGame(
+                        playerName = player,
+                        gameId = gameId,
+                        cookiesCount = cookies,
+                        wallThickness = wall,
+                        restitution = restitution,
+                    )
+                },
                 onStop = viewModel::stopGame,
                 onDisconnect = viewModel::disconnect,
                 modifier = Modifier.fillMaxSize(),
