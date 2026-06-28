@@ -1,9 +1,21 @@
 \section{Prompts}
 \label{sec:prompts}
+
+For transparency and reproducibility, the used AI tool prompts are attached in this section.
+In general, the model Google Gemini Flach 3.5 Thinking was used for all prompts.
+
 % Attach AI tool prompts used during the development phase.
 
 % TODO: add all file names here.
-\foreach \p in {logo_generation, maze_random_dfs} {
+\foreach \p in {
+		architecture_design,
+		concurrency_freertos,
+		docstring_generation,
+		gfx_graphics_library,
+		logo_generation,
+		maze_random_dfs,
+		nodred_dashboard_library,
+		plantuml_basic_template} {
 		\input{../prompts/\p.tex}
 	}
 
