@@ -1,6 +1,4 @@
-# Overview about the used prompts
-
-## 1. Random DFS Maze Generation Algorithm
+# Random DFS Maze Generation Algorithm
 
 Prompt:
 
