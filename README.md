@@ -1,5 +1,12 @@
 # BiteBound
 
+<div align="center">
+  <img src="assets/logo/logo.png" alt="BiteBound Logo" width="150">
+</div>
+
+A tilt-controlled IoT game for the ESP32-S3, featuring real-time physics and dual-dashboard synchronization via MQTT on an Android app and Node-RED flow. The game is designed to be played on a Waveshare ESP32-S3 1.69" Touch LCD, with a ball navigating through procedurally generated mazes or flat arenas, collecting cookies while beating the clock.
+
+<!-- TODO: Remove -->
 ## Before making this repo public
 
 Before making this repository public, the following steps have to be done:
@@ -14,7 +21,7 @@ The GitHub repository for this project is located at: [https://github.com/s-voel
 
 ## License
 
-The MIT License (MIT) applies to this project. See the [LICENSE](LICENSE) file for details.
+The MIT License (MIT) applies to this project, as stated in [LICENSE](LICENSE). The documentation and diagrams are licensed under the Creative Commons Attribution 4.0 International Public License (CC BY 4.0) in accordance with the [LICENSE](tex/LICENSE) file.
 
 ## Usage
 
@@ -25,6 +32,8 @@ See [Usage Guide](USAGE.md) for detailed instructions on how to set up and run t
 The ESP32 firmware is split into self-contained, unit-tested modules under `esp32/src/`, orchestrated from the main sketch `esp32/esp32.ino`. All tunable values and hardware pins are centralized in `esp32/config.h`.
 
 See the component diagram in [diagrams/src/architecture.puml](diagrams/src/architecture.puml).
+
+![Architecture Diagram](diagrams/out/architecture/architecture.png)
 
 ### Concurrency Model (ESP32-S3 Dual Core)
 
@@ -74,6 +83,7 @@ BiteBound/
 └── tex/                      # LaTeX report sources
 ```
 
+<!-- TODO: Remove -->
 ## Projectmanagement
 
 Spiel 1 & 2:
