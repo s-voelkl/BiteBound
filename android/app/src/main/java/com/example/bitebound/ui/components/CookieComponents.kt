@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -30,11 +32,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.bitebound.data.GameConfigConstants
 import com.example.bitebound.ui.theme.CaramelBrown
 import com.example.bitebound.ui.theme.ChocolateChip
 import com.example.bitebound.ui.theme.CookieDough
 import com.example.bitebound.ui.theme.CookieGolden
 import com.example.bitebound.ui.theme.Honey
+import com.example.bitebound.ui.theme.MintGreen
 
 /** A titled, slightly raised card used for every dashboard section. */
 @Composable
@@ -155,12 +159,12 @@ fun CookieProgress(
                 "$collected",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
-                color = ChocolateChip,
+                color = Color.White,
             )
             Text(
                 "of $target",
                 style = MaterialTheme.typography.titleMedium,
-                color = ChocolateChip.copy(alpha = 0.8f),
+                color = Color.White.copy(alpha = 0.9f),
             )
         }
     }
@@ -228,14 +232,15 @@ fun StatGrid(
 }
 
 /**
- * A miniature of the ESP32 game board showing the ball's live position. The
- * incoming coordinates are in the device's screen pixels, so they are scaled
- * into the available canvas.
+ * A miniature of the ESP32 game board showing the ball's live position.
+ * The board preserves the aspect ratio of the remote device screen.
  */
 @Composable
 fun MiniGameBoard(
     ballX: Double,
     ballY: Double,
+    velocityX: Double = 0.0,
+    velocityY: Double = 0.0,
     screenWidth: Int,
     screenHeight: Int,
     collision: Boolean,
@@ -245,43 +250,79 @@ fun MiniGameBoard(
     val yFraction = if (screenHeight > 0) (ballY / screenHeight).toFloat().coerceIn(0f, 1f) else 0.5f
     val ballColor = if (collision) MaterialTheme.colorScheme.error else ChocolateChip
 
+    // Calculate aspect ratio. Default to 16:9 if unknown.
+    val aspectRatio = if (screenWidth > 0 && screenHeight > 0) {
+        screenWidth.toFloat() / screenHeight.toFloat()
+    } else {
+        16f / 9f
+    }
+
     Box(
         modifier
-            .fillMaxWidth()
-            .height(180.dp),
+            .padding(vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Canvas(Modifier.fillMaxWidth().height(180.dp)) {
-            val pad = 10.dp.toPx()
-            val boardW = size.width - pad * 2
-            val boardH = size.height - pad * 2
-            // Board background
-            drawRoundRect(
-                color = CookieDough.copy(alpha = 0.4f),
-                topLeft = Offset(pad, pad),
-                size = androidx.compose.ui.geometry.Size(boardW, boardH),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx()),
-            )
-            drawRoundRect(
-                color = CaramelBrown,
-                topLeft = Offset(pad, pad),
-                size = androidx.compose.ui.geometry.Size(boardW, boardH),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx()),
-                style = Stroke(width = 2.dp.toPx()),
-            )
-            // The rolling cookie/ball
-            val ballRadius = 9.dp.toPx()
-            val cx = pad + ballRadius + xFraction * (boardW - ballRadius * 2)
-            val cy = pad + ballRadius + yFraction * (boardH - ballRadius * 2)
-            if (collision) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(aspectRatio)
+        ) {
+            Canvas(Modifier.fillMaxSize()) {
+                val pad = 8.dp.toPx()
+                val boardW = size.width - pad * 2
+                val boardH = size.height - pad * 2
+
+                // Board background
+                drawRoundRect(
+                    color = CookieDough.copy(alpha = 0.4f),
+                    topLeft = Offset(pad, pad),
+                    size = androidx.compose.ui.geometry.Size(boardW, boardH),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx()),
+                )
+                drawRoundRect(
+                    color = CaramelBrown,
+                    topLeft = Offset(pad, pad),
+                    size = androidx.compose.ui.geometry.Size(boardW, boardH),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx()),
+                    style = Stroke(width = 2.dp.toPx()),
+                )
+
+                // The rolling cookie/ball
+                val ballRadius = 8.dp.toPx()
+                val cx = pad + ballRadius + xFraction * (boardW - ballRadius * 2)
+                val cy = pad + ballRadius + yFraction * (boardH - ballRadius * 2)
+
+                // Velocity vector
+                val maxSpeed = GameConfigConstants.DEFAULT_MAX_SPEED.toFloat()
+                // Scale vector length based on board size
+                val vectorScale = boardW * 0.20f
+                val vx = (velocityX.toFloat() / maxSpeed) * vectorScale
+                val vy = (velocityY.toFloat() / maxSpeed) * vectorScale
+
+                if (vx != 0f || vy != 0f) {
+                    drawLine(
+                        color = MintGreen,
+                        start = Offset(cx, cy),
+                        end = Offset(cx + vx, cy + vy),
+                        strokeWidth = 3.dp.toPx(),
+                        cap = StrokeCap.Round
+                    )
+                }
+
+                if (collision) {
+                    drawCircle(
+                        color = ballColor.copy(alpha = 0.25f),
+                        radius = ballRadius * 1.8f,
+                        center = Offset(cx, cy),
+                    )
+                }
+                drawCircle(color = ballColor, radius = ballRadius, center = Offset(cx, cy))
                 drawCircle(
-                    color = ballColor.copy(alpha = 0.25f),
-                    radius = ballRadius * 1.9f,
-                    center = Offset(cx, cy),
+                    color = CookieGolden,
+                    radius = ballRadius * 0.4f,
+                    center = Offset(cx - ballRadius * 0.2f, cy - ballRadius * 0.2f)
                 )
             }
-            drawCircle(color = ballColor, radius = ballRadius, center = Offset(cx, cy))
-            drawCircle(color = CookieGolden, radius = ballRadius * 0.4f, center = Offset(cx - 2, cy - 2))
         }
     }
 }
