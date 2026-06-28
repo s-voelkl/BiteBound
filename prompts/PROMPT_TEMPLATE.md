@@ -1,4 +1,4 @@
-\subsection{Prompt Title}
+\subsection*{Prompt Title}
 
 \textbf{Prompt:}
 \begin{lstlisting}[language={}, breaklines=true]
