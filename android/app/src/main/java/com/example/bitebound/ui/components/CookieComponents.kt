@@ -32,10 +32,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.bitebound.data.GameConfigConstants
+import com.example.bitebound.ui.theme.BerryRed
 import com.example.bitebound.ui.theme.CaramelBrown
 import com.example.bitebound.ui.theme.ChocolateChip
 import com.example.bitebound.ui.theme.CookieDough
-import com.example.bitebound.ui.theme.MintGreen
 
 /** A titled, slightly raised card used for every dashboard section. */
 @Composable
@@ -225,8 +225,8 @@ fun MiniGameBoard(
 ) {
     val xFraction = if (screenWidth > 0) (ballX / screenWidth).toFloat().coerceIn(0f, 1f) else 0.5f
     val yFraction = if (screenHeight > 0) (ballY / screenHeight).toFloat().coerceIn(0f, 1f) else 0.5f
-    // Just one flat colour for the ball - the two-tone version looked off.
-    val ballColor = ChocolateChip
+    // Red ball to match the sphere on the ESP display.
+    val ballColor = BerryRed
 
     // Calculate aspect ratio. Default to 16:9 if unknown.
     val aspectRatio = if (screenWidth > 0 && screenHeight > 0) {
@@ -279,7 +279,7 @@ fun MiniGameBoard(
 
                 if (vx != 0f || vy != 0f) {
                     drawLine(
-                        color = MintGreen,
+                        color = Color.Black,
                         start = Offset(cx, cy),
                         end = Offset(cx + vx, cy + vy),
                         strokeWidth = 3.dp.toPx(),

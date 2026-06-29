@@ -39,13 +39,15 @@ private fun BiteBoundApp(viewModel: BiteBoundViewModel = viewModel()) {
         ConnectionState.Connected -> {
             DashboardScreen(
                 state = state,
-                onStart = { player, gameId, cookies, wall, restitution ->
+                onStart = { player, gameId, cookies, wall, restitution, sensitivity, emaAlpha ->
                     viewModel.startGame(
                         playerName = player,
                         gameId = gameId,
                         cookiesCount = cookies,
                         wallThickness = wall,
                         restitution = restitution,
+                        imuSensitivity = sensitivity,
+                        emaAlpha = emaAlpha,
                     )
                 },
                 onStop = viewModel::stopGame,

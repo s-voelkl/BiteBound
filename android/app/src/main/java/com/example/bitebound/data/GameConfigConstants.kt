@@ -30,18 +30,25 @@ object GameConfigConstants {
 }
 
 /**
- * Instead of letting the user type a raw restitution number we let them pick a
- * ball. Each ball just maps to a bounce value we drop into the start command.
- * The numbers are picked by feel (gummy bounces a lot, steel barely), not from
- * any real physics table.
+ * Instead of typing raw physics numbers the user picks a ball. Each ball maps to
+ * a feel: restitution = how much it bounces, sensitivity = how strongly a tilt
+ * pushes it (lower sensitivity = heavier ball, you have to hold the tilt longer
+ * to get it moving). Numbers are picked by feel, not from a real physics table.
  */
-enum class BallType(val label: String, val restitution: Double) {
-    STEEL("Steel", 0.30),
-    FOOTBALL("Football", 0.60),
-    GUMMY("Gummy", 0.90);
+enum class BallType(
+    val label: String,
+    val restitution: Double,
+    val sensitivity: Double,
+    val emaAlpha: Double,
+) {
+    // emaAlpha: lower = more input lag (the tilt has to build up over more frames
+    // before the ball reacts), which adds to the "heavy, hold-it-longer" feel.
+    STEEL("Steel", 0.15, 55.0, 0.25),
+    FOOTBALL("Football", 0.50, 100.0, 0.5),
+    GUMMY("Gummy", 0.75, 100.0, 0.6);
 
     companion object {
-        val DEFAULT = STEEL
+        val DEFAULT = FOOTBALL
 
         /** Figure out which ball a stored restitution belongs to (used on load). */
         fun fromRestitution(value: Double): BallType =

@@ -1,6 +1,7 @@
 package com.example.bitebound.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -43,12 +46,12 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.bitebound.data.BallType
+import com.example.bitebound.R
 import com.example.bitebound.data.Credentials
 import com.example.bitebound.data.GameConfigConstants
 import com.example.bitebound.mqtt.ConnectionState
 import com.example.bitebound.ui.theme.BerryRed
 import com.example.bitebound.ui.theme.ChocolateChip
-import java.util.Locale
 
 @Composable
 fun ConnectionScreen(
@@ -67,14 +70,9 @@ fun ConnectionScreen(
     var wallThickness by remember { mutableStateOf(credentials.wallThickness.toString()) }
     var telemetryTopic by remember { mutableStateOf(credentials.telemetryTopic) }
     var commandTopic by remember { mutableStateOf(credentials.commandTopic) }
-    // Physics fields are shown rounded to 2 decimals so they don't look messy.
-    var imuSensitivity by remember { mutableStateOf(fmt2(credentials.imuSensitivity)) }
     var ballType by remember { mutableStateOf(BallType.fromRestitution(credentials.restitution)) }
-    var emaAlpha by remember { mutableStateOf(fmt2(credentials.emaAlpha)) }
-    var deadzone by remember { mutableStateOf(fmt2(credentials.deadzone)) }
     var showPassword by remember { mutableStateOf(false) }
     var showTopics by remember { mutableStateOf(false) }
-    var showPhysics by remember { mutableStateOf(false) }
 
     val connecting = connection is ConnectionState.Connecting
 
@@ -91,17 +89,16 @@ fun ConnectionScreen(
                 .padding(vertical = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("🍪", style = MaterialTheme.typography.headlineLarge.copy(fontSize = MaterialTheme.typography.headlineLarge.fontSize * 2))
-            Spacer(Modifier.height(8.dp))
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = null,
+                modifier = Modifier.size(100.dp),
+            )
+            Spacer(Modifier.height(16.dp))
             Text(
                 "BiteBound",
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                "The sweetest connection in IoT",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(28.dp))
 
@@ -189,52 +186,6 @@ fun ConnectionScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(ball.label)
-                    }
-                }
-            }
-
-            TextButton(
-                onClick = { showPhysics = !showPhysics },
-                modifier = Modifier.align(Alignment.Start),
-            ) {
-                Icon(
-                    if (showPhysics) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                    contentDescription = null,
-                )
-                Spacer(Modifier.width(4.dp))
-                Text("Physics Parameters")
-            }
-            AnimatedVisibility(visible = showPhysics) {
-                Column {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        CredentialField(
-                            value = imuSensitivity,
-                            onValueChange = { imuSensitivity = it },
-                            label = "Sensitivity",
-                            keyboardType = KeyboardType.Decimal,
-                            enabled = !connecting,
-                            modifier = Modifier.weight(1f)
-                        )
-                        CredentialField(
-                            value = emaAlpha,
-                            onValueChange = { emaAlpha = it },
-                            label = "EMA Alpha",
-                            keyboardType = KeyboardType.Decimal,
-                            enabled = !connecting,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        CredentialField(
-                            value = deadzone,
-                            onValueChange = { deadzone = it },
-                            label = "Deadzone",
-                            keyboardType = KeyboardType.Decimal,
-                            enabled = !connecting,
-                            modifier = Modifier.weight(1f)
-                        )
-                        // empty half so the Deadzone box keeps the same width as the row above
-                        Spacer(Modifier.weight(1f))
                     }
                 }
             }
@@ -347,10 +298,10 @@ fun ConnectionScreen(
                             gameId = gameId,
                             cookiesCount = parsedCookies.coerceIn(1, 20),
                             wallThickness = parsedWall.coerceIn(5, 40),
-                            imuSensitivity = (imuSensitivity.toDoubleOrNull() ?: credentials.imuSensitivity).round2(),
+                            imuSensitivity = ballType.sensitivity,
                             restitution = ballType.restitution,
-                            emaAlpha = (emaAlpha.toDoubleOrNull() ?: credentials.emaAlpha).round2(),
-                            deadzone = (deadzone.toDoubleOrNull() ?: credentials.deadzone).round2()
+                            emaAlpha = ballType.emaAlpha,
+                            deadzone = credentials.deadzone
                         ),
                     )
                 },
@@ -432,12 +383,6 @@ private fun clampWallInput(raw: String): String {
     val value = digits.toIntOrNull() ?: GameConfigConstants.MAX_WALL_THICKNESS
     return value.coerceAtMost(GameConfigConstants.MAX_WALL_THICKNESS).toString()
 }
-
-// Show a number with exactly 2 decimals (Locale.US so we always get a dot).
-private fun fmt2(value: Double): String = String.format(Locale.US, "%.2f", value)
-
-// Round to 2 decimals before we send it off, so 0.04000001 stays 0.04.
-private fun Double.round2(): Double = Math.round(this * 100.0) / 100.0
 
 @Composable
 private fun CredentialField(
