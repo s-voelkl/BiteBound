@@ -363,7 +363,7 @@ Implemented in `esp32/src/network/json-builder/JsonBuilder.h` and `esp32/src/net
     "velocity_x": 1.85,
     "velocity_y": -0.92,
     "acc_x": 0.15,
-    "acc_y": -0.34,
+    "acc_y": -0.34
   },
   "sensors": {
     "accel_x": 0.12,
@@ -409,8 +409,8 @@ Commands received on the `mauc2026/group_03/game/command` topic are decoded by t
   "command": "start",
   "meta": {
     "source_ui": "NODE_RED",
-    "request_id": "1234",
-    "timestamp": "2024-06-08T11:50:00Z"
+    "request_id": "908f4600-5fc3-4be5-b872-27ca816d6273",
+    "timestamp": "2026-06-29T11:50:00Z"
   },
   "player": {
     "name": "Cookie-Lover"
@@ -423,9 +423,9 @@ Commands received on the `mauc2026/group_03/game/command` topic are decoded by t
     "wall_thickness_px": 6
   },
   "physics": {
-    "imu_sensitivity_multiplier": 1.25,
-    "bounce_restitution": 0.75,
-    "ema_alpha": 0.25,
+    "imu_sensitivity_multiplier": 100,
+    "bounce_restitution": 0.3,
+    "ema_alpha": 0.5,
     "deadzone_threshold": 0.04
   }
 }
