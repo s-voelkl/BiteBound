@@ -43,12 +43,12 @@ enum class BallType(
 ) {
     // emaAlpha: lower = more input lag (the tilt has to build up over more frames
     // before the ball reacts), which adds to the "heavy, hold-it-longer" feel.
-    STEEL("Steel", 0.15, 55.0, 0.25),    // heavy & dead: barely bounces, slow + laggy to get rolling
-    FOOTBALL("Football", 0.60, 100.0, 0.5), // balanced default feel
-    GUMMY("Gummy", 0.80, 100.0, 0.5);    // lively bounce, normal responsiveness
+    STEEL("Steel", 0.15, 55.0, 0.25),
+    FOOTBALL("Football", 0.50, 100.0, 0.5),
+    GUMMY("Gummy", 0.75, 100.0, 0.6);
 
     companion object {
-        val DEFAULT = STEEL
+        val DEFAULT = FOOTBALL
 
         /** Figure out which ball a stored restitution belongs to (used on load). */
         fun fromRestitution(value: Double): BallType =
