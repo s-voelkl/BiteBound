@@ -1,7 +1,8 @@
 \section{Project Management}
 \label{sec:project_management}
 
-The BiteBound project was executed by a two-person team, with each member contributing to all aspects of the project by reviewing or leading the development of each component.
+The BiteBound project was executed by a two-person team, with each member contributing to all aspects of the project.
+The lead developers for each component are indicated in~\Cref{tab:task_distribution}, while a reviewer was assigned to each task to ensure code quality and maintainability, as stated in \Cref{subsec:task_distribution}. 
 
 % \subsection{SMART Goals}
 % \label{subsec:smart}
@@ -76,7 +77,9 @@ The development of BiteBound followed an incremental path, prioritizing the defi
 
 \subsection{Task Dependencies}
 \label{subsec:task_dependencies}
-The decoupled software architecture introduced several critical dependencies: IMU calibration fed into physics input, JSON schema definitions enabled dashboard integration, and dual-core allocation required thread-safe state protection before merging the network and game codebases. These dependencies ensured that network managers and telemetry contracts were established first, physics and sensor processing were validated before graphics integration, and the multi-core architecture was introduced only after both stacks were independently stable.
+
+The decoupled software architecture introduced several critical dependencies: 
+IMU calibration fed into physics input, JSON schema definitions enabled dashboard integration, and dual-core allocation required thread-safe state protection before merging the network and game codebases. These dependencies ensured that network managers and telemetry contracts were established first, physics and sensor processing were validated before graphics integration, and the multi-core architecture was introduced only after both stacks were independently stable.
 
 \subsection{Task Distribution}
 \label{subsec:task_distribution}
