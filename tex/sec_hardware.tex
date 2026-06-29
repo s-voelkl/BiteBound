@@ -97,6 +97,25 @@ To circumvent this hardware bottleneck, the \texttt{GraphicsManager} implements 
 
 Volatile HUD elements, such as the score and elapsed time, are cached and updated only when their internal values change.
 
+An example display frame of the labyrinth game is shown in~\Cref{fig:esp32_labyrinth}, while~\Cref{fig:esp32_loading} illustrates a loading screen for the game startup phase.
+
+\begin{figure}[h]
+    \centering
+    \begin{minipage}[b]{0.48\linewidth}
+        \centering
+        \includegraphics[width=0.8\linewidth]{../assets/esp32-labyrinth.png}
+        \caption[Display Frame of the Labyrinth Game]{Example display frame of the labyrinth game on the ESP32-S3.}
+        \label{fig:esp32_labyrinth}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.48\linewidth}
+        \centering
+        \includegraphics[width=0.8\linewidth]{../assets/esp32-loading.png}
+        \caption[Display Frame of the Loading Screen]{Loading screen for the game startup phase on the ESP32-S3.}
+        \label{fig:esp32_loading}
+    \end{minipage}
+\end{figure}
+
 \subsection{MQTT Communication}
 \label{subsec:mqtt_communication}
 
