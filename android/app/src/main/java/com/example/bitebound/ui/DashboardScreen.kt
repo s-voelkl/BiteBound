@@ -69,7 +69,7 @@ import com.example.bitebound.ui.theme.MintGreen
 @Composable
 fun DashboardScreen(
     state: UiState,
-    onStart: (playerName: String, gameId: Int, cookies: Int, wall: Int, restitution: Double) -> Unit,
+    onStart: (playerName: String, gameId: Int, cookies: Int, wall: Int, restitution: Double, sensitivity: Double, emaAlpha: Double) -> Unit,
     onStop: () -> Unit,
     onResume: (playerName: String) -> Unit,
     onDisconnect: () -> Unit,
@@ -245,7 +245,7 @@ private fun ControlsCard(
     connected: Boolean,
     running: Boolean,
     hasTelemetry: Boolean,
-    onStart: (String, Int, Int, Int, Double) -> Unit,
+    onStart: (String, Int, Int, Int, Double, Double, Double) -> Unit,
     onStop: () -> Unit,
     onResume: (String) -> Unit,
 ) {
@@ -397,7 +397,9 @@ private fun ControlsCard(
                             gameId,
                             cookies.toIntOrNull()?.coerceIn(1, 20) ?: 10,
                             wall.toIntOrNull()?.coerceIn(5, 40) ?: 10,
-                            ballType.restitution
+                            ballType.restitution,
+                            ballType.sensitivity,
+                            ballType.emaAlpha
                         )
                     }
                 ) { Text("New Game") }

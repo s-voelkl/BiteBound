@@ -52,7 +52,6 @@ import com.example.bitebound.data.GameConfigConstants
 import com.example.bitebound.mqtt.ConnectionState
 import com.example.bitebound.ui.theme.BerryRed
 import com.example.bitebound.ui.theme.ChocolateChip
-import java.util.Locale
 
 @Composable
 fun ConnectionScreen(
@@ -71,14 +70,9 @@ fun ConnectionScreen(
     var wallThickness by remember { mutableStateOf(credentials.wallThickness.toString()) }
     var telemetryTopic by remember { mutableStateOf(credentials.telemetryTopic) }
     var commandTopic by remember { mutableStateOf(credentials.commandTopic) }
-    // Physics fields are shown rounded to 2 decimals so they don't look messy.
-    var imuSensitivity by remember { mutableStateOf(fmt2(credentials.imuSensitivity)) }
     var ballType by remember { mutableStateOf(BallType.fromRestitution(credentials.restitution)) }
-    var emaAlpha by remember { mutableStateOf(fmt2(credentials.emaAlpha)) }
-    var deadzone by remember { mutableStateOf(fmt2(credentials.deadzone)) }
     var showPassword by remember { mutableStateOf(false) }
     var showTopics by remember { mutableStateOf(false) }
-    var showPhysics by remember { mutableStateOf(false) }
 
     val connecting = connection is ConnectionState.Connecting
 
@@ -196,52 +190,6 @@ fun ConnectionScreen(
                 }
             }
 
-            TextButton(
-                onClick = { showPhysics = !showPhysics },
-                modifier = Modifier.align(Alignment.Start),
-            ) {
-                Icon(
-                    if (showPhysics) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                    contentDescription = null,
-                )
-                Spacer(Modifier.width(4.dp))
-                Text("Physics Parameters")
-            }
-            AnimatedVisibility(visible = showPhysics) {
-                Column {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        CredentialField(
-                            value = imuSensitivity,
-                            onValueChange = { imuSensitivity = it },
-                            label = "Sensitivity",
-                            keyboardType = KeyboardType.Decimal,
-                            enabled = !connecting,
-                            modifier = Modifier.weight(1f)
-                        )
-                        CredentialField(
-                            value = emaAlpha,
-                            onValueChange = { emaAlpha = it },
-                            label = "EMA Alpha",
-                            keyboardType = KeyboardType.Decimal,
-                            enabled = !connecting,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        CredentialField(
-                            value = deadzone,
-                            onValueChange = { deadzone = it },
-                            label = "Deadzone",
-                            keyboardType = KeyboardType.Decimal,
-                            enabled = !connecting,
-                            modifier = Modifier.weight(1f)
-                        )
-                        // empty half so the Deadzone box keeps the same width as the row above
-                        Spacer(Modifier.weight(1f))
-                    }
-                }
-            }
-
             Spacer(Modifier.height(16.dp))
             // Server Connection Section
             Text(
@@ -350,10 +298,10 @@ fun ConnectionScreen(
                             gameId = gameId,
                             cookiesCount = parsedCookies.coerceIn(1, 20),
                             wallThickness = parsedWall.coerceIn(5, 40),
-                            imuSensitivity = (imuSensitivity.toDoubleOrNull() ?: credentials.imuSensitivity).round2(),
+                            imuSensitivity = ballType.sensitivity,
                             restitution = ballType.restitution,
-                            emaAlpha = (emaAlpha.toDoubleOrNull() ?: credentials.emaAlpha).round2(),
-                            deadzone = (deadzone.toDoubleOrNull() ?: credentials.deadzone).round2()
+                            emaAlpha = ballType.emaAlpha,
+                            deadzone = credentials.deadzone
                         ),
                     )
                 },
@@ -435,12 +383,6 @@ private fun clampWallInput(raw: String): String {
     val value = digits.toIntOrNull() ?: GameConfigConstants.MAX_WALL_THICKNESS
     return value.coerceAtMost(GameConfigConstants.MAX_WALL_THICKNESS).toString()
 }
-
-// Show a number with exactly 2 decimals (Locale.US so we always get a dot).
-private fun fmt2(value: Double): String = String.format(Locale.US, "%.2f", value)
-
-// Round to 2 decimals before we send it off, so 0.04000001 stays 0.04.
-private fun Double.round2(): Double = Math.round(this * 100.0) / 100.0
 
 @Composable
 private fun CredentialField(
