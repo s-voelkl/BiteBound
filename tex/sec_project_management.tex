@@ -91,10 +91,12 @@ To maintain code quality and structural integrity across the shared codebase, th
 \begin{itemize}
     \item \textbf{Branch Protection:} Direct commits to the \texttt{main} branch were restricted. All feature updates and bug fixes were developed on separate branches.
     \item \textbf{Code Review:} Merging any branch into \texttt{main} required a Pull Request accompanied by the other team member's review and approval.
-    \item \textbf{Code Coverage Targets:} A unit test coverage of about 60\% was targeted for the core ESP32 modules, while the Android application aimed for basic unit tests. Node-RED flows were excluded from automated testing due to their visual nature (see \texttt{esp32/test-coverage.txt}).
     \item \textbf{CI Pipeline}: A GitHub Actions pipeline was configured to automatically verify the compilation of the ESP32 firmware for both test and production builds (see \texttt{.github/workflows/ci.yaml})
+    \item \textbf{Code Coverage Targets:} A unit test coverage of about 60\% was targeted for the core ESP32 modules, while the Android application aimed for basic unit tests. Node-RED flows were excluded from automated testing due to their visual nature (see \texttt{esp32/test-coverage.txt}).
+    \item \textbf{Docstrings:} All public methods and classes were documented with docstrings to enhance code readability and accessibility.
 \end{itemize}
 
+Transparency note: The unit test writing and docstring generation were partly assisted by AI, as documented in \Cref{sec:prompts}.
 The division of responsibilities between the two team members is outlined in~\Cref{tab:task_distribution}.
 
 \begin{table}[htb]
