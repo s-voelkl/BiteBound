@@ -28,7 +28,7 @@ class GameCommandTest {
     // the chosen ball's physics should actually land in the command we send
     @Test
     fun ballTypePhysicsEndUpInTheCommand() {
-        val ball = BallType.GUMMY
+        val ball = BallType.SCRAPPY
         val physics = JSONObject(
             GameCommand.start(
                 playerName = "X", gameId = 1, cookiesCount = 5, wallThicknessPx = 10,

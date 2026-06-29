@@ -33,20 +33,20 @@ class GameLogicTest {
     // steel should be heavier -> lower sensitivity than the others
     @Test
     fun steelIsHeavier() {
-        assertTrue(BallType.STEEL.sensitivity < BallType.FOOTBALL.sensitivity)
-        assertTrue(BallType.STEEL.sensitivity < BallType.GUMMY.sensitivity)
+        assertTrue(BallType.CHONK.sensitivity < BallType.CHOMPER.sensitivity)
+        assertTrue(BallType.CHONK.sensitivity < BallType.SCRAPPY.sensitivity)
     }
 
     // gummy bounces more than steel
     @Test
     fun gummyBouncesMore() {
-        assertTrue(BallType.GUMMY.restitution > BallType.STEEL.restitution)
+        assertTrue(BallType.SCRAPPY.restitution > BallType.CHONK.restitution)
     }
 
     // picking a ball and reading it back should give the same ball
     @Test
     fun ballRoundTrips() {
-        assertEquals(BallType.GUMMY, BallType.fromRestitution(BallType.GUMMY.restitution))
-        assertEquals(BallType.STEEL, BallType.fromRestitution(BallType.STEEL.restitution))
+        assertEquals(BallType.SCRAPPY, BallType.fromRestitution(BallType.SCRAPPY.restitution))
+        assertEquals(BallType.CHONK, BallType.fromRestitution(BallType.CHONK.restitution))
     }
 }
