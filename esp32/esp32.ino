@@ -25,7 +25,7 @@
 // Set to 1 to run AUnit tests; set 0 for main functionality.
 // Can be overridden at compile time via -DRUN_TESTS=1 (used by CI).
 #ifndef RUN_TESTS
-#define RUN_TESTS 0
+#define RUN_TESTS 1
 #endif
 
 // Threading Synchronizations
@@ -338,82 +338,93 @@ void updateGameStep() {
  */
 void vNetworkTask(void *pvParameters) {
   TickType_t lastTelemetryTime = xTaskGetTickCount();
+
+  // Retry MQTT if disconnected, but avoiding spamming the broker with connection attempts. Use a cooldown interval.
+  TickType_t lastMqttRetryTime = 0;
+  const TickType_t mqttRetryInterval = pdMS_TO_TICKS(mqtt_retry_interval_ms); 
+
   while (true) {
     // 1. Service MQTT loop and maintain connection status
     // Must be called frequently to handle keep-alives and incoming messages.
-    if (wifiManager.isConnected()) {
-      mqttManager.loop();
+    if (!wifiManager.isConnected()){
+      // Reconnect WiFi if lost 
+      Serial.println("NetworkTask: WiFi connection lost, attempting to reconnect...");
+      wifiManager.connect();
     }
+    mqttManager.loop();
 
     // 2. Periodic telemetry publishing
     TickType_t currentTick = xTaskGetTickCount();
+
+    // Reconnect MQTT if disconnected
+    if (!mqttManager.isConnected()) {
+      if (currentTick - lastMqttRetryTime >= mqttRetryInterval) {
+        lastMqttRetryTime = currentTick;
+        mqttManager.connect();
+      }
+    }
+
     if ((currentTick - lastTelemetryTime) >= pdMS_TO_TICKS(telemetry_rate_ms)) {
       lastTelemetryTime = currentTick;
 
-      // Check WiFi and MQTT connection before publishing
-      if (wifiManager.isConnected()) {
-        if (!mqttManager.isConnected()) {
-          mqttManager.connect();
-        }
+      // Only publish if connected
+      if (wifiManager.isConnected() && mqttManager.isConnected()) {
+        SensorData sensorData = sensorManager.getLastData();
+        TelemetryData telemetry;
 
-        if (mqttManager.isConnected()) {
-          SensorData sensorData = sensorManager.getLastData();
-          TelemetryData telemetry;
+        // Populate hardware information.
+        telemetry.client_id = device_id;
+        telemetry.hardware = device_hardware;
+        telemetry.firmware_version = device_firmware_version;
+        telemetry.uptime_ms = millis();
+        telemetry.wifi_ssid = wifiManager.getSSID();
 
-          // Populate hardware information.
-          telemetry.client_id = device_id;
-          telemetry.hardware = device_hardware;
-          telemetry.firmware_version = device_firmware_version;
-          telemetry.uptime_ms = millis();
-          telemetry.wifi_ssid = wifiManager.getSSID();
+        // Populate raw sensor readings.
+        telemetry.accel_x = sensorData.accelerometerX;
+        telemetry.accel_y = sensorData.accelerometerY;
+        telemetry.accel_z = sensorData.accelerometerZ;
+        telemetry.gyro_x = sensorData.gyroscopeX;
+        telemetry.gyro_y = sensorData.gyroscopeY;
+        telemetry.gyro_z = sensorData.gyroscopeZ;
+        telemetry.battery_voltage = sensorData.batteryVoltage;
+        telemetry.button = sensorData.button;
 
-          // Populate raw sensor readings.
-          telemetry.accel_x = sensorData.accelerometerX;
-          telemetry.accel_y = sensorData.accelerometerY;
-          telemetry.accel_z = sensorData.accelerometerZ;
-          telemetry.gyro_x = sensorData.gyroscopeX;
-          telemetry.gyro_y = sensorData.gyroscopeY;
-          telemetry.gyro_z = sensorData.gyroscopeZ;
-          telemetry.battery_voltage = sensorData.batteryVoltage;
-          telemetry.button = sensorData.button;
+        // Thread-safe capture of current game progress and physics state.
+        {
+          MutexLock lock(stateMutex);
+          if (lock.isLocked()) {
+            telemetry.game_id = sharedState.gameId;
+            telemetry.player_name = sharedState.playerName;
+            telemetry.target_cookies = sharedState.cookiesCount;
+            telemetry.screen_width = display_width;
+            telemetry.screen_height = display_height;
+            telemetry.wall_thickness_px = sharedState.wallThicknessPx;
 
-          // Thread-safe capture of current game progress and physics state.
-          {
-            MutexLock lock(stateMutex);
-            if (lock.isLocked()) {
-              telemetry.game_id = sharedState.gameId;
-              telemetry.player_name = sharedState.playerName;
-              telemetry.target_cookies = sharedState.cookiesCount;
-              telemetry.screen_width = display_width;
-              telemetry.screen_height = display_height;
-              telemetry.wall_thickness_px = sharedState.wallThicknessPx;
-
-              String runningStatusStr = "idle";
-              if (sharedState.runningStatus == RunningStatus::RUNNING) {
-                runningStatusStr = "running";
-              } else if (sharedState.runningStatus == RunningStatus::COMPLETED) {
-                runningStatusStr = "completed";
-              }
-              telemetry.runningStatus = runningStatusStr;
-
-              telemetry.cookies_collected = sharedState.cookiesCollected;
-              telemetry.cookies_remaining = sharedState.cookiesRemaining;
-              telemetry.current_round = sharedState.currentRound;
-              telemetry.elapsed_time_sec = sharedState.elapsedTimeSec;
-
-              telemetry.ball_pos_x = sharedState.ballPosX;
-              telemetry.ball_pos_y = sharedState.ballPosY;
-              telemetry.velocity_x = sharedState.velocityX;
-              telemetry.velocity_y = sharedState.velocityY;
-              telemetry.acc_x = sharedState.accX;
-              telemetry.acc_y = sharedState.accY;
+            String runningStatusStr = "idle";
+            if (sharedState.runningStatus == RunningStatus::RUNNING) {
+              runningStatusStr = "running";
+            } else if (sharedState.runningStatus == RunningStatus::COMPLETED) {
+              runningStatusStr = "completed";
             }
-          }
+            telemetry.runningStatus = runningStatusStr;
 
-          // Send telemetry JSON payload to MQTT broker
-          String payload = buildTelemetryJson(telemetry);
-          mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
+            telemetry.cookies_collected = sharedState.cookiesCollected;
+            telemetry.cookies_remaining = sharedState.cookiesRemaining;
+            telemetry.current_round = sharedState.currentRound;
+            telemetry.elapsed_time_sec = sharedState.elapsedTimeSec;
+
+            telemetry.ball_pos_x = sharedState.ballPosX;
+            telemetry.ball_pos_y = sharedState.ballPosY;
+            telemetry.velocity_x = sharedState.velocityX;
+            telemetry.velocity_y = sharedState.velocityY;
+            telemetry.acc_x = sharedState.accX;
+            telemetry.acc_y = sharedState.accY;
+          }
         }
+
+        // Send telemetry JSON payload to MQTT broker
+        String payload = buildTelemetryJson(telemetry);
+        mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
       }
     }
 
