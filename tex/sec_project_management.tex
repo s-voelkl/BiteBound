@@ -1,7 +1,8 @@
 \section{Project Management}
 \label{sec:project_management}
 
-The BiteBound project was executed by a two-person team, with each member contributing to all aspects of the project by reviewing or leading the development of each component.
+The BiteBound project was executed by a two-person team, with each member contributing to all aspects of the project.
+The lead developers for each component are indicated in~\Cref{tab:task_distribution}, while a reviewer was assigned to each task to ensure code quality and maintainability, as stated in \Cref{subsec:task_distribution}. 
 
 % \subsection{SMART Goals}
 % \label{subsec:smart}
@@ -76,7 +77,9 @@ The development of BiteBound followed an incremental path, prioritizing the defi
 
 \subsection{Task Dependencies}
 \label{subsec:task_dependencies}
-The decoupled software architecture introduced several critical dependencies: IMU calibration fed into physics input, JSON schema definitions enabled dashboard integration, and dual-core allocation required thread-safe state protection before merging the network and game codebases. These dependencies ensured that network managers and telemetry contracts were established first, physics and sensor processing were validated before graphics integration, and the multi-core architecture was introduced only after both stacks were independently stable.
+
+The decoupled software architecture introduced several critical dependencies: 
+IMU calibration fed into physics input, JSON schema definitions enabled dashboard integration, and dual-core allocation required thread-safe state protection before merging the network and game codebases. These dependencies ensured that network managers and telemetry contracts were established first, physics and sensor processing were validated before graphics integration, and the multi-core architecture was introduced only after both stacks were independently stable.
 
 \subsection{Task Distribution}
 \label{subsec:task_distribution}
@@ -88,10 +91,12 @@ To maintain code quality and structural integrity across the shared codebase, th
 \begin{itemize}
     \item \textbf{Branch Protection:} Direct commits to the \texttt{main} branch were restricted. All feature updates and bug fixes were developed on separate branches.
     \item \textbf{Code Review:} Merging any branch into \texttt{main} required a Pull Request accompanied by the other team member's review and approval.
-    \item \textbf{Code Coverage Targets:} A unit test coverage of about 60\% was targeted for the core ESP32 modules, while the Android application aimed for basic unit tests. Node-RED flows were excluded from automated testing due to their visual nature (see \texttt{esp32/test-coverage.txt}).
     \item \textbf{CI Pipeline}: A GitHub Actions pipeline was configured to automatically verify the compilation of the ESP32 firmware for both test and production builds (see \texttt{.github/workflows/ci.yaml})
+    \item \textbf{Code Coverage Targets:} A unit test coverage of about 60\% was targeted for the core ESP32 modules, while the Android application aimed for basic unit tests. Node-RED flows were excluded from automated testing due to their visual nature (see \texttt{esp32/test-coverage.txt}).
+    \item \textbf{Docstrings:} All public methods and classes were documented with docstrings to enhance code readability and accessibility.
 \end{itemize}
 
+Transparency note: The unit test writing and docstring generation were partly assisted by AI, as documented in \Cref{sec:prompts}.
 The division of responsibilities between the two team members is outlined in~\Cref{tab:task_distribution}.
 
 \begin{table}[htb]
