@@ -11,7 +11,7 @@ test(JsonBuilderBasicStructure)
     data.wifi_ssid = "TestSSID";
 
     data.game_id = 1;
-    data.player_name = "TestPlayer";
+    data.player_name = "Test";
     data.target_cookies = 10;
     data.screen_width = 240;
     data.screen_height = 280;

@@ -165,6 +165,11 @@ void processIncomingCommands() {
           GameConfig config;
           config.gameId = commandMsg.gameId;
           config.targetCookies = commandMsg.cookiesCount;
+          // Don't show more cookies at once than are still needed to win, so a
+          // target of 1 shows exactly 1 cookie instead of the default 4.
+          config.visibleCookies = (commandMsg.cookiesCount < default_max_visible_cookies)
+                                      ? (uint8_t)commandMsg.cookiesCount
+                                      : (uint8_t)default_max_visible_cookies;
           config.wallThicknessPx = commandMsg.wallThicknessPx;
           config.physics.sensitivity = commandMsg.imuSensitivity;
           config.physics.restitution = commandMsg.bounceRestitution;
@@ -176,8 +181,12 @@ void processIncomingCommands() {
           
           sharedState.runningStatus = RunningStatus::RUNNING;
           sharedState.gameId = commandMsg.gameId;
+          // Mirror the chosen target/wall into shared state so the telemetry (and
+          // with it the dashboard's cookie counter) reports the right values.
+          sharedState.cookiesCount = commandMsg.cookiesCount;
+          sharedState.wallThicknessPx = commandMsg.wallThicknessPx;
           strncpy(sharedState.playerName, commandMsg.playerName, sizeof(sharedState.playerName) - 1);
-        } 
+        }
         else if (commandMsg.type == CommandType::STOP) {
           // Tell the engine to stop too, not just the shared flag. Otherwise the
           // game step writes the running state back from the engine next frame.
@@ -289,6 +298,36 @@ void updateGameStep() {
       sharedState.elapsedTimeSec = gs.elapsedTimeSec;
       sharedState.gameId = gameEngine.activeGameId();
       sharedState.runningStatus = gs.runningStatus;
+    }
+  }
+
+  // 6. Round complete: hold the "completed" state for a moment so the dashboard
+  // (and the on-device banner) can show it, then auto-start the next round
+  // (fresh maze / field, round + 1).
+  static uint32_t completedSinceMs = 0;
+  bool advanceRound = false;
+  {
+    MutexLock lock(stateMutex);
+    if (lock.isLocked()) {
+      if (sharedState.runningStatus == RunningStatus::COMPLETED) {
+        if (completedSinceMs == 0) {
+          completedSinceMs = millis();
+        } else if (millis() - completedSinceMs >= round_complete_hold_ms) {
+          advanceRound = true;
+        }
+      } else {
+        completedSinceMs = 0;
+      }
+    }
+  }
+  if (advanceRound) {
+    // nextRound() rebuilds the level (new maze for Game 1) and sets RUNNING again.
+    gameEngine.nextRound();
+    completedSinceMs = 0;
+    MutexLock lock(stateMutex);
+    if (lock.isLocked()) {
+      sharedState.runningStatus = RunningStatus::RUNNING;
+      sharedState.currentRound = gameEngine.state().currentRound;
     }
   }
 }

@@ -86,10 +86,12 @@ void GraphicsManager::drawUI(const GameState &state, bool forceDraw)
         _gfx->setCursor(30, 5);
         _gfx->print("Round:");
         _gfx->print(state.currentRound);
+        // Show collected / target. There's no target field in GameState, but
+        // remaining = target - collected, so collected + remaining = target.
         _gfx->print(" Cookies:");
         _gfx->print(state.cookiesCollected);
         _gfx->print("/");
-        _gfx->print(state.cookiesRemaining);
+        _gfx->print(state.cookiesCollected + state.cookiesRemaining);
 
         // Print stopwatch timer
         // _gfx->print(" Time:");
@@ -195,6 +197,29 @@ void GraphicsManager::drawPauseOverlay()
     _gfx->fillRect(rightX, top, barWidth, barHeight, color_frosting_white);
 }
 
+void GraphicsManager::drawCompletedOverlay()
+{
+    if (!_gfx)
+        return;
+
+    // A small banner in the middle of the play area announcing the finished round.
+    const int boxW = 150;
+    const int boxH = 38;
+    int centerX = _width / 2;
+    int centerY = ui_header_height + (_height - ui_header_height) / 2;
+    int boxX = centerX - boxW / 2;
+    int boxY = centerY - boxH / 2;
+
+    _gfx->fillRect(boxX, boxY, boxW, boxH, color_dark_cocoa);
+    _gfx->drawRect(boxX, boxY, boxW, boxH, color_honey);
+
+    _gfx->setTextColor(color_honey);
+    _gfx->setTextSize(2);
+    // "ROUND DONE" is 10 chars; size-2 glyphs are ~12px wide -> ~120px total.
+    _gfx->setCursor(centerX - 60, centerY - 7);
+    _gfx->print("ROUND DONE");
+}
+
 void GraphicsManager::update(
     const uint8_t *mazeGrid,
     int gridWidth,
@@ -220,7 +245,11 @@ void GraphicsManager::update(
     // bars on top, then leave the screen untouched on later ticks so the partial
     // update path doesn't erase the overlay.
     bool paused = (state.runningStatus == RunningStatus::IDLE);
-    if (paused && !_needsFullRedraw)
+    bool completed = (state.runningStatus == RunningStatus::COMPLETED);
+    // Both paused and completed freeze the ball; draw one full frame with the
+    // matching overlay, then leave the screen alone on later ticks so the partial
+    // update path doesn't erase it.
+    if ((paused || completed) && !_needsFullRedraw)
     {
         return;
     }
@@ -242,10 +271,14 @@ void GraphicsManager::update(
         drawSphere(ball);
         drawUI(state, true);
 
-        // Lay the pause bars over everything else while idle.
+        // Lay the pause bars / round-complete banner over everything else.
         if (paused)
         {
             drawPauseOverlay();
+        }
+        else if (completed)
+        {
+            drawCompletedOverlay();
         }
 
         // Store structures

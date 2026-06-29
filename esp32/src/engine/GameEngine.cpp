@@ -26,6 +26,11 @@ void GameEngine::chooseGameMode(uint8_t gameId)
     _active = (gameId == 1) ? static_cast<IGame *>(&_game1)
                             : static_cast<IGame *>(&_game2);
     _config.gameId = gameId;
+    // Re-init the active game with the CURRENT wall thickness. init() is what
+    // builds the maze at the given block size, and begin() only ran once with the
+    // boot-time default - so without this a new wall_thickness_px from a START
+    // command would be ignored and the maze would keep the default thickness.
+    _active->init(_board, _playW, _playH, _config.wallThicknessPx);
     _physics.reset();        // drop carried-over input filter state
     _active->start(_config); // game resets its own round to 1 + builds the level
     afterBuild();

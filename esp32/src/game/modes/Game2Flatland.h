@@ -42,6 +42,8 @@ protected:
         _ball.y = _h * 0.5f;
         _ball.vx = 0.0f;
         _ball.vy = 0.0f;
+        // Same ball-size rule as the maze, derived from the wall thickness.
+        _ball.radius = cfg.wallThicknessPx * ball_diameter_wall_ratio / 2.0f;
         _spawner = RectCookieSpawner((float)_w, (float)_h, default_cookie_radius);
         _cookies.start(cfg.visibleCookies, cfg.targetCookies, _spawner, _ball);
     }

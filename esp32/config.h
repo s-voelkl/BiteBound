@@ -48,9 +48,6 @@ const int game_id_plane = 2;
 /** Default game id. */
 const int default_game_id = game_id_maze;
 
-/** Default player name. */
-const char *const default_player_name = "Cookie-Lover";
-
 /** Default game duration in seconds. */
 // const int default_game_duration_sec = 120;
 
@@ -60,11 +57,19 @@ const int default_cookies_count = 10;
 /** Default maximum number of visible cookies in the game. */
 const int default_max_visible_cookies = 4;
 
+/** How long the "completed" state is shown before the next round auto-starts [ms]. */
+const uint32_t round_complete_hold_ms = 3000;
+
 /** Default cookie radius in pixels. */
 const float default_cookie_radius = 3.0f;
 
-/** Default physics body (sphere/ball) radius in pixels. */
+/** Default physics body (sphere/ball) radius in pixels. Only a fallback before a
+ *  level is built - the actual ball size is derived from the wall thickness below. */
 const float default_physics_body_radius = 3.0f;
+
+/** Ball diameter as a fraction of the wall thickness, so the ball always fits the
+ *  corridor no matter which wall thickness is chosen. radius = wall * ratio / 2. */
+const float ball_diameter_wall_ratio = 0.7f;
 
 /** ----- Display settings ----- */
 /** Display width in pixels. */

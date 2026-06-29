@@ -50,7 +50,14 @@ uint8_t CookieField::checkPickup(const PhysicsBody &ball)
             }
             else
             {
-                c.active = false; // target reached -> last cookie vanishes
+                // Target reached: clear every cookie so the board is empty on win
+                // (not just the last-eaten one), and stop so a second cookie in the
+                // same frame can't push _collected past _target.
+                for (uint8_t j = 0; j < _count; ++j)
+                {
+                    _cookies[j].active = false;
+                }
+                break;
             }
         }
     }

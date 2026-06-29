@@ -55,6 +55,9 @@ protected:
         }
         _ball.vx = 0.0f;
         _ball.vy = 0.0f;
+        // Derive the ball size from the wall thickness so it always fits the
+        // corridor: diameter = 70% of a corridor's width.
+        _ball.radius = cfg.wallThicknessPx * ball_diameter_wall_ratio / 2.0f;
 
         _cookies.start(cfg.visibleCookies, cfg.targetCookies, _spawner, _ball);
     }

@@ -115,6 +115,12 @@ private:
      * centered over the play area. Shown while the game is idle/paused.
      */
     void drawPauseOverlay();
+
+    /**
+     * @brief Draws a "round complete" banner centered over the play area, shown
+     * for the brief moment between finishing a round and the next one starting.
+     */
+    void drawCompletedOverlay();
 };
 
 #endif // GRAPHICS_MANAGER_H
