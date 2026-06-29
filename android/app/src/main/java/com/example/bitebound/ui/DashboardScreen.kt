@@ -1,5 +1,6 @@
 package com.example.bitebound.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,10 +45,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.bitebound.R
 import com.example.bitebound.UiState
 import com.example.bitebound.data.BallType
 import com.example.bitebound.data.GameConfigConstants
@@ -79,7 +82,11 @@ fun DashboardScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("🍪", style = MaterialTheme.typography.titleLarge)
+                        Image(
+                            painter = painterResource(id = R.drawable.logo),
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp),
+                        )
                         Spacer(Modifier.width(8.dp))
                         Text("BiteBound", style = MaterialTheme.typography.titleLarge)
                     }
