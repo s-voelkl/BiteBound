@@ -32,7 +32,9 @@ public:
         _world = MazeCollider(board, playW, playH);
         // Spawner reads the maze's free-cell list, which is re-filled in place
         // on each generate(); the pointer stays valid across regenerations.
-        _spawner = MazeCookieSpawner(&_maze.getFreeCells(), default_cookie_radius);
+        // Cookie size scales with the corridor too (like the ball, just smaller).
+        _spawner = MazeCookieSpawner(&_maze.getFreeCells(),
+                                     wallThickness * cookie_diameter_wall_ratio / 2.0f);
     }
 
     const ICollider &collider() const override { return _world; }

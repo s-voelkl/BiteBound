@@ -61,15 +61,24 @@ const int default_max_visible_cookies = 4;
 const uint32_t round_complete_hold_ms = 3000;
 
 /** Default cookie radius in pixels. */
-const float default_cookie_radius = 3.0f;
+const float default_cookie_radius = 5.0f;
 
 /** Default physics body (sphere/ball) radius in pixels. Only a fallback before a
  *  level is built - the actual ball size is derived from the wall thickness below. */
-const float default_physics_body_radius = 3.0f;
+const float default_physics_body_radius = 5.0f;
 
 /** Ball diameter as a fraction of the wall thickness, so the ball always fits the
  *  corridor no matter which wall thickness is chosen. radius = wall * ratio / 2. */
 const float ball_diameter_wall_ratio = 0.7f;
+
+/** Maze cookie diameter as a fraction of the wall thickness, so cookies scale with
+ *  the corridor like the ball (a bit smaller so they stay distinguishable). */
+const float cookie_diameter_wall_ratio = 0.6f;
+
+/** Game 2 (open field) has no corridor to scale to, so its ball and cookies use
+ *  fixed sizes - picked to be clearly visible without dominating the field. */
+const float default_flatland_ball_radius = 8.0f;
+const float default_flatland_cookie_radius = 6.0f;
 
 /** ----- Display settings ----- */
 /** Display width in pixels. */
