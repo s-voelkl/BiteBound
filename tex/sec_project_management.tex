@@ -2,7 +2,7 @@
 \label{sec:project_management}
 
 The BiteBound project was executed by a two-person team, with each member contributing to all aspects of the project.
-The lead developers for each component are indicated in~\Cref{tab:task_distribution}, while a reviewer was assigned to each task to ensure code quality and maintainability, as stated in \Cref{subsec:task_distribution}. 
+The lead developers for each component are indicated in~\Cref{tab:task_distribution}, while a reviewer was assigned to each task to ensure code quality and maintainability, as stated in \Cref{subsec:task_distribution}.
 
 % \subsection{SMART Goals}
 % \label{subsec:smart}
@@ -78,7 +78,7 @@ The development of BiteBound followed an incremental path, prioritizing the defi
 \subsection{Task Dependencies}
 \label{subsec:task_dependencies}
 
-The decoupled software architecture introduced several critical dependencies: 
+The decoupled software architecture introduced several critical dependencies:
 IMU calibration fed into physics input, JSON schema definitions enabled dashboard integration, and dual-core allocation required thread-safe state protection before merging the network and game codebases. These dependencies ensured that network managers and telemetry contracts were established first, physics and sensor processing were validated before graphics integration, and the multi-core architecture was introduced only after both stacks were independently stable.
 
 \subsection{Task Distribution}
@@ -124,7 +124,7 @@ The division of responsibilities between the two team members is outlined in~\Cr
                            & JSON Builder and Parser & JSON serialization of game state and deserialization of commands. & Lead              & Review               \\
                            & Concurrency             & FreeRTOS multi-core tasking, queues, and mutex sharing.           & Lead              & Review               \\
                            & Game Engine             & Game modes, engine and start.                                     & Review            & Lead                 \\
-                           & Game Orchestration      & Orchestrated concurrency and game engine in Arduino.              & Lead              & Review               \\
+                           & Game Orchestration      & Orchestrated concurrency and game engine in Arduino.              & Lead              & Lead                 \\
         \midrule
         \multirow{4}{2.6cm}{\textbf{Milestone 3: UI \& Refinement}}
                            & Branding                & Designing the logo, color scheme, and visual assets.              & Lead              & Lead                 \\

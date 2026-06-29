@@ -6,9 +6,9 @@ The technical concept of BiteBound is designed to ensure real-time responsivenes
 \subsection{High-Level Architecture}
 \label{subsec:high_level_architecture}
 
-The architecture relies on an asynchronous, event-driven design. The ESP32-S3 runs two primary execution threads across its dual cores to balance the computational workload. Core 1 is designated as the Game Core, measuring the sensor data, executing the physics engine, handling the game logic, and updating the display at a constant 50 Hz. Core 0 acts as the Network Core, managing secure TLS connections, MQTT messaging, and transmitting telemetry at circa 2 Hz.
+The architecture relies on an asynchronous, event-driven design. The ESP32-S3 runs two primary execution threads across its dual cores to balance the computational workload. Core 1 is designated as the Game Core, measuring the sensor data, executing the physics engine, handling the game logic, and updating the display. Core 0 acts as the Network Core, managing secure TLS connections, MQTT messaging, and transmitting telemetry, running significantly slower than the Game Core.
 
-Communication between the embedded hardware and the external control interfaces is bridged through the centralized MQTT broker HiveMQ. External clients communicate bidirectionally with the device. They send game-related commands to a dedicated topic, while subscribing to a telemetry topic to monitor real-time variables.
+Communication between the embedded hardware and the external control interfaces is bridged through the centralized MQTT broker HiveMQ~\cite{hivemq2026,mqtt2026}. External clients communicate bidirectionally with the device. They send game-related commands to a dedicated topic, while subscribing to a telemetry topic to monitor real-time variables.
 
 The system architecture is depicted in Figure~\ref{fig:system-architecture}, illustrating the interactions between the ESP32-S3 and the frontend dashboards (see \texttt{diagrams/out/}).
 

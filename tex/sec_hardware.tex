@@ -100,7 +100,7 @@ Volatile HUD elements, such as the score and elapsed time, are cached and update
 \subsection{MQTT Communication}
 \label{subsec:mqtt_communication}
 
-The network layer connects to a HiveMQ Cloud broker over an encrypted TLS connection~\cite{mqtt2026}. Network credentials and SSL certificates are compiled from the git-ignored \texttt{wifi\_mqtt\_secrets.h} file. Certificate validation is supported by synchronization with the NTP server pool via the \texttt{TimeManager} during initialization.
+The network layer connects to a HiveMQ Cloud broker over an encrypted TLS connection~\cite{hivemq2026}. Network credentials and SSL certificates are compiled from the git-ignored \texttt{wifi\_mqtt\_secrets.h} file. Certificate validation is supported by synchronization with the NTP server pool via the \texttt{TimeManager} during initialization.
 
 The device establishes two main communication paths:
 
@@ -116,18 +116,18 @@ The device establishes two main communication paths:
 All communication packets default to Quality of Service 1 (QoS 1) with the retain flag set to false to avoid processing stale telemetry.
 
 \begin{figure}[h]
-	\centering
-	\begin{minipage}[b]{0.53\linewidth}
-		\centering
-		\includegraphics[width=1\linewidth]{../diagrams/out/json-command/json-command.png}
-		\caption[JSON Command Payload]{Dashboard JSON Command Payload to the ESP32-S3.}
-		\label{fig:json-command}
-	\end{minipage}
-	\hfill
-	\begin{minipage}[b]{0.43\linewidth}
-		\centering
-		\includegraphics[width=1\linewidth]{../diagrams/out/json-telemetry/json-telemetry.png}
-		\caption[JSON Telemetry Payload]{ESP32-S3 JSON telemetry payload to the dashboards.}
-		\label{fig:json-telemetry}
-	\end{minipage}
+    \centering
+    \begin{minipage}[b]{0.53\linewidth}
+        \centering
+        \includegraphics[width=1\linewidth]{../diagrams/out/json-command/json-command.png}
+        \caption[JSON Command Payload]{Dashboard JSON Command Payload to the ESP32-S3.}
+        \label{fig:json-command}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.43\linewidth}
+        \centering
+        \includegraphics[width=1\linewidth]{../diagrams/out/json-telemetry/json-telemetry.png}
+        \caption[JSON Telemetry Payload]{ESP32-S3 JSON telemetry payload to the dashboards.}
+        \label{fig:json-telemetry}
+    \end{minipage}
 \end{figure}
