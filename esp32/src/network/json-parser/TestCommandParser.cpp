@@ -8,7 +8,7 @@ test(CommandParser_ParseStartSuccess)
                      "\"command\":\"start\"," +
                      "\"meta\":{\"source_ui\":\"NODE_RED\",\"request_id\":\"id1\"," +
                      "\"timestamp\":\"2026-06-26T11:50:00Z\"}," +
-                     "\"player\":{\"name\":\"" + default_player_name + "\"}," +
+                     "\"player\":{\"name\":\"Tester\"}," +
                      "\"game\":{\"game_id\":" + String(default_game_id) + "}," +
                      "\"parameters\":{" +
                      "\"cookies_count\":" + String(default_cookies_count) + "," +
@@ -27,7 +27,7 @@ test(CommandParser_ParseStartSuccess)
 
     assertTrue(success);
     assertTrue(msg.type == CommandType::START);
-    assertEqual(strcmp(msg.playerName, default_player_name), 0);
+    assertEqual(strcmp(msg.playerName, "Tester"), 0);
     assertEqual(msg.cookiesCount, default_cookies_count);
     assertEqual(msg.wallThicknessPx, default_wall_thickness_px);
     assertNear(msg.imuSensitivity, default_imu_sensitivity_multiplier, 1e-4f);
@@ -43,7 +43,7 @@ test(CommandParser_ParseByteArraySuccess)
                      "\"command\":\"start\"," +
                      "\"meta\":{\"source_ui\":\"NODE_RED\",\"request_id\":\"id_byte\"," +
                      "\"timestamp\":\"2026-06-26T11:50:00Z\"}," +
-                     "\"player\":{\"name\":\"" + default_player_name + "\"}," +
+                     "\"player\":{\"name\":\"Tester\"}," +
                      "\"game\":{\"game_id\":" + String(default_game_id) + "}," +
                      "\"parameters\":{" +
                      "\"cookies_count\":" + String(default_cookies_count) + "," +
@@ -67,7 +67,7 @@ test(CommandParser_ParseByteArraySuccess)
     // Verify properties decode identically through the byte array interface
     assertTrue(success);
     assertTrue(msg.type == CommandType::START);
-    assertEqual(strcmp(msg.playerName, default_player_name), 0);
+    assertEqual(strcmp(msg.playerName, "Tester"), 0);
     assertEqual(msg.cookiesCount, default_cookies_count);
     assertEqual(msg.wallThicknessPx, default_wall_thickness_px);
     assertNear(msg.imuSensitivity, default_imu_sensitivity_multiplier, 1e-4f);

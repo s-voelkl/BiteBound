@@ -16,7 +16,8 @@ test(SharedState_InitDefaults)
     assertEqual(state.bounceRestitution, default_bounce_restitution);
     assertEqual(state.emaAlpha, default_ema_alpha);
     assertEqual(state.deadzoneThreshold, default_deadzone_threshold);
-    assertEqual(strcmp(state.playerName, default_player_name), 0);
+    // No default player name anymore: init leaves it empty.
+    assertEqual(strcmp(state.playerName, ""), 0);
     assertTrue(state.runningStatus == RunningStatus::IDLE);
 }
 

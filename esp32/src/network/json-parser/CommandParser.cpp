@@ -58,15 +58,13 @@ bool CommandParser::parse(const String &jsonPayload, CommandMsg &outMsg)
         strncpy(outMsg.requestId, reqId, sizeof(outMsg.requestId) - 1);
     }
 
-    // Player name for identifying the player.
+    // Player name: kept so every dashboard shows the same name. Only set it when
+    // the command actually carries one - there is no default fallback (outMsg was
+    // memset to 0, so an absent name just stays empty).
     const char *playerName = doc["player"]["name"];
     if (playerName)
     {
         strncpy(outMsg.playerName, playerName, sizeof(outMsg.playerName) - 1);
-    }
-    else
-    {
-        strncpy(outMsg.playerName, default_player_name, sizeof(outMsg.playerName) - 1);
     }
 
     outMsg.gameId = doc["game"]["game_id"] | default_game_id;
