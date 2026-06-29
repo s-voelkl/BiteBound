@@ -24,7 +24,7 @@ object GameConfigConstants {
     const val MAX_COOKIES = 20
     
     const val MIN_WALL_THICKNESS = 5
-    const val MAX_WALL_THICKNESS = 40
+    const val MAX_WALL_THICKNESS = 20
 
     const val TELEMETRY_TIMEOUT_MS = 30000L
 }

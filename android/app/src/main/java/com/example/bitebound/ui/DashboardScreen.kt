@@ -308,7 +308,7 @@ private fun ControlsCard(
                 OutlinedTextField(
                     value = wall,
                     onValueChange = { wall = clampWallInput(it) },
-                    label = { Text("Wall Px (5-40)") },
+                    label = { Text("Wall Px (5-20)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     shape = RoundedCornerShape(14.dp),

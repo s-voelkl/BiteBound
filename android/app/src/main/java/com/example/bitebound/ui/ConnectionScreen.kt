@@ -157,7 +157,7 @@ fun ConnectionScreen(
                     CredentialField(
                         value = wallThickness,
                         onValueChange = { wallThickness = clampWallInput(it) },
-                        label = "Wall Px (5-40)",
+                        label = "Wall Px (5-20)",
                         keyboardType = KeyboardType.Number,
                         enabled = !connecting,
                         modifier = Modifier.weight(1f)
