@@ -39,6 +39,12 @@ const int mqtt_qos = 1;
 /** Retain flag for MQTT messages. */
 const bool mqtt_retain = false;
 
+/** MQTT Retry interval in milliseconds. */
+const int mqtt_retry_interval_ms = 3000;
+
+/** MQTT Retry Attempts per connection setup. */
+const int mqtt_retry_attempts = 3;
+
 /** ----- Game settings ----- */
 
 /** Game ID for the maze game. */
@@ -50,6 +56,9 @@ const int default_game_id = game_id_maze;
 
 /** Default game duration in seconds. */
 // const int default_game_duration_sec = 120;
+
+/** Default player name. */
+const char *const default_player_name = "Cookie-Monster";
 
 /** Default maximum number of cookies in the game. */
 const int default_cookies_count = 10;
