@@ -88,22 +88,9 @@ To achieve a consistent frame rate, the display module utilizes a hybrid update 
 
 Updating a $240 \times 280$ display in 16-bit color (RGB565) requires pushing **131.25 KB** of data per frame. Over a standard, stable 27 MHz SPI bus, a full frame transmission takes **~40ms**, which physically violates the 20ms constraint of a 50Hz game loop.
 
-% TODO: here
+To circumvent this hardware bottleneck, the \texttt{GraphicsManager} implements a hybrid rendering architecture utilizing the dirty rectangles technique~\cite{studyraid2025dirtyrect}:
 
-% To circumvent this hardware bottleneck, the `GraphicsManager` implements a hybrid rendering architecture:
-
-% 1. **Full Redraw Mode (Round Start / State Transition):**
-%    When a new round begins or the game state changes, a full redraw is triggered. The manager clears the screen, draws the HUD, and renders the static maze. To optimize SPI bandwidth, the maze generator renders horizontal spans of identical pixel states using an RLE (Run-Length Encoding) algorithm rather than individual pixels.
-% 2. **Partial Update Mode (50Hz Active Ticks):**
-%    During active gameplay, the screen is *never* fully re-cleared. Instead, the manager utilizes a **"Dirty Rectangles"** approach:
-%    - It calculates the bounding box of the sphere's *previous* position and overwrites only that region with the underlying static maze background.
-%    - It checks for and restores any active cookies that were overlapped by the sphere's previous position to prevent graphical clipping.
-%    - It handles cookie collection/respawns by locally drawing or erasing only those tiny $16 \times 16$ pixel regions.
-%    - It draws the sphere at its *new* position.
-
-% This reduces the active frame data payload from **131.25 KB to ~1 KB**, dropping display transmission overhead from **~40ms to under 1ms**.
 \begin{itemize}
-    % \item Full Redraw: Performed only at round transitions or configuration resets. Static elements such as borders and the complete maze layout are rendered entirely. Horizontally adjacent pixels are drawn as unified spans to minimize SPI transaction overhead.
     \item Full Redraw: Executed at the start of each round or when the game state changes. The manager clears the entire screen, draws the HUD, and renders the static maze layout. To optimize SPI bandwidth, horizontal spans of identical pixel states are drawn using a Run-Length Encoding (RLE)~\cite{peterson2023computer} approach instead of individual pixels.
     \item Partial Redraw: Used during active game updates. On every tick, the manager clears only the bounding box representing the ball's previous position. It recovers the background texture or any overlapping cookie graphics, then draws the ball at its new coordinate. This limits the active data transfer to approximately 1\,KB per frame, keeping SPI communication time under 1\,ms.
 \end{itemize}
@@ -112,16 +99,35 @@ Volatile HUD elements, such as the score and elapsed time, are cached and update
 
 \subsection{MQTT Communication}
 \label{subsec:mqtt_communication}
+
 The network layer connects to a HiveMQ Cloud broker over an encrypted TLS connection~\cite{mqtt2026}. Network credentials and SSL certificates are compiled from the git-ignored \texttt{wifi\_mqtt\_secrets.h} file. Certificate validation is supported by synchronization with the NTP server pool via the \texttt{TimeManager} during initialization.
 
 The device establishes two main communication paths:
 
 \begin{itemize}
     \item Command Topic (\texttt{mauc2026/group\_03/game/command}):
-          Receives control payloads from external dashboards.
+          Receives control payloads from external dashboards, as illustrated in~\Cref{fig:json-command}.
           The incoming JSON content is processed by the static \texttt{CommandParser} class to adjust gameplay states or update physical and visual parameters on the fly~\cite{json2026}.
     \item Telemetry Topic (\texttt{mauc2026/group\_03/game/telemetry}):
-          Publishes state reports at a 2\,Hz interval.
-          The \texttt{JsonBuilder} class structures the combined hardware information, configuration records, game progress, physics parameters, and raw sensor readings into a unified JSON format.
+          Published telemetry data to dashboards at a 2\,Hz rate, as shown in~\Cref{fig:json-telemetry}.
+          The \texttt{JsonBuilder} class structures the combined hardware information, game progress, configuration records, physics parameters, and raw sensor readings into a unified JSON format.
 \end{itemize}
+
 All communication packets default to Quality of Service 1 (QoS 1) with the retain flag set to false to avoid processing stale telemetry.
+
+\begin{figure}[h]
+	\centering
+	\begin{minipage}[b]{0.53\linewidth}
+		\centering
+		\includegraphics[width=1\linewidth]{../diagrams/out/json-command/json-command.png}
+		\caption[JSON Command Payload]{Dashboard JSON Command Payload to the ESP32-S3.}
+		\label{fig:json-command}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[b]{0.43\linewidth}
+		\centering
+		\includegraphics[width=1\linewidth]{../diagrams/out/json-telemetry/json-telemetry.png}
+		\caption[JSON Telemetry Payload]{ESP32-S3 JSON telemetry payload to the dashboards.}
+		\label{fig:json-telemetry}
+	\end{minipage}
+\end{figure}
