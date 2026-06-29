@@ -40,10 +40,10 @@ const int mqtt_qos = 1;
 const bool mqtt_retain = false;
 
 /** MQTT Retry interval in milliseconds. */
-const int mqtt_retry_interval_ms = 3000;
+const int mqtt_retry_interval_ms = 2000;
 
 /** MQTT Retry Attempts per connection setup. */
-const int mqtt_retry_attempts = 3;
+const int mqtt_retry_attempts = 2;
 
 /** ----- Game settings ----- */
 
