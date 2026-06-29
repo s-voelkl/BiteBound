@@ -81,13 +81,30 @@ The \texttt{RectCookieSpawner} places cookies within random bounds for the open 
 \label{subsec:display}
 
 The rendering of the interface is performed by the \texttt{GraphicsManager} using the Adafruit GFX-compatible \texttt{Arduino\_GFX} library~\cite{arduino2026gfx}.
-Transmitting a full 16-bit color frame ($240 \times 280$ pixels) requires writing 131.25\,KB of data, which requires approximately 40\,ms of transmission time over a standard 27\,MHz SPI bus.
-This exceeds the 20\,ms limit of the 50\,Hz game loop.
 
+Transmitting a full 16-bit color frame ($240 \times 280$ pixels) requires writing 131.25 KB of data. Since SPI transfers one bit per clock cycle, a 27 MHz bus provides a theoretical throughput of 27 Mbit/s, resulting in a frame transmission time of approximately 40 ms, derived from the ratio between total frame size and bus bandwidth.
+This exceeds the 20\,ms limit of the 50\,Hz game loop.
 To achieve a consistent frame rate, the display module utilizes a hybrid update scheme:
 
+Updating a $240 \times 280$ display in 16-bit color (RGB565) requires pushing **131.25 KB** of data per frame. Over a standard, stable 27 MHz SPI bus, a full frame transmission takes **~40ms**, which physically violates the 20ms constraint of a 50Hz game loop.
+
+% TODO: here
+
+% To circumvent this hardware bottleneck, the `GraphicsManager` implements a hybrid rendering architecture:
+
+% 1. **Full Redraw Mode (Round Start / State Transition):**
+%    When a new round begins or the game state changes, a full redraw is triggered. The manager clears the screen, draws the HUD, and renders the static maze. To optimize SPI bandwidth, the maze generator renders horizontal spans of identical pixel states using an RLE (Run-Length Encoding) algorithm rather than individual pixels.
+% 2. **Partial Update Mode (50Hz Active Ticks):**
+%    During active gameplay, the screen is *never* fully re-cleared. Instead, the manager utilizes a **"Dirty Rectangles"** approach:
+%    - It calculates the bounding box of the sphere's *previous* position and overwrites only that region with the underlying static maze background.
+%    - It checks for and restores any active cookies that were overlapped by the sphere's previous position to prevent graphical clipping.
+%    - It handles cookie collection/respawns by locally drawing or erasing only those tiny $16 \times 16$ pixel regions.
+%    - It draws the sphere at its *new* position.
+
+% This reduces the active frame data payload from **131.25 KB to ~1 KB**, dropping display transmission overhead from **~40ms to under 1ms**.
 \begin{itemize}
-    \item Full Redraw: Performed only at round transitions or configuration resets. Static elements such as borders and the complete maze layout are rendered entirely. Horizontally adjacent pixels are drawn as unified spans to minimize SPI transaction overhead.
+    % \item Full Redraw: Performed only at round transitions or configuration resets. Static elements such as borders and the complete maze layout are rendered entirely. Horizontally adjacent pixels are drawn as unified spans to minimize SPI transaction overhead.
+    \item Full Redraw: Executed at the start of each round or when the game state changes. The manager clears the entire screen, draws the HUD, and renders the static maze layout. To optimize SPI bandwidth, horizontal spans of identical pixel states are drawn using a Run-Length Encoding (RLE)~\cite{peterson2023computer} approach instead of individual pixels.
     \item Partial Redraw: Used during active game updates. On every tick, the manager clears only the bounding box representing the ball's previous position. It recovers the background texture or any overlapping cookie graphics, then draws the ball at its new coordinate. This limits the active data transfer to approximately 1\,KB per frame, keeping SPI communication time under 1\,ms.
 \end{itemize}
 
