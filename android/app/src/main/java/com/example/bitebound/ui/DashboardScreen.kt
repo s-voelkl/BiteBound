@@ -19,7 +19,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -31,6 +33,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -63,8 +66,8 @@ import com.example.bitebound.ui.theme.MintGreen
 @Composable
 fun DashboardScreen(
     state: UiState,
-    onStart: (playerName: String, cookies: Int) -> Unit,
-    onStop: (playerName: String) -> Unit,
+    onStart: (playerName: String, gameId: Int, cookies: Int, wall: Int, restitution: Double) -> Unit,
+    onStop: () -> Unit,
     onResume: (playerName: String) -> Unit,
     onDisconnect: () -> Unit,
     modifier: Modifier = Modifier,
@@ -117,6 +120,8 @@ fun DashboardScreen(
                 defaultWall = state.credentials.wallThickness,
                 defaultRestitution = state.credentials.restitution,
                 connected = state.connection is ConnectionState.Connected,
+                running = telemetry?.state?.isRunning == true,
+                hasTelemetry = telemetry != null,
                 onStart = onStart,
                 onStop = onStop,
                 onResume = onResume,
@@ -193,6 +198,17 @@ private fun ScoreCard(telemetry: Telemetry) {
             HeroStat("Round", telemetry.state.currentRound.toString(), Honey)
             HeroStat("Time", formatDuration(telemetry.state.elapsedTimeSec), MintGreen)
         }
+        if (telemetry.state.isFinished) {
+            Spacer(Modifier.height(12.dp))
+            Text(
+                "🎉 Round complete! Next round starting…",
+                style = MaterialTheme.typography.titleMedium,
+                color = MintGreen,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+            )
+        }
         Spacer(Modifier.height(10.dp))
         Text(
             "Player: ${telemetry.config.playerName}  ·  Remaining: ${telemetry.state.cookiesRemaining}",
@@ -220,8 +236,10 @@ private fun ControlsCard(
     defaultWall: Int,
     defaultRestitution: Double,
     connected: Boolean,
-    onStart: (String, Int) -> Unit,
-    onStop: (String) -> Unit,
+    running: Boolean,
+    hasTelemetry: Boolean,
+    onStart: (String, Int, Int, Int, Double) -> Unit,
+    onStop: () -> Unit,
     onResume: (String) -> Unit,
 ) {
     var player by remember { mutableStateOf(defaultPlayer) }
@@ -229,6 +247,7 @@ private fun ControlsCard(
     var gameId by remember { mutableStateOf(defaultGameId) }
     var wall by remember { mutableStateOf(defaultWall.toString()) }
     var ballType by remember { mutableStateOf(BallType.fromRestitution(defaultRestitution)) }
+    var showNewGameConfirm by remember { mutableStateOf(false) }
 
     CookieCard(title = "Game Controls", emoji = "🎮") {
         OutlinedTextField(
@@ -320,50 +339,66 @@ private fun ControlsCard(
 
         Spacer(Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Starts a fresh game - asks first because it throws away the current run.
             Button(
-                onClick = {
-                    onStart(
-                        player.trim().ifBlank { "Cookie-Lover" },
-                        gameId,
-                        cookies.toIntOrNull()?.coerceIn(1, 20) ?: 10,
-                        wall.toIntOrNull()?.coerceIn(5, 40) ?: 10,
-                        ballType.restitution
-                    )
-                },
+                onClick = { showNewGameConfirm = true },
                 enabled = connected,
                 modifier = Modifier.weight(1f).height(50.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MintGreen, contentColor = Color.White),
             ) {
-                Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                Icon(Icons.Filled.Refresh, contentDescription = null)
                 Spacer(Modifier.width(6.dp))
-                Text("Start", fontWeight = FontWeight.Bold)
+                Text("New Game", fontWeight = FontWeight.Bold)
             }
+            // One button does both: pause a running game, resume a paused one.
+            // Disabled until we have telemetry, otherwise it would misleadingly
+            // show "Resume" while we're still waiting for the ESP.
             Button(
-                onClick = { onStop() },
-                enabled = connected,
+                onClick = {
+                    if (running) onStop() else onResume(player.trim().ifBlank { "Player 1" })
+                },
+                enabled = connected && hasTelemetry,
                 modifier = Modifier.weight(1f).height(50.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = BerryRed, contentColor = Color.White),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (running) BerryRed else Honey,
+                    contentColor = Color.White,
+                ),
             ) {
-                Icon(Icons.Filled.Stop, contentDescription = null)
+                Icon(
+                    if (running) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                    contentDescription = null,
+                )
                 Spacer(Modifier.width(6.dp))
-                Text("Stop", fontWeight = FontWeight.Bold)
+                Text(if (running) "Pause" else "Resume", fontWeight = FontWeight.Bold)
             }
         }
-        Spacer(Modifier.height(10.dp))
-        // Continue a paused game (the ESP keeps the ball/score while stopped).
-        Button(
-            onClick = { onResume(player.trim().ifBlank { "Player 1" }) },
-            enabled = connected,
-            modifier = Modifier.fillMaxWidth().height(50.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Honey, contentColor = Color.White),
-        ) {
-            Icon(Icons.Filled.PlayArrow, contentDescription = null)
-            Spacer(Modifier.width(6.dp))
-            Text("Resume", fontWeight = FontWeight.Bold)
-        }
+    }
+
+    if (showNewGameConfirm) {
+        AlertDialog(
+            onDismissRequest = { showNewGameConfirm = false },
+            title = { Text("Start a new game?") },
+            text = { Text("This starts a fresh game and the current progress will be lost.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showNewGameConfirm = false
+                        onStart(
+                            player.trim().ifBlank { "Cookie-Lover" },
+                            gameId,
+                            cookies.toIntOrNull()?.coerceIn(1, 20) ?: 10,
+                            wall.toIntOrNull()?.coerceIn(5, 40) ?: 10,
+                            ballType.restitution
+                        )
+                    }
+                ) { Text("New Game") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNewGameConfirm = false }) { Text("Cancel") }
+            },
+        )
     }
 }
 

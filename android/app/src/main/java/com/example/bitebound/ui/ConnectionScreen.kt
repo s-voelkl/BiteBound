@@ -98,11 +98,6 @@ fun ConnectionScreen(
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.primary,
             )
-            Text(
-                "The sweetest connection in IoT",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
             Spacer(Modifier.height(28.dp))
 
             // Game Settings Section
