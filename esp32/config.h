@@ -58,7 +58,7 @@ const int default_cookies_count = 10;
 const int default_max_visible_cookies = 4;
 
 /** How long the "completed" state is shown before the next round auto-starts [ms]. */
-const uint32_t round_complete_hold_ms = 3000;
+const uint32_t round_complete_hold_ms = 2000;
 
 /** Default cookie radius in pixels. */
 const float default_cookie_radius = 5.0f;
