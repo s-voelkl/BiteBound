@@ -46,6 +46,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.bitebound.data.BallType
+import com.example.bitebound.R
 import com.example.bitebound.data.Credentials
 import com.example.bitebound.data.GameConfigConstants
 import com.example.bitebound.mqtt.ConnectionState
