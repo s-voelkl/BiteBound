@@ -1,0 +1,22 @@
+\subsection*{UI State Persistence Guide}
+\textbf{Prompt:}
+\begin{lstlisting}[language={}, breaklines=true]
+I am developing the 'BiteBound' Android app using Kotlin and Jetpack Compose. I need to manage local UI state for graphical elements across recompositions. 
+Please provide a professional guide on using `remember` for UI state persistence, including examples showing basic usage for graphics.
+\end{lstlisting}
+\textbf{Answer:}
+\begin{lstlisting}[language={}, breaklines=true]
+In Jetpack Compose, `remember` retains objects across recompositions. While `BiteBoundViewModel` handles complex logic, `remember` manages transient graphical states.
+
+Basic usage:
+@Composable
+fun GraphicComponent() {
+    // Persists state across standard recompositions
+    var isActive by remember { mutableStateOf(false) }
+
+    Button(onClick = { isActive = !isActive }) {
+        Text(if (isActive) "Active Graphic" else "Inactive Graphic")
+    }
+}
+Use `rememberSaveable` to survive configuration changes like rotations.
+\end{lstlisting}
