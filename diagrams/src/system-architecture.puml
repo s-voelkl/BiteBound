@@ -1,0 +1,45 @@
+@startuml system-architecture
+
+' Style configurations
+' skinparam handwritten false
+' skinparam monochrome false
+' skinparam packageStyle rectangle
+' skinparam shadowing false
+' skinparam defaultFontName "Arial"
+skinparam linetype ortho
+top to bottom direction
+
+' increase text size
+skinparam defaultFontSize 16
+
+actor User
+
+package "Graphical User Interfaces" as GUI {
+    component "Android App" as Android
+    component "Node-RED Dashboard" as NodeRed
+}
+
+package "ESP32-S3 Device" as ESP32 {
+    package "Network Core (Core 0)" {
+        ' component "Sensor Manager"
+        ' component "Physics Engine"
+        ' component "Game Logic"
+        ' component "Graphics Manager"
+        ' component "Maze Manager"
+    }
+    
+    package "Game Core (Core 1)" {
+        ' component "Wi-Fi Manager"
+        ' component "MQTT Manager"
+        ' component "JSON Builder"
+        ' component "JSON Parser"
+    }
+}
+
+
+' Interaction arrows
+User --> ESP32 : tilts
+User --> GUI : interacts
+' GUI <--> ESP32 : commands / telemetry 
+
+@enduml
