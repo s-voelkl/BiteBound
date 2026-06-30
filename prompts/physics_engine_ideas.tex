@@ -1,0 +1,14 @@
+\subsection*{Physics Engine Architecture Prompt}
+\textbf{Prompt:}
+\begin{lstlisting}[language={}, breaklines=true]
+I am building a physics engine for an ESP32-S3 game (50Hz loop). I need to move a ball based on IMU tilt. What is the best architectural approach? What sensor data is needed, and what is the optimal way to calculate physics stably without jitter? I need high adjustability.
+\end{lstlisting}
+\textbf{Answer:}
+\begin{lstlisting}[language={}, breaklines=true]
+For a stable, adjustable 50Hz ESP32 game loop, follow these steps:
+1. Sensors: Read raw IMU accelerometer pitch and roll.
+2. Filtering: Apply an Exponential Moving Average (EMA) to smooth noise, plus a deadzone to prevent resting drift.
+3. Physics Math: Use Semi-Implicit Euler integration. Update velocity from acceleration, then position from the new velocity. It is highly stable and computationally efficient for MCUs.
+4. Tuning: Isolate sensitivity settings. Use separate parameters for input scaling, friction, and restitution.
+Graphics Usage: Keep rendering entirely decoupled. The physics engine updates the spatial state on Core 1, and the graphics manager simply clears the dirty rectangle and redraws the shape at the new coordinates.
+\end{lstlisting}

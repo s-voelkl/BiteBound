@@ -1,0 +1,19 @@
+\subsection*{Compose Cookie Theme Generation}
+
+The generated code was directly implemented into the Android Frontend.
+
+\textbf{Prompt:}
+\begin{lstlisting}[language={}, breaklines=true]
+As an expert Android developer, please design a Jetpack Compose theme for a bakery app called 'BiteBound'. The design system should use a cookie-inspired color palette with warm tones like 'CookieDough' and 'CaramelBrown', supporting both light and dark modes. Map these to a Material 3 lightColorScheme. Additionally, configure standard Typography using a custom 'Display' font for headlines. Place the files in the `theme` folder, and briefly explain how the light and dark modes are handled.
+\end{lstlisting}
+\textbf{Answer:}
+\begin{lstlisting}[language={}, breaklines=true]
+I have generated the Jetpack Compose design system for BiteBound. The resulting files are located in the `com.example.bitebound.ui.theme` folder. 
+
+Summary of the generated architecture:
+1. Color.kt: Contains the raw cookie-themed color palette (e.g., CookieDough, CaramelBrown) and their dark mode counterparts (e.g., NightDough).
+2. Type.kt: Configures the Material 3 Typography, utilizing your custom 'Display' font for headlineLarge and headlineSmall.
+3. Theme.kt: Implements the MaterialTheme, defining both lightColorScheme and darkColorScheme. 
+
+The app will seamlessly transition between light and dark mode by evaluating the system preference and applying the respective color scheme. To utilize basic graphics and colors in your UI, wrap your screens in the generated theme wrapper and apply modifiers such as `Modifier.background(MaterialTheme.colorScheme.primary)`.
+\end{lstlisting}
