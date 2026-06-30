@@ -72,6 +72,7 @@ fun ConnectionScreen(
     var commandTopic by remember { mutableStateOf(credentials.commandTopic) }
     var ballType by remember { mutableStateOf(BallType.fromRestitution(credentials.restitution)) }
     var showPassword by remember { mutableStateOf(false) }
+    var showServerConnetion by remember { mutableStateOf(false)}
     var showTopics by remember { mutableStateOf(false) }
 
     val connecting = connection is ConnectionState.Connecting
@@ -192,52 +193,61 @@ fun ConnectionScreen(
 
             Spacer(Modifier.height(16.dp))
             // Server Connection Section
-            Text(
-                "Server Connection",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                fontWeight = FontWeight.Bold
-            )
+            TextButton(
+                onClick = { showServerConnetion = !showServerConnetion },
+                modifier = Modifier.align(Alignment.Start),
+            ) {
+                Icon(
+                    if (showServerConnetion) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = null,
+                )
+                Spacer(Modifier.width(4.dp))
+                Text("Server Connection")
+            }
+            AnimatedVisibility(visible = showServerConnetion) {
+                Column {
 
-            CredentialField(
-                value = host,
-                onValueChange = { host = it },
-                label = "Broker Host Address",
-                enabled = !connecting,
-            )
-            CredentialField(
-                value = port,
-                onValueChange = { port = it.filter(Char::isDigit) },
-                label = "Port (default 8883)",
-                keyboardType = KeyboardType.Number,
-                enabled = !connecting,
-            )
-            CredentialField(
-                value = username,
-                onValueChange = { username = it },
-                label = "Username for Connection",
-                enabled = !connecting,
-            )
-            CredentialField(
-                value = password,
-                onValueChange = { password = it },
-                label = "Password for Connection",
-                enabled = !connecting,
-                keyboardType = KeyboardType.Password,
-                visualTransformation = if (showPassword) {
-                    VisualTransformation.None
-                } else {
-                    PasswordVisualTransformation()
-                },
-                trailingIcon = {
-                    IconButton(onClick = { showPassword = !showPassword }) {
-                        Icon(
-                            if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                            contentDescription = if (showPassword) "Hide password" else "Show password",
-                        )
-                    }
-                },
-            )
+                    CredentialField(
+                        value = host,
+                        onValueChange = { host = it },
+                        label = "Broker Host Address",
+                        enabled = !connecting,
+                    )
+                    CredentialField(
+                        value = port,
+                        onValueChange = { port = it.filter(Char::isDigit) },
+                        label = "Port (default 8883)",
+                        keyboardType = KeyboardType.Number,
+                        enabled = !connecting,
+                    )
+                    CredentialField(
+                        value = username,
+                        onValueChange = { username = it },
+                        label = "Username for Connection",
+                        enabled = !connecting,
+                    )
+                    CredentialField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = "Password for Connection",
+                        enabled = !connecting,
+                        keyboardType = KeyboardType.Password,
+                        visualTransformation = if (showPassword) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { showPassword = !showPassword }) {
+                                Icon(
+                                    if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                    contentDescription = if (showPassword) "Hide password" else "Show password",
+                                )
+                            }
+                        },
+                    )
+                }
+            }
 
             TextButton(
                 onClick = { showTopics = !showTopics },
