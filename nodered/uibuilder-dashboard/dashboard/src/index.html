@@ -1,144 +1,240 @@
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="../uibuilder/images/uib-world.svg" type="image/svg+xml">
 
     <title>BiteBound Dashboard</title>
-    <meta name="description" content="BiteBound web dashboard driven by Node-RED uibuilder and MQTT telemetry.">
+    <meta name="description" content="BiteBound web dashboard driven by Node-RED uibuilder and MQTT communication.">
 
     <link type="text/css" rel="stylesheet" href="./index.css" media="all">
 
-    <script defer src="../uibuilder/uibuilder.iife.min.js">/* THE UIBUILDER LIBRARY MUST BE IN THE HTML! DO NOT REMOVE */</script>
+    <script defer
+        src="../uibuilder/uibuilder.iife.min.js">/* THE UIBUILDER LIBRARY MUST BE IN THE HTML! DO NOT REMOVE */</script>
     <script type="module" defer src="./index.js">/* Main dashboard app */</script>
 </head>
+
 <body>
-    <div class="page-shell">
-        <header class="topbar card">
-            <div>
-                <p class="eyebrow">BiteBound</p>
-                <h1>Cookie Dashboard</h1>
-            </div>
-            <div class="topbar-status">
-                <span id="connection-status" class="status-badge connecting">Connecting</span>
-                <span id="message-count" class="muted">0 updates</span>
+    <!-- Active Dashboard Screen -->
+    <div id="dashboardScreen" class="screen-view">
+        <!-- Center Aligned Top App Bar -->
+        <header class="top-app-bar">
+            <div class="app-bar-content">
+                <div class="app-bar-left">
+                    <section class="banner-section">
+                        <div class="status-banner">
+                            <span class="status-dot"></span>
+                            <span id="connectionBannerText">Disconnected</span>
+                        </div>
+                    </section>
+                </div>
+                <div class="app-bar-brand-container">
+                    <div class="app-bar-brand">
+                        <img src="assets/logo.png" alt="BiteBound Logo" class="brand-logo-small">
+                        <span class="app-bar-title">BiteBound</span>
+                    </div>
+                </div>
+                <div class="app-bar-right">
+                    <div class="app-credits">
+                        Created by <a href="https://github.com/s-voelkl/BiteBound" target="_blank">Simon Völkl and Johannes Schieder</a>
+                    </div>
+                </div>
             </div>
         </header>
 
-        <main class="dashboard-grid">
-            <section class="card hero-card">
-                <h2>Cookie Score</h2>
-                <div class="hero-content">
-                    <div id="cookie-progress" class="cookie-progress" style="--progress: 0%;">
-                        <div class="cookie-center">
-                            <div class="cookie-value"><span id="cookies-collected">0</span></div>
-                            <div class="cookie-subtitle">of <span id="cookies-target">10</span></div>
-                        </div>
+        <main class="dashboard-container">
+            <div class="dashboard-workspace is-waiting">
+                <!-- Waiting for Oven Placeholder -->
+                <section id="placeholderOven" class="placeholder-section">
+                    <div class="card card-alert">
+                        <h2 class="card-title">⏳ Warming up the oven</h2>
+                        <p>Connected — waiting for the first telemetry message from the ESP32. Start the game below.</p>
+                    </div>
+                </section>
+
+                <!-- Telemetry-Bound Cards (Self-revealed when telemetry is present) -->
+                <div id="activeTelemetryGrid" class="telemetry-columns">
+                    <!-- Column 1: Score & Sensors -->
+                    <div class="layout-col col-left">
+                        <!-- Score Card -->
+                        <section class="card">
+                            <h2 class="card-title">🏆 Cookie Score</h2>
+                            <div class="cookie-score-layout">
+                                <div class="cookie-progress-left">
+                                    <div class="cookie-progress-wrapper">
+                                        <!-- Circular SVG progress representation of CookieProgress -->
+                                        <svg class="progress-ring" width="180" height="180">
+                                            <circle class="progress-ring__bg" cx="90" cy="90" r="67.5"></circle>
+                                            <circle class="progress-ring__track" cx="90" cy="90" r="78"></circle>
+                                            <circle class="progress-ring__circle" id="scoreCircle" cx="90" cy="90" r="78"></circle>
+                                        </svg>
+                                        <div class="progress-text-overlay">
+                                            <span id="textCollected" class="collected-count">0</span>
+                                            <span id="textTarget" class="target-count">of 0</span>
+                                            <span id="textPercent" class="percent-count">0%</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="cookie-stats-right">
+                                    <div class="cookie-stat-item">
+                                        <span class="stat-highlight text-honey">Round <span id="stateRound">0</span></span>
+                                    </div>
+                                    <div class="cookie-stat-item">
+                                        <span class="stat-highlight text-mint">Time: <span id="stateElapsedTime">00:00</span></span>
+                                    </div>
+                                    <div class="player-info-row">
+                                        <p id="gameStateSubline" class="subline">
+                                            Player: — · Remaining: 0
+                                        </p>
+                                    </div>
+                                    <div id="roundCompleteAnnouncement" class="announcement hidden">
+                                        🎉 Round complete!
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Sensors Card -->
+                        <section class="card">
+                            <h2 class="card-title">📡 Sensors</h2>
+                            <div class="sensor-grid-stat">
+                                <div class="stat-tile">
+                                    <span id="sensorBattery" class="stat-tile-val">—</span>
+                                    <span class="metric-label">Battery</span>
+                                </div>
+                                <div class="stat-tile">
+                                    <span id="sensorButton" class="stat-tile-val">Released</span>
+                                    <span class="metric-label">Button</span>
+                                </div>
+                                <div class="stat-tile">
+                                    <span id="sensorAccelX" class="stat-tile-val">0.00</span>
+                                    <span class="metric-label">Accel X</span>
+                                </div>
+                                <div class="stat-tile">
+                                    <span id="sensorAccelY" class="stat-tile-val">0.00</span>
+                                    <span class="metric-label">Accel Y</span>
+                                </div>
+                                <div class="stat-tile">
+                                    <span id="sensorAccelZ" class="stat-tile-val">0.00</span>
+                                    <span class="metric-label">Accel Z</span>
+                                </div>
+                                <div class="stat-tile">
+                                    <span id="sensorGyroX" class="stat-tile-val">0.00</span>
+                                    <span class="metric-label">Gyro X</span>
+                                </div>
+                                <div class="stat-tile">
+                                    <span id="sensorGyroY" class="stat-tile-val">0.00</span>
+                                    <span class="metric-label">Gyro Y</span>
+                                </div>
+                                <div class="stat-tile">
+                                    <span id="sensorGyroZ" class="stat-tile-val">0.00</span>
+                                    <span class="metric-label">Gyro Z</span>
+                                </div>
+                            </div>
+                        </section>
                     </div>
 
-                    <div class="hero-stats">
-                        <article class="tile">
-                            <p class="tile-label">Running Status</p>
-                            <p id="running-status-value" class="tile-value">Idle</p>
-                        </article>
-                        <article class="tile">
-                            <p class="tile-label">Round</p>
-                            <p id="round-value" class="tile-value">0</p>
-                        </article>
-                        <article class="tile">
-                            <p class="tile-label">Time</p>
-                            <p id="time-value" class="tile-value">0s</p>
-                        </article>
+                    <!-- Column 2: Game Controls & Device Table -->
+                    <div class="layout-col col-center controls-wrapper">
+                        <!-- Game Controls Card -->
+                        <section class="card control-card-sticky">
+                            <h2 class="card-title">🎮 Game Controls</h2>
+
+                            <div class="form-group">
+                                <label for="ctrlPlayerName" class="metric-label">Player Name</label>
+                                <input type="text" id="ctrlPlayerName" class="form-control" placeholder="Player Name">
+                            </div>
+
+                            <div class="grid-2 margin-top-sm">
+                                <button id="ctrlModeLabyrinth" class="btn btn-toggle active">Dough Maze</button>
+                                <button id="ctrlModeFlatland" class="btn btn-toggle">Baking Tray</button>
+                            </div>
+
+                            <div class="grid-2 margin-top-sm">
+                                <div class="form-group">
+                                    <label for="ctrlCookiesCount" class="metric-label">Cookies (1-20)</label>
+                                    <input type="text" id="ctrlCookiesCount" class="form-control">
+                                </div>
+                                <div class="form-group" id="ctrlWallThicknessFormGroup">
+                                    <label for="ctrlWallThickness" class="metric-label">Wall Px (5-20)</label>
+                                    <input type="text" id="ctrlWallThickness" class="form-control">
+                                </div>
+                            </div>
+
+                            <p class="metric-label section-label">Cookie Monster:</p>
+                            <div class="grid-3">
+                                <button id="ctrlBallChonk" class="btn btn-toggle">Chonk</button>
+                                <button id="ctrlBallChomper" class="btn btn-toggle active">Chomper</button>
+                                <button id="ctrlBallScrappy" class="btn btn-toggle">Scrappy</button>
+                            </div>
+
+                            <div class="action-row-container margin-top-md">
+                                <button id="btnNewGame" class="btn btn-warning btn-compact">
+                                    New Game
+                                </button>
+                                <button id="btnPauseResume" class="btn btn-danger btn-compact" disabled>
+                                    Pause
+                                </button>
+                            </div>
+                        </section>
+
+                        <!-- Device Card -->
+                        <section class="card">
+                            <h2 class="card-title">🔌 Device</h2>
+                            <div class="detail-rows device-table-container">
+                                <div class="info-row">
+                                    <span class="info-label">Client ID</span>
+                                    <span id="deviceClientId" class="info-val">—</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Hardware</span>
+                                    <span id="deviceHardware" class="info-val">—</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Firmware</span>
+                                    <span id="deviceFirmware" class="info-val">—</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Wi-Fi</span>
+                                    <span id="deviceWifi" class="info-val">—</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Uptime</span>
+                                    <span id="deviceUptime" class="info-val">—</span>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- Column 3: Live Board -->
+                    <div class="layout-col col-right">
+                        <!-- Board Card -->
+                        <section class="card board-card">
+                            <h2 class="card-title">🎯 Live Board</h2>
+                            <div class="board-canvas-container">
+                                <canvas id="physicsCanvas" width="480" height="480"></canvas>
+                            </div>
+                        </section>
                     </div>
                 </div>
-                <p id="player-summary" class="muted">Player: Player 1 · Remaining: 10</p>
-            </section>
-
-            <section class="card controls-card">
-                <h2>Game Controls</h2>
-                <p class="muted">Commands are sent through uibuilder to Node-RED and then MQTT out.</p>
-
-                <div class="form-grid">
-                    <label>
-                        <span>Player name</span>
-                        <input id="player-name" type="text" value="Player 1" maxlength="40">
-                    </label>
-                    <label>
-                        <span>Cookies to collect</span>
-                        <input id="cookies-count" type="number" value="10" min="1" max="999">
-                    </label>
-                    <label>
-                        <span>Game ID</span>
-                        <input id="game-id" type="number" value="1" min="1" max="999999">
-                    </label>
-                    <label>
-                        <span>Wall thickness (px)</span>
-                        <input id="wall-thickness" type="number" value="6" min="1" max="48">
-                    </label>
-                </div>
-
-                <details class="physics-details">
-                    <summary>Physics defaults used in command payload</summary>
-                    <ul>
-                        <li>imu_sensitivity_multiplier: 1.25</li>
-                        <li>bounce_restitution: 0.75</li>
-                        <li>ema_alpha: 0.25</li>
-                        <li>deadzone_threshold: 0.04</li>
-                    </ul>
-                </details>
-
-                <div class="actions">
-                    <button id="start-game" class="btn btn-primary" type="button">Start</button>
-                    <button id="stop-game" class="btn btn-danger" type="button">Stop</button>
-                </div>
-                <p id="connection-error" class="muted">No connection errors.</p>
-            </section>
-
-            <section class="card board-card">
-                <h2>Live Board</h2>
-                <div class="board-wrap">
-                    <div id="board-area" class="board-area">
-                        <div id="board-ball" class="board-ball" aria-hidden="true"></div>
-                        <p id="board-empty" class="board-empty">Waiting for telemetry from the ESP32.</p>
-                    </div>
-                </div>
-
-                <div class="stats-grid three-up">
-                    <article class="tile"><p class="tile-label">Pos X</p><p id="board-pos-x" class="tile-value">0</p></article>
-                    <article class="tile"><p class="tile-label">Pos Y</p><p id="board-pos-y" class="tile-value">0</p></article>
-                    <article class="tile"><p class="tile-label">Collision</p><p id="board-collision" class="tile-value">No</p></article>
-                    <article class="tile"><p class="tile-label">Vel X</p><p id="board-vel-x" class="tile-value">0</p></article>
-                    <article class="tile"><p class="tile-label">Vel Y</p><p id="board-vel-y" class="tile-value">0</p></article>
-                    <article class="tile"><p class="tile-label">Acc X</p><p id="board-acc-x" class="tile-value">0</p></article>
-                </div>
-            </section>
-
-            <section class="card sensors-card">
-                <h2>IMU Sensors</h2>
-                <div class="stats-grid four-up">
-                    <article class="tile"><p class="tile-label">Accel X</p><p id="sensor-acc-x" class="tile-value">0</p></article>
-                    <article class="tile"><p class="tile-label">Accel Y</p><p id="sensor-acc-y" class="tile-value">0</p></article>
-                    <article class="tile"><p class="tile-label">Accel Z</p><p id="sensor-acc-z" class="tile-value">0</p></article>
-                    <article class="tile"><p class="tile-label">Gyro X</p><p id="sensor-gyro-x" class="tile-value">0</p></article>
-                    <article class="tile"><p class="tile-label">Gyro Y</p><p id="sensor-gyro-y" class="tile-value">0</p></article>
-                    <article class="tile"><p class="tile-label">Gyro Z</p><p id="sensor-gyro-z" class="tile-value">0</p></article>
-                    <article class="tile"><p class="tile-label">Battery (V)</p><p id="sensor-battery" class="tile-value">0</p></article>
-                    <article class="tile"><p class="tile-label">Button</p><p id="sensor-button" class="tile-value">Released</p></article>
-                </div>
-            </section>
-
-            <section class="card device-card">
-                <h2>Device</h2>
-                <div class="info-list">
-                    <p><span>Client ID</span><strong id="device-client-id">—</strong></p>
-                    <p><span>Hardware</span><strong id="device-hardware">—</strong></p>
-                    <p><span>Firmware</span><strong id="device-firmware">—</strong></p>
-                    <p><span>Wi-Fi</span><strong id="device-wifi">—</strong></p>
-                    <p><span>Uptime</span><strong id="device-uptime">0s</strong></p>
-                </div>
-            </section>
+            </div>
         </main>
     </div>
+
+    <!-- Confirmation Modal Dialog -->
+    <div id="newGameModal" class="modal-overlay hidden">
+        <div class="modal-box card">
+            <h2>Start a new game?</h2>
+            <p>This starts a fresh game and the current progress will be lost.</p>
+            <div class="modal-actions">
+                <button id="btnConfirmCancel" class="btn btn-secondary">Cancel</button>
+                <button id="btnConfirmStart" class="btn btn-success">New Game</button>
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>

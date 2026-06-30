@@ -7,16 +7,23 @@ In general, the model Google Gemini Flach 3.5 Thinking was used for all prompts.
 % TODO: Update the list of prompt files by using the following command:
 % (Get-ChildItem -Path prompts -Filter *.tex | ForEach-Object { $_.BaseName }) -join ",`n`t"
 
-% \foreach \p in {
-% 		architecture_design,
-%         concurrency_freertos,
-%         docstring_generation,
-%         gfx_graphics_library,
-%         logo_generation,
-%         maze_random_dfs,
-%         nodred_dashboard_library,
-%         plantuml_basic_template,
-%         unit_test_generation} {
-% 		\input{../prompts/\p.tex}
-% 	}
+\foreach \p in {
+        android_state_persistence,
+        android_theme,
+        architecture_design,
+        collision_detection_algo,
+        concurrency_freertos,
+        docstring_generation,
+        gfx_graphics_library,
+        logo_generation,
+        maze_random_dfs,
+        nodered_dashboard_library,
+        nodered_migration_examples,
+        nodered_migration_guide,
+        physics_engine_ideas,
+        plantuml_basic_template,
+        readme_generation,
+        unit_test_generation} {
+        \input{../prompts/\p.tex}
+    }
 

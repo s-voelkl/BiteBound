@@ -1,5 +1,6 @@
 \section{Hardware}
 \label{sec:hardware}
+
 The firmware of the BiteBound platform is written in C++ using the Arduino framework~\cite{ArduinoLanguageReference}.
 The code operates on a dual-core microcontroller to separate timing-sensitive game updates from network Input/Output (I/O) activities, as illustrated in~\Cref{fig:hardware-architecture}.
 
@@ -102,7 +103,7 @@ Volatile HUD elements, such as the score and elapsed time, are cached and update
 
 An example display frame of the labyrinth game is shown in~\Cref{fig:esp32_labyrinth}, while~\Cref{fig:esp32_loading} illustrates a loading screen for the game startup phase.
 
-\begin{figure}[h]
+\begin{figure}[htb]
     \centering
     \begin{minipage}[b]{0.48\linewidth}
         \centering
@@ -129,7 +130,7 @@ The device establishes two main communication paths:
 \begin{itemize}
     \item Command Topic (\texttt{mauc2026/group\_03/game/command}):
           Receives control payloads from external dashboards, as illustrated in~\Cref{fig:json-command}.
-          The incoming JSON content is processed by the static \texttt{CommandParser} class to adjust gameplay states or update physical and visual parameters on the fly~\cite{json2026}.
+          The incoming JSON content is processed by the static \texttt{CommandParser} class to adjust gameplay states or update physical and visual parameters on the fly~\cite{json2026}. A Universally Unique Identifier (UUID)~\cite{uuid2026} is used for tracking the origin of commands.
     \item Telemetry Topic (\texttt{mauc2026/group\_03/game/telemetry}):
           Published telemetry data to dashboards at a 2\,Hz rate, as shown in~\Cref{fig:json-telemetry}.
           The \texttt{JsonBuilder} class structures the combined hardware information, game progress, configuration records, physics parameters, and raw sensor readings into a unified JSON format.
@@ -137,7 +138,7 @@ The device establishes two main communication paths:
 
 All communication packets default to Quality of Service 1 (QoS 1) with the retain flag set to false to avoid processing stale telemetry.
 
-\begin{figure}[h]
+\begin{figure}[htb]
     \centering
     \begin{minipage}[b]{0.53\linewidth}
         \centering

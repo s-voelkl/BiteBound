@@ -15,7 +15,7 @@ This system utilizes the code-first UIBUILDER package~\cite{Knight_node-red-cont
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.9\linewidth]{../assets/nodered-dashboard.png}
+    \includegraphics[width=1\linewidth]{../assets/nodered-dashboard.png}
     \caption[Node-RED UI Builder Dashboard]{Web-based operator dashboard rendered via uibuilder.}
     \label{fig:nodered-dashboard}
 \end{figure}
@@ -36,7 +36,7 @@ The interface is modularized within the local web directory, separating markup, 
 \begin{itemize}
     \item \texttt{index.html}: Establishes the DOM structure, dividing the workspace into cards.
     \item  \texttt{index.css}: Implements a uniform, cookie-themed color palette using CSS variables to maintain styling coherence.
-    \item \texttt{index.js}: Acts as the script entry point, initializing the client-side uibuilder library and listening for active WebSocket updates from the flow.
+    \item \texttt{index.js}: Acts as the script entry point, initializing the client-side uibuilder library and listening for active WebSocket~\cite{uibuilderv7} updates from the flow.
 \end{itemize}
 
 The core logic processes telemetry inputs into standardized JavaScript objects, validates them against JSON specifications, and constructs device commands for WebSocket transmission. DOM rendering dynamically updates the HTML content based on the current state, though no data persistence is implemented.
