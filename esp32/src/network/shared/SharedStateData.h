@@ -10,7 +10,7 @@
  */
 struct SharedStateData
 {
-    // Identity
+    // Identity (held so all dashboards show the same name; never defaulted)
     char playerName[32];
 
     // Parameters

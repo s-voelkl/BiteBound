@@ -86,10 +86,12 @@ void GraphicsManager::drawUI(const GameState &state, bool forceDraw)
         _gfx->setCursor(30, 5);
         _gfx->print("Round:");
         _gfx->print(state.currentRound);
+        // Show collected / target. There's no target field in GameState, but
+        // remaining = target - collected, so collected + remaining = target.
         _gfx->print(" Cookies:");
         _gfx->print(state.cookiesCollected);
         _gfx->print("/");
-        _gfx->print(state.cookiesRemaining);
+        _gfx->print(state.cookiesCollected + state.cookiesRemaining);
 
         // Print stopwatch timer
         // _gfx->print(" Time:");
@@ -175,6 +177,49 @@ void GraphicsManager::drawSphere(const PhysicsBody &ball)
     _gfx->fillCircle((int16_t)ball.x, (int16_t)(ball.y + ui_header_height), (int16_t)ball.radius, color_sphere);
 }
 
+void GraphicsManager::drawPauseOverlay()
+{
+    if (!_gfx)
+        return;
+
+    const int barWidth = 14;
+    const int barHeight = 56;
+    const int gap = 16;
+
+    int centerX = _width / 2;
+    int centerY = ui_header_height + (_height - ui_header_height) / 2;
+    int top = centerY - barHeight / 2;
+
+    int leftX = centerX - gap / 2 - barWidth;
+    int rightX = centerX + gap / 2;
+
+    _gfx->fillRect(leftX, top, barWidth, barHeight, color_frosting_white);
+    _gfx->fillRect(rightX, top, barWidth, barHeight, color_frosting_white);
+}
+
+void GraphicsManager::drawCompletedOverlay()
+{
+    if (!_gfx)
+        return;
+
+    // A small banner in the middle of the play area announcing the finished round.
+    const int boxW = 150;
+    const int boxH = 38;
+    int centerX = _width / 2;
+    int centerY = ui_header_height + (_height - ui_header_height) / 2;
+    int boxX = centerX - boxW / 2;
+    int boxY = centerY - boxH / 2;
+
+    _gfx->fillRect(boxX, boxY, boxW, boxH, color_dark_cocoa);
+    _gfx->drawRect(boxX, boxY, boxW, boxH, color_honey);
+
+    _gfx->setTextColor(color_honey);
+    _gfx->setTextSize(2);
+    // "ROUND DONE" is 10 chars; size-2 glyphs are ~12px wide -> ~120px total.
+    _gfx->setCursor(centerX - 60, centerY - 7);
+    _gfx->print("ROUND DONE");
+}
+
 void GraphicsManager::update(
     const uint8_t *mazeGrid,
     int gridWidth,
@@ -196,6 +241,19 @@ void GraphicsManager::update(
         _needsFullRedraw = true;
     }
 
+    // While paused (idle) the ball is frozen. Draw one full frame with the pause
+    // bars on top, then leave the screen untouched on later ticks so the partial
+    // update path doesn't erase the overlay.
+    bool paused = (state.runningStatus == RunningStatus::IDLE);
+    bool completed = (state.runningStatus == RunningStatus::COMPLETED);
+    // Both paused and completed freeze the ball; draw one full frame with the
+    // matching overlay, then leave the screen alone on later ticks so the partial
+    // update path doesn't erase it.
+    if ((paused || completed) && !_needsFullRedraw)
+    {
+        return;
+    }
+
     if (_needsFullRedraw)
     {
         // Redraw display from scratch
@@ -206,11 +264,22 @@ void GraphicsManager::update(
         {
             drawCookie(cookies[i]);
             _prevCookieActiveStates[i] = cookies[i].active;
+            _prevCookies[i] = cookies[i];
         }
         _prevCookieCount = min(cookieCount, max_rendered_cookies);
 
         drawSphere(ball);
         drawUI(state, true);
+
+        // Lay the pause bars / round-complete banner over everything else.
+        if (paused)
+        {
+            drawPauseOverlay();
+        }
+        else if (completed)
+        {
+            drawCompletedOverlay();
+        }
 
         // Store structures
         _prevBall = ball;
@@ -240,21 +309,31 @@ void GraphicsManager::update(
             }
         }
 
-        // 3. Process changes in cookie states (erase newly collected, render respawned)
+        // 3. Process cookie changes: erase eaten ones and (re)draw new or respawned
+        // ones. A respawn keeps the cookie active but moves it to a new spot, so we
+        // also have to treat a position change as "needs redraw" - that case was
+        // missing before, which is why respawned cookies never showed up.
         for (int i = 0; i < cookieCount && i < max_rendered_cookies; ++i)
         {
+            const Cookie &cur = cookies[i];
+            const Cookie &prev = _prevCookies[i];
             bool wasActive = (i < _prevCookieCount) ? _prevCookieActiveStates[i] : false;
-            bool isActive = cookies[i].active;
+            bool isActive = cur.active;
+            bool moved = ((int)prev.x != (int)cur.x) || ((int)prev.y != (int)cur.y);
 
-            if (wasActive && !isActive)
+            // Erase the old drawing if the cookie was visible and has now gone or moved.
+            if (wasActive && (!isActive || moved))
             {
-                eraseRegion((int)cookies[i].x, (int)cookies[i].y, (int)cookies[i].radius, mazeGrid, gridWidth, gridHeight);
+                eraseRegion((int)prev.x, (int)prev.y, (int)prev.radius, mazeGrid, gridWidth, gridHeight);
             }
-            else if (!wasActive && isActive)
+            // Draw at the current spot if it is visible and just appeared or moved.
+            if (isActive && (!wasActive || moved))
             {
-                drawCookie(cookies[i]);
+                drawCookie(cur);
             }
+
             _prevCookieActiveStates[i] = isActive;
+            _prevCookies[i] = cur;
         }
         _prevCookieCount = min(cookieCount, max_rendered_cookies);
 
