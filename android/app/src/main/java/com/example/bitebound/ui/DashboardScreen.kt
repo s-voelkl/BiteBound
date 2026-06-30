@@ -261,7 +261,7 @@ private fun ControlsCard(
         OutlinedTextField(
             value = player,
             onValueChange = { player = it },
-            label = { Text("Player name") },
+            label = { Text("Player Name") },
             singleLine = true,
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier.fillMaxWidth(),
@@ -278,7 +278,7 @@ private fun ControlsCard(
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Labyrinth")
+                Text("Dough Maze")
             }
             Button(
                 onClick = { gameId = 2 },
@@ -323,7 +323,7 @@ private fun ControlsCard(
         Spacer(Modifier.height(10.dp))
         // Ball type picks the bounce (restitution) sent with the next start.
         Text(
-            "Ball Type",
+            "Cookie Monster",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 4.dp),

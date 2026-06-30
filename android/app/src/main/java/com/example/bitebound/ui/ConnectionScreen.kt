@@ -129,7 +129,7 @@ fun ConnectionScreen(
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Labyrinth")
+                    Text("Dough Maze")
                 }
                 Button(
                     onClick = { gameId = GameConfigConstants.GAME_ID_FLATLAND },
@@ -169,7 +169,7 @@ fun ConnectionScreen(
 
             // Ball type maps to a fixed restitution (bounce) value below.
             Text(
-                "Ball Type",
+                "Cookie Monster",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 4.dp),
