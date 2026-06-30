@@ -3,6 +3,7 @@
 #include "PhysicsParams.h"
 #include "../colliders/BorderCollider.h"
 #include "../colliders/ICollider.h"
+#include "../../../config.h"
 
 #include <math.h>
 #include <AUnit.h>
@@ -74,6 +75,10 @@ test(physics_inputAccel_firstSampleScalesBySensitivity)
 {
     PhysicsEngine engine;
     PhysicsParams p; // sensitivity 1.25, deadzone 0.05
+    p.sensitivity = 1.25f;
+    p.deadzone = 0.05f;
+    p.emaAlpha = 1.0f;    // disable EMA for this test
+    p.restitution = 0.0f; // irrelevant
     engine.setParams(p);
     engine.reset();
 
@@ -90,6 +95,10 @@ test(physics_inputAccel_deadzoneZeroesSmallInput)
 {
     PhysicsEngine engine;
     PhysicsParams p; // deadzone 0.05
+    p.deadzone = 0.05f;
+    p.emaAlpha = 1.0f;    // disable EMA for this test
+    p.restitution = 0.0f; // irrelevant
+    p.sensitivity = 1.0f; // irrelevant
     engine.setParams(p);
     engine.reset();
 
@@ -108,6 +117,7 @@ test(physics_inputAccel_emaBlendsSecondSample)
     PhysicsParams p;
     p.sensitivity = 1.0f; // isolate the EMA from the scaling
     p.deadzone = 0.0f;
+    p.emaAlpha = 0.25f; // 25% new sample, 75% previous
     engine.setParams(p);
     engine.reset();
 

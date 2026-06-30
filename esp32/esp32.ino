@@ -165,6 +165,11 @@ void processIncomingCommands() {
           GameConfig config;
           config.gameId = commandMsg.gameId;
           config.targetCookies = commandMsg.cookiesCount;
+          // Don't show more cookies at once than are still needed to win, so a
+          // target of 1 shows exactly 1 cookie instead of the default 4.
+          config.visibleCookies = (commandMsg.cookiesCount < default_max_visible_cookies)
+                                      ? (uint8_t)commandMsg.cookiesCount
+                                      : (uint8_t)default_max_visible_cookies;
           config.wallThicknessPx = commandMsg.wallThicknessPx;
           config.physics.sensitivity = commandMsg.imuSensitivity;
           config.physics.restitution = commandMsg.bounceRestitution;
@@ -176,11 +181,26 @@ void processIncomingCommands() {
           
           sharedState.runningStatus = RunningStatus::RUNNING;
           sharedState.gameId = commandMsg.gameId;
+          // Mirror the chosen target/wall into shared state so the telemetry (and
+          // with it the dashboard's cookie counter) reports the right values.
+          sharedState.cookiesCount = commandMsg.cookiesCount;
+          sharedState.wallThicknessPx = commandMsg.wallThicknessPx;
           strncpy(sharedState.playerName, commandMsg.playerName, sizeof(sharedState.playerName) - 1);
-        } 
+        }
         else if (commandMsg.type == CommandType::STOP) {
+          // Tell the engine to stop too, not just the shared flag. Otherwise the
+          // game step writes the running state back from the engine next frame.
+          gameEngine.stop();
           sharedState.runningStatus = RunningStatus::IDLE;
-        } 
+        }
+        else if (commandMsg.type == CommandType::RESUME) {
+          // Continue a paused game right where it left off (no rebuild). resume()
+          // ignores it if there's no paused game, so a stray resume is harmless.
+          if (gameEngine.canResume()) {
+            gameEngine.resume();
+            sharedState.runningStatus = RunningStatus::RUNNING;
+          }
+        }
         else if (commandMsg.type == CommandType::PARAM_CHANGE) {
           GameConfig config;
           config.physics.sensitivity = commandMsg.imuSensitivity;
@@ -198,6 +218,8 @@ void processIncomingCommands() {
       Serial.println("Command: Start game received.");
     } else if (commandMsg.type == CommandType::STOP) {
       Serial.println("Command: Stop game received.");
+    } else if (commandMsg.type == CommandType::RESUME) {
+      Serial.println("Command: Resume game received.");
     } else if (commandMsg.type == CommandType::PARAM_CHANGE) {
       Serial.println("Command: Parameter Change received.");
     } else {
@@ -278,6 +300,36 @@ void updateGameStep() {
       sharedState.runningStatus = gs.runningStatus;
     }
   }
+
+  // 6. Round complete: hold the "completed" state for a moment so the dashboard
+  // (and the on-device banner) can show it, then auto-start the next round
+  // (fresh maze / field, round + 1).
+  static uint32_t completedSinceMs = 0;
+  bool advanceRound = false;
+  {
+    MutexLock lock(stateMutex);
+    if (lock.isLocked()) {
+      if (sharedState.runningStatus == RunningStatus::COMPLETED) {
+        if (completedSinceMs == 0) {
+          completedSinceMs = millis();
+        } else if (millis() - completedSinceMs >= round_complete_hold_ms) {
+          advanceRound = true;
+        }
+      } else {
+        completedSinceMs = 0;
+      }
+    }
+  }
+  if (advanceRound) {
+    // nextRound() rebuilds the level (new maze for Game 1) and sets RUNNING again.
+    gameEngine.nextRound();
+    completedSinceMs = 0;
+    MutexLock lock(stateMutex);
+    if (lock.isLocked()) {
+      sharedState.runningStatus = RunningStatus::RUNNING;
+      sharedState.currentRound = gameEngine.state().currentRound;
+    }
+  }
 }
 
 /**
@@ -286,82 +338,96 @@ void updateGameStep() {
  */
 void vNetworkTask(void *pvParameters) {
   TickType_t lastTelemetryTime = xTaskGetTickCount();
+
+  // Retry MQTT if disconnected, but avoiding spamming the broker with connection attempts. Use a cooldown interval.
+  TickType_t lastMqttRetryTime = 0;
+  const TickType_t mqttRetryInterval = pdMS_TO_TICKS(mqtt_retry_interval_ms); 
+
   while (true) {
     // 1. Service MQTT loop and maintain connection status
     // Must be called frequently to handle keep-alives and incoming messages.
+    if (!wifiManager.isConnected()){
+      // Reconnect WiFi if lost 
+      Serial.println("NetworkTask: WiFi connection lost, attempting to reconnect...");
+      wifiManager.connect();
+    }
+
     if (wifiManager.isConnected()) {
       mqttManager.loop();
     }
 
     // 2. Periodic telemetry publishing
     TickType_t currentTick = xTaskGetTickCount();
+
+    // Reconnect MQTT if disconnected
+    if (wifiManager.isConnected() && !mqttManager.isConnected()) {
+      if (currentTick - lastMqttRetryTime >= mqttRetryInterval) {
+        lastMqttRetryTime = currentTick;
+        mqttManager.connect();
+      }
+    }
+
     if ((currentTick - lastTelemetryTime) >= pdMS_TO_TICKS(telemetry_rate_ms)) {
       lastTelemetryTime = currentTick;
 
-      // Check WiFi and MQTT connection before publishing
-      if (wifiManager.isConnected()) {
-        if (!mqttManager.isConnected()) {
-          mqttManager.connect();
-        }
+      // Only publish if connected
+      if (wifiManager.isConnected() && mqttManager.isConnected()) {
+        SensorData sensorData = sensorManager.getLastData();
+        TelemetryData telemetry;
 
-        if (mqttManager.isConnected()) {
-          SensorData sensorData = sensorManager.getLastData();
-          TelemetryData telemetry;
+        // Populate hardware information.
+        telemetry.client_id = device_id;
+        telemetry.hardware = device_hardware;
+        telemetry.firmware_version = device_firmware_version;
+        telemetry.uptime_ms = millis();
+        telemetry.wifi_ssid = wifiManager.getSSID();
 
-          // Populate hardware information.
-          telemetry.client_id = device_id;
-          telemetry.hardware = device_hardware;
-          telemetry.firmware_version = device_firmware_version;
-          telemetry.uptime_ms = millis();
-          telemetry.wifi_ssid = wifiManager.getSSID();
+        // Populate raw sensor readings.
+        telemetry.accel_x = sensorData.accelerometerX;
+        telemetry.accel_y = sensorData.accelerometerY;
+        telemetry.accel_z = sensorData.accelerometerZ;
+        telemetry.gyro_x = sensorData.gyroscopeX;
+        telemetry.gyro_y = sensorData.gyroscopeY;
+        telemetry.gyro_z = sensorData.gyroscopeZ;
+        telemetry.battery_voltage = sensorData.batteryVoltage;
+        telemetry.button = sensorData.button;
 
-          // Populate raw sensor readings.
-          telemetry.accel_x = sensorData.accelerometerX;
-          telemetry.accel_y = sensorData.accelerometerY;
-          telemetry.accel_z = sensorData.accelerometerZ;
-          telemetry.gyro_x = sensorData.gyroscopeX;
-          telemetry.gyro_y = sensorData.gyroscopeY;
-          telemetry.gyro_z = sensorData.gyroscopeZ;
-          telemetry.battery_voltage = sensorData.batteryVoltage;
-          telemetry.button = sensorData.button;
+        // Thread-safe capture of current game progress and physics state.
+        {
+          MutexLock lock(stateMutex);
+          if (lock.isLocked()) {
+            telemetry.game_id = sharedState.gameId;
+            telemetry.player_name = sharedState.playerName;
+            telemetry.target_cookies = sharedState.cookiesCount;
+            telemetry.screen_width = display_width;
+            telemetry.screen_height = display_height;
+            telemetry.wall_thickness_px = sharedState.wallThicknessPx;
 
-          // Thread-safe capture of current game progress and physics state.
-          {
-            MutexLock lock(stateMutex);
-            if (lock.isLocked()) {
-              telemetry.game_id = sharedState.gameId;
-              telemetry.player_name = sharedState.playerName;
-              telemetry.target_cookies = sharedState.cookiesCount;
-              telemetry.screen_width = display_width;
-              telemetry.screen_height = display_height;
-              telemetry.wall_thickness_px = sharedState.wallThicknessPx;
-
-              String runningStatusStr = "idle";
-              if (sharedState.runningStatus == RunningStatus::RUNNING) {
-                runningStatusStr = "running";
-              } else if (sharedState.runningStatus == RunningStatus::COMPLETED) {
-                runningStatusStr = "completed";
-              }
-              telemetry.runningStatus = runningStatusStr;
-
-              telemetry.cookies_collected = sharedState.cookiesCollected;
-              telemetry.cookies_remaining = sharedState.cookiesRemaining;
-              telemetry.current_round = sharedState.currentRound;
-              telemetry.elapsed_time_sec = sharedState.elapsedTimeSec;
-
-              telemetry.ball_pos_x = sharedState.ballPosX;
-              telemetry.ball_pos_y = sharedState.ballPosY;
-              telemetry.velocity_x = sharedState.velocityX;
-              telemetry.velocity_y = sharedState.velocityY;
-              telemetry.acc_x = sharedState.accX;
-              telemetry.acc_y = sharedState.accY;
+            String runningStatusStr = "idle";
+            if (sharedState.runningStatus == RunningStatus::RUNNING) {
+              runningStatusStr = "running";
+            } else if (sharedState.runningStatus == RunningStatus::COMPLETED) {
+              runningStatusStr = "completed";
             }
-          }
+            telemetry.runningStatus = runningStatusStr;
 
-          // Send telemetry JSON payload to MQTT broker
-          String payload = buildTelemetryJson(telemetry);
-          mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
+            telemetry.cookies_collected = sharedState.cookiesCollected;
+            telemetry.cookies_remaining = sharedState.cookiesRemaining;
+            telemetry.current_round = sharedState.currentRound;
+            telemetry.elapsed_time_sec = sharedState.elapsedTimeSec;
+
+            telemetry.ball_pos_x = sharedState.ballPosX;
+            telemetry.ball_pos_y = sharedState.ballPosY;
+            telemetry.velocity_x = sharedState.velocityX;
+            telemetry.velocity_y = sharedState.velocityY;
+            telemetry.acc_x = sharedState.accX;
+            telemetry.acc_y = sharedState.accY;
+          }
         }
+
+        // Send telemetry JSON payload to MQTT broker
+        String payload = buildTelemetryJson(telemetry);
+        mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
       }
     }
 

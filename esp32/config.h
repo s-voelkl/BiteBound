@@ -39,6 +39,12 @@ const int mqtt_qos = 1;
 /** Retain flag for MQTT messages. */
 const bool mqtt_retain = false;
 
+/** MQTT Retry interval in milliseconds. */
+const int mqtt_retry_interval_ms = 2000;
+
+/** MQTT Retry Attempts per connection setup. */
+const int mqtt_retry_attempts = 2;
+
 /** ----- Game settings ----- */
 
 /** Game ID for the maze game. */
@@ -48,11 +54,11 @@ const int game_id_plane = 2;
 /** Default game id. */
 const int default_game_id = game_id_maze;
 
-/** Default player name. */
-const char *const default_player_name = "Cookie-Lover";
-
 /** Default game duration in seconds. */
 // const int default_game_duration_sec = 120;
+
+/** Default player name. */
+const char *const default_player_name = "Cookie-Monster";
 
 /** Default maximum number of cookies in the game. */
 const int default_cookies_count = 10;
@@ -60,11 +66,28 @@ const int default_cookies_count = 10;
 /** Default maximum number of visible cookies in the game. */
 const int default_max_visible_cookies = 4;
 
+/** How long the "completed" state is shown before the next round auto-starts [ms]. */
+const uint32_t round_complete_hold_ms = 2000;
+
 /** Default cookie radius in pixels. */
 const float default_cookie_radius = 5.0f;
 
-/** Default physics body (sphere/ball) radius in pixels. */
+/** Default physics body (sphere/ball) radius in pixels. Only a fallback before a
+ *  level is built - the actual ball size is derived from the wall thickness below. */
 const float default_physics_body_radius = 5.0f;
+
+/** Ball diameter as a fraction of the wall thickness, so the ball always fits the
+ *  corridor no matter which wall thickness is chosen. radius = wall * ratio / 2. */
+const float ball_diameter_wall_ratio = 0.7f;
+
+/** Maze cookie diameter as a fraction of the wall thickness, so cookies scale with
+ *  the corridor like the ball (a bit smaller so they stay distinguishable). */
+const float cookie_diameter_wall_ratio = 0.6f;
+
+/** Game 2 (open field) has no corridor to scale to, so its ball and cookies use
+ *  fixed sizes - picked to be clearly visible without dominating the field. */
+const float default_flatland_ball_radius = 8.0f;
+const float default_flatland_cookie_radius = 6.0f;
 
 /** ----- Display settings ----- */
 /** Display width in pixels. */
@@ -74,7 +97,7 @@ const int display_width = 240;
 const int display_height = 280;
 
 /** Default wall thickness in pixels. */
-const int default_wall_thickness_px = 15;
+const int default_wall_thickness_px = 10;
 
 /** Top HUD header height in pixels. */
 const int ui_header_height = 20;
@@ -96,12 +119,12 @@ const uint16_t color_mint_green = 0x4C6B;     // MintGreen (0x4C8C5A)
 const uint16_t color_honey = 0xF5C9;          // Honey (0xF2B84B)
 
 /** ----- Main Game Mapping (Backward Compatible Names) ----- */
-const uint16_t color_background = color_cinnamon;
-const uint16_t color_wall_type_1 = color_cookie_dough;
-const uint16_t color_wall_type_2 = color_dark_cocoa;
-const uint16_t color_sphere = color_berry_red;   // Jam Red Sphere
-const uint16_t color_cookie = color_honey;       // Honey Yellow dots
-const uint16_t color_ui_text = color_milk_cream; // Warm milk HUD text
+const uint16_t color_background = color_dark_cocoa;    // Espresso Brown base
+const uint16_t color_wall_type_1 = color_cookie_dough; // Golden Dough paths
+const uint16_t color_wall_type_2 = color_cinnamon;     // Cinnamon pathways
+const uint16_t color_sphere = color_berry_red;         // Jam Red Sphere
+const uint16_t color_cookie = color_honey;             // Honey Yellow dots
+const uint16_t color_ui_text = color_milk_cream;       // Warm milk HUD text
 
 /** ----- Physics settings ----- */
 /** IMU sensitivity multiplier (IMU = Inertial Measurement Units) */

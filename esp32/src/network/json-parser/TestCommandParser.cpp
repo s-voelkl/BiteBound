@@ -8,7 +8,7 @@ test(CommandParser_ParseStartSuccess)
                      "\"command\":\"start\"," +
                      "\"meta\":{\"source_ui\":\"NODE_RED\",\"request_id\":\"id1\"," +
                      "\"timestamp\":\"2026-06-26T11:50:00Z\"}," +
-                     "\"player\":{\"name\":\"" + default_player_name + "\"}," +
+                     "\"player\":{\"name\":\"Tester\"}," +
                      "\"game\":{\"game_id\":" + String(default_game_id) + "}," +
                      "\"parameters\":{" +
                      "\"cookies_count\":" + String(default_cookies_count) + "," +
@@ -27,12 +27,12 @@ test(CommandParser_ParseStartSuccess)
 
     assertTrue(success);
     assertTrue(msg.type == CommandType::START);
-    assertEqual(strcmp(msg.playerName, default_player_name), 0);
+    assertEqual(strcmp(msg.playerName, "Tester"), 0);
     assertEqual(msg.cookiesCount, default_cookies_count);
     assertEqual(msg.wallThicknessPx, default_wall_thickness_px);
-    assertEqual(msg.imuSensitivity, default_imu_sensitivity_multiplier);
-    assertEqual(msg.bounceRestitution, default_bounce_restitution);
-    assertEqual(msg.emaAlpha, default_ema_alpha);
+    assertNear(msg.imuSensitivity, default_imu_sensitivity_multiplier, 1e-4f);
+    assertNear(msg.bounceRestitution, default_bounce_restitution, 1e-4f);
+    assertNear(msg.emaAlpha, default_ema_alpha, 1e-4f);
     assertNear(msg.deadzoneThreshold, default_deadzone_threshold, 1e-4f);
     assertEqual(strcmp(msg.requestId, "id1"), 0);
 }
@@ -43,7 +43,7 @@ test(CommandParser_ParseByteArraySuccess)
                      "\"command\":\"start\"," +
                      "\"meta\":{\"source_ui\":\"NODE_RED\",\"request_id\":\"id_byte\"," +
                      "\"timestamp\":\"2026-06-26T11:50:00Z\"}," +
-                     "\"player\":{\"name\":\"" + default_player_name + "\"}," +
+                     "\"player\":{\"name\":\"Tester\"}," +
                      "\"game\":{\"game_id\":" + String(default_game_id) + "}," +
                      "\"parameters\":{" +
                      "\"cookies_count\":" + String(default_cookies_count) + "," +
@@ -67,12 +67,12 @@ test(CommandParser_ParseByteArraySuccess)
     // Verify properties decode identically through the byte array interface
     assertTrue(success);
     assertTrue(msg.type == CommandType::START);
-    assertEqual(strcmp(msg.playerName, default_player_name), 0);
+    assertEqual(strcmp(msg.playerName, "Tester"), 0);
     assertEqual(msg.cookiesCount, default_cookies_count);
     assertEqual(msg.wallThicknessPx, default_wall_thickness_px);
-    assertEqual(msg.imuSensitivity, default_imu_sensitivity_multiplier);
-    assertEqual(msg.bounceRestitution, default_bounce_restitution);
-    assertEqual(msg.emaAlpha, default_ema_alpha);
+    assertNear(msg.imuSensitivity, default_imu_sensitivity_multiplier, 1e-4f);
+    assertNear(msg.bounceRestitution, default_bounce_restitution, 1e-4f);
+    assertNear(msg.emaAlpha, default_ema_alpha, 1e-4f);
     assertNear(msg.deadzoneThreshold, default_deadzone_threshold, 1e-4f);
     assertEqual(strcmp(msg.requestId, "id_byte"), 0);
 }

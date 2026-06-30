@@ -11,6 +11,10 @@ void CookieField::start(uint8_t visibleCount, uint16_t target,
     {
         visibleCount = kMaxVisibleCookies;
     }
+    if (visibleCount > target)
+    {
+        visibleCount = (uint8_t)target;
+    }
     _count = visibleCount;
 
     for (uint8_t i = 0; i < _count; ++i)
@@ -44,13 +48,18 @@ uint8_t CookieField::checkPickup(const PhysicsBody &ball)
             ++_collected;
             ++eaten;
 
-            if (_collected < _target)
+            if (_target - _collected >= _count)
             {
                 c = _spawner->spawn(ball); // reappear elsewhere
             }
             else
             {
-                c.active = false; // target reached -> last cookie vanishes
+                c.active = false; // not needed anymore -> let the field empty out
+            }
+
+            if (_collected >= _target)
+            {
+                break; // round won, nothing left to pick up
             }
         }
     }
