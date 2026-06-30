@@ -57,11 +57,15 @@ ESP32 screen examples:
 
 Node-RED workflow:
 
-![Node-RED Workflow](assets/nodered-workflow.png)
+<div align="left">
+  <img src="assets/nodered-workflow.png" alt="BiteBound Node-RED Workflow Screenshot" width="600">
+</div>
 
 Node-RED web dashboard example:
 
-![Node-RED Web Dashboard](assets/nodered-dashboard.png)
+<div align="left">
+  <img src="assets/nodered-dashboard.png" alt="BiteBound Node-RED Dashboard Screenshot" width="700">
+</div>
 
 ### Android App
 
