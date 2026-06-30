@@ -1,12 +1,31 @@
 \section{Technical Concept}
 \label{sec:technical_concept}
 
+The technical concept of BiteBound is designed to ensure real-time responsiveness, modularity, and thread safety. By leveraging the dual-core capabilities of the ESP32-S3, the system separates latency-sensitive gameplay and rendering tasks from time-intensive network operations.
+
 \subsection{High-Level Architecture}
 \label{subsec:high_level_architecture}
-% TODO: write High-Level Architecture
-% Explain the high-level architecture with a diagram.
+
+The architecture relies on an asynchronous, event-driven design. The ESP32-S3 runs two primary execution threads across its dual cores to balance the computational workload. Core 1 is designated as the Game Core, measuring the sensor data, executing the physics engine, handling the game logic, and updating the display. Core 0 acts as the Network Core, managing secure TLS connections, MQTT messaging, and transmitting telemetry, running significantly slower than the Game Core.
+
+Communication between the embedded hardware and the external control interfaces is bridged through the centralized MQTT broker HiveMQ~\cite{hivemq2026,mqtt2026}. External clients communicate bidirectionally with the device. They send game-related commands to a dedicated topic, while subscribing to a telemetry topic to monitor real-time variables.
+
+The system architecture is depicted in Figure~\ref{fig:system-architecture}, illustrating the interactions between the ESP32-S3 and the frontend dashboards (see \texttt{diagrams/out/}).
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\linewidth]{../diagrams/out/system-architecture/system-architecture.png}
+    \caption[BiteBound Architecture]{System architecture diagram displaying the user interactions with the ESP32-S3 and the frontend dashboards. }
+    \label{fig:system-architecture}
+\end{figure}
 
 \subsection{Components}
 \label{subsec:components_concept}
-% TODO: write Components
-% Give an overview of the main components (Hardware, Node-RED, Android).
+
+The system architecture is divided into three primary components:
+
+\begin{itemize}
+    \item \textbf{Hardware (ESP32-S3):} The core of the system is the Waveshare ESP32-S3 development board equipped with a 1.69-inch touch LCD, a 6-axis inertial measurement unit (IMU), and a buzzer. It hosts the procedural sensor manager, maze generator, 2D physics simulation, game engine, display logic, and network communication stack.
+    \item \textbf{Android Application:} A native mobile interface written in Kotlin. It receives telemetry data and sends control commands to the ESP32-S3 via MQTT.
+    \item \textbf{Node-RED Dashboard:} A flow-based UI-Builder dashboard that mirrors the application logic of the Android app.
+\end{itemize}

@@ -1,10 +1,7 @@
-# Overview about the used prompts
+\subsection*{Random DFS Maze Generation Algorithm}
 
-## 1. Random DFS Maze Generation Algorithm
-
-Prompt:
-
-```txt
+\textbf{Prompt:}
+\begin{lstlisting}[language={}, breaklines=true]
 Act as a computer science expert. For an embedded IoT game ("BiteBound"), I need to design a maze generation algorithm for a grid-mapped display space (conceptually 240x280 with variable wall thickness).
 
 Provide an architectural breakdown of a Randomized Depth-First Search (DFS) algorithm with backtracking. Your response must include:
@@ -14,11 +11,10 @@ Provide an architectural breakdown of a Randomized Depth-First Search (DFS) algo
 
 STRICT REQUIREMENT: Do not generate any functional source code (e.g., C++, Python). Provide only high-level logical pseudo-code and analysis.
 Keep your answer concise, technical, and focused on algorithmic design principles.
-```
+\end{lstlisting}
 
-Answer with Gemini Flash 3.5 Thinking:
-
-```txt
+\textbf{Answer:}
+\begin{lstlisting}[language={}, breaklines=true]
 BITEBOUND: RANDOMIZED DFS MAZE GENERATION ARCHITECTURE
 
 1. CORE CONCEPTS & GRID MAPPING
@@ -89,4 +85,4 @@ END FUNCTION
 
 4. EMBEDDED DESIGN TIP
 For high performance on low-power displays, update the screen incrementally by drawing the "carved" paths during step 3, rather than redrawing the whole grid every loop cycle.
-```
+\end{lstlisting}
