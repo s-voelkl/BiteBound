@@ -3,20 +3,25 @@
 
 \subsection{Introduction}
 \label{subsec:introduction}
-% TODO: write Introduction
-% Give a brief overview of the project, mission statement, and background.
+
+BiteBound is an interactive labyrinth game that leverages the Waveshare ESP32-S3-Touch-LCD-1.69 development board to create a physical, tilt-controlled gaming device using an onboard inertial measurement unit (IMU).
+By combining a real-time embedded physics simulation with secure network communication via the Message Queuing Telemetry Transport (MQTT) protocol, BiteBound establishes a complete Internet of Things (IoT) ecosystem.
+This setup connects physical hardware interactions with digital dashboards on Android and web to enable real-time telemetry streaming, remote configuration, and external visualization.
 
 \subsection{Mission Statement}
 \label{subsec:mission_statement}
-% TODO: write Mission Statement
-% Detail the goal and purpose of the project.
 
-\subsection{Motivation}
-\label{subsec:motivation}
-% TODO: write Motivation
-% Describe why the project is important and the motivation behind it.
+The primary objective of the BiteBound project is to build a responsive, low-latency gaming system that demonstrates effective multi-core task scheduling on resource-constrained hardware.
+Utilizing a playful, bakery-themed design, the gameplay challenges players to navigate a virtual cherry (ball) through procedural mazes or flatland to collect cookies.
+A key technical focus is maintaining a stable, high-frame-rate rendering pipeline on the device while concurrently handling bi-directional network transmission via MQTT.
+To support this goal, the project aims to deliver a native Kotlin-based Android application and a web-based Node-RED operator dashboard, providing a seamless multi-platform experience.
 
 \subsection{Document Structure}
 \label{subsec:document_structure}
-% TODO: write Document Structure
-% Give an overview of how the rest of the document is structured.
+
+The remainder of this report details the design, implementation, and discussion of the BiteBound platform.
+~\Cref{sec:technical_concept} presents the high-level system architecture and its core components.
+The hardware-specific firmware, including sensor readings, the two-dimensional physics simulation, display driver optimizations, and concurrent task management, is detailed in~\Cref{sec:hardware}.
+~\Cref{sec:android_app} describes the design and architecture of the Android companion application, followed by the presentation of the Node-RED web-based operator dashboard in~\Cref{sec:nodered}.
+The project management methodology, milestone schedules, and developer task distributions are outlined in~\Cref{sec:project_management}.
+Finally,~\Cref{sec:discussion} highlights the faced challenges and found solutions, and~\Cref{sec:summary-future-work} provides a summary of results along with potential future work.
