@@ -1,321 +1,119 @@
 @startuml hardware-architecture
 top to bottom direction
-' skinparam classAttributeIconSize 0
-' skinparam monochrome true
-' skinparam shadowing false
-' skinparam class {
-'     BackgroundColor<<utility>> #FDF6E3
-'     BackgroundColor<<interface>> #EEE8D5
-'     BackgroundColor<<struct>> #EEE8D5
-'     BackgroundColor<<enum>> #EEE8D5
-'     BackgroundColor<<abstract>> #EEE8D5
-' }
-' skinparam linetype ortho
-' page 2x2
-' skinparam nodesep 20
-' skinparam ranksep 20
+skinparam linetype ortho
+skinparam nodesep 12
+skinparam ranksep 12
 
-package "Entry Point (Core 1)" {
-    class "esp32.ino" as Main {
-        + setup() : void
-        + loop() : void
-        - processIncomingCommands() : void
-        - updateGameStep() : void
-        - vNetworkTask(void *pvParameters) : void
-        - gameBoard : uint8_t*
-        - stateMutex : SemaphoreHandle_t
-        - commandQueue : QueueHandle_t
-    }
+' Force clean, vertical flow of packages
+package "1. Entry & Config" as Layer1 {
+    class "Main (esp32)" as Main
+    class "Config" as Config
 }
 
-package "Configuration" {
-    class "config.h" as Config {
-        + Network / MQTT settings
-        + Game settings
-        + Display & color palette
-        + Physics tuning defaults
-        + Time / NTP settings
-        + Hardware & LCD pins
-        + Analog & battery settings
-    }
+package "2. Shared Data & IPC" as Layer2 {
+    class SharedStateData
+    class CommandMsg
+    enum CommandType
+    class MutexLock
 }
 
-package "Shared Data (Cross-Core)" {
-    enum CommandType {
-        START
-        STOP
-        PARAM_CHANGE
-        UNKNOWN
-    }
-
-    struct CommandMsg {
-        + type : CommandType
-        + playerName : char[32]
-        + gameId : int
-        + cookiesCount : int
-        + wallThicknessPx : int
-        + imuSensitivity : float
-        + bounceRestitution : float
-        + emaAlpha : float
-        + deadzoneThreshold : float
-        + requestId : char[36]
-    }
-
-    struct SharedStateData {
-        + playerName : char[32]
-        + cookiesCount : int
-        + wallThicknessPx : int
-        + imuSensitivity : float
-        + bounceRestitution : float
-        + emaAlpha : float
-        + deadzoneThreshold : float
-        + ballPosX : float
-        + ballPosY : float
-        + velocityX : float
-        + velocityY : float
-        + accX : float
-        + accY : float
-        + gameId : int
-        + cookiesCollected : int
-        + cookiesRemaining : int
-        + currentRound : int
-        + elapsedTimeSec : float
-        + runningStatus : RunningStatus
-    }
-
-    class MutexLock <<utility>> {
-        + MutexLock(mutex : SemaphoreHandle_t, timeout : TickType_t)
-        + ~MutexLock()
-        + isLocked() : bool
-        - m_mutex : SemaphoreHandle_t
-        - m_locked : bool
-    }
+package "3. Network (Core 0)" as Layer3 {
+    class MqttManager
+    class WifiManager
+    class TimeManager
+    class JsonBuilder
+    class CommandParser
 }
 
-package "JSON Parser (Core 0)" {
-    class CommandParser {
-        + {static} parse(jsonPayload : const String&, outMsg : CommandMsg&) : bool
-        + {static} parse(const char *payload, size_t length, outMsg : CommandMsg&) : bool
-    }
+package "4. Sensors" as Layer4 {
+    class SensorManager
+    class SensorData
 }
 
-package "Network (Core 0)" {
-    class MqttManager {
-        + begin() : void
-        + connect() : bool
-        + loop() : void
-        + isConnected() : bool
-        + publish(topic : const char*, payload : String&, retain : bool) : bool
-        + subscribe(topic : const char*, qos : uint8_t) : bool
-        + disconnect() : void
-        + state() : int
-    }
-
-    class WifiManager {
-        + connect() : bool
-        + isConnected() : bool
-        + localIP() : String
-        + getSSID() : String
-    }
-
-    class TimeManager {
-        + sync() : void
-        + now() : time_t
-        + isSynchronized() : bool
-    }
-
-    struct TelemetryData {
-        + device info (client_id, hardware, firmware, uptime, ssid)
-        + game config (game_id, player_name, target_cookies, ...)
-        + game state (status, cookies, round, elapsed)
-        + physics (ball_pos, velocity, acc)
-        + sensors (accel, gyro, battery, button)
-    }
-
-    class JsonBuilder <<utility>> {
-        + buildTelemetryJson(data : TelemetryData&) : String
-        + buildTelemetryJsonTest() : String
-    }
+package "5. Game Engine and Entities (Core 1)" as Layer5 {
+    class GameEngine
+    class GameConfig
+    interface IGame
+    class BaseGame
+    class Game1Labyrinth
+    class Game2Flatland
+    class CookieField
+    class Cookie
+    interface ICookieSpawner
+    class RectCookieSpawner
+    class MazeCookieSpawner
+    class GameState
+    enum RunningStatus
 }
 
-package "Sensors (Core 1)" {
-    struct SensorData {
-        + timestamp : String
-        + accelerometerX : float
-        + accelerometerY : float
-        + accelerometerZ : float
-        + gyroscopeX : float
-        + gyroscopeY : float
-        + gyroscopeZ : float
-        + batteryVoltage : float
-        + button : bool
-    }
-
-    class SensorManager {
-        + begin() : void
-        + read() : SensorData
-        + readMock() : SensorData
-        + getLastData() : SensorData
-        + isInitialized() : bool
-    }
+package "6. Physics Simulation" as Layer6 {
+    class PhysicsEngine
+    class PhysicsBody
+    class PhysicsParams
+    class Vec2
+    interface ICollider
+    class BorderCollider
+    class MazeCollider
 }
 
-package "Physics (Core 1)" {
-    struct Vec2 {
-        + x : float
-        + y : float
-    }
-
-    struct PhysicsBody {
-        + x : float
-        + y : float
-        + vx : float
-        + vy : float
-        + radius : float
-    }
-
-    struct PhysicsParams {
-        + sensitivity : float
-        + restitution : float
-        + emaAlpha : float
-        + deadzone : float
-        + maxSpeed : float
-        + linearDamping : float
-    }
-
-    struct Contact {
-        + normal : Vec2
-        + penetration : float
-        + hit : bool
-    }
-
-    class PhysicsEngine {
-        - params : PhysicsParams
-        + setParams(params : PhysicsParams&) : void
-        + params() : PhysicsParams&
-        + reset() : void
-        + inputAccel(tiltX : float, tiltY : float) : Vec2
-        + step(body : PhysicsBody&, accel : Vec2, dt : float, world : ICollider&) : bool
-    }
-
-    interface ICollider {
-        + query(body : PhysicsBody&) : Contact
-    }
-
-    class BorderCollider {
-        + query(body : PhysicsBody&) : Contact
-    }
+package "7. Maze Generation" as Layer7 {
+    class MazeManager
 }
 
-package "Game (Core 1)" {
-    struct Cookie {
-        + x : float
-        + y : float
-        + radius : float
-        + active : bool
-    }
-
-    struct GameState {
-        + runningStatus : RunningStatus
-        + cookiesCollected : int
-        + cookiesRemaining : int
-        + currentRound : int
-        + elapsedTimeSec : float
-    }
-
-    interface ICookieSpawner {
-        + spawn(avoid : PhysicsBody&) : Cookie
-    }
-
-    class RectCookieSpawner {
-        + spawn(avoid : PhysicsBody&) : Cookie
-    }
-
-    class MazeCookieSpawner {
-        + spawn(avoid : PhysicsBody&) : Cookie
-    }
-
-    class CookieField {
-        + start(visibleCount : uint8_t, target : uint16_t, \n  spawner : ICookieSpawner&, ball : PhysicsBody&) : void
-        + checkPickup(ball : PhysicsBody&) : uint8_t
-        + collected() : uint16_t
-        + remaining() : uint16_t
-        + finished() : bool
-        + count() : uint8_t
-        + at(i : uint8_t) : Cookie&
-    }
+package "8. Graphics" as Layer8 {
+    class GraphicsManager
 }
 
-package "Maze (Core 1)" {
-    class MazeManager {
-        + generate(board : uint8_t*) : bool
-        + getWidth() : int
-        + getHeight() : int
-        + getWallThickness() : int
-    }
-}
 
-package "Graphics (Core 1)" {
-    class GraphicsManager {
-        + begin(gfx : Arduino_GFX*) : void
-        + forceFullRedraw() : void
-        + update(mazeGrid : uint8_t*, gridW : int, gridH : int, ball : PhysicsBody&, \n  cookies : Cookie*, count : int, state : GameState&) : void
-        + drawLoadingScreen(statusText : const char*) : void
-    }
-}
+' Stacking modules under each other vertically to guarantee clean layout page-fitting
 
-' Orchestration and shared bindings
-Main --> SensorManager : "manages/reads sensors"
-Main --> PhysicsEngine : "steps simulation"
-Main --> CookieField : "tracks cookies"
-Main --> MazeManager : "generates maze"
-Main --> GraphicsManager : "manages display"
-Main ..> JsonBuilder : "builds telemetry"
-Main ..> MqttManager : "handles communication"
-Main ..> Config : "reads settings"
-Main ..> MutexLock : "synchronizes state"
-Main ..> SharedStateData : "stores shared state"
-Main ..> CommandMsg : "receives commands"
-Main ..> WifiManager : "connects to WiFi"
-Main ..> TimeManager : "syncs NTP time"
-Main ..> TelemetryData : "populates metrics"
+' --- Orchestration & Top-Level Dependencies ---
+Main --> SensorManager
+Main --> GameEngine
+Main --> GraphicsManager
+Main --> MqttManager
+Main ..> MutexLock
+Main ..> Config
 
-' Shared Data & Parser dependencies
-CommandMsg o--> CommandType : "uses"
-CommandParser ..> CommandMsg : "populates"
-CommandParser ..> CommandType : "resolves"
+' --- Shared IPC ---
+CommandMsg --> CommandType
+CommandParser ..> CommandMsg
 
-' Network & IPC
-MqttManager ..> WifiManager : "requires"
-MqttManager ..> TimeManager : "requires (TLS)"
-MqttManager ..> CommandParser : "triggers on command payload"
-JsonBuilder ..> TelemetryData : "serializes"
-MqttManager ..> SharedStateData : "reads telemetry metrics"
+' --- Network Layer ---
+MqttManager ..> WifiManager
+MqttManager ..> TimeManager
+MqttManager ..> CommandParser
+JsonBuilder ..> SharedStateData
 
-' Sensors
-SensorManager ..> SensorData : "creates"
+' --- Sensor Layer ---
+SensorManager ..> SensorData
 
-' Physics
-PhysicsEngine o--> PhysicsParams : "holds tuning"
-PhysicsEngine ..> PhysicsBody : "integrates"
-PhysicsEngine ..> ICollider : "queries"
-PhysicsEngine ..> Vec2 : "uses"
-ICollider ..> Contact : "returns"
-BorderCollider ..|> ICollider : "implements"
+' --- Engine & Game Modes ---
+GameEngine --> IGame
+GameEngine --> GameConfig
+BaseGame ..|> IGame
+Game1Labyrinth --|> BaseGame
+Game2Flatland --|> BaseGame
+GameEngine --> CookieField
+GameEngine --> PhysicsEngine
 
-' Game
-CookieField o--> Cookie : "owns set"
-CookieField ..> ICookieSpawner : "uses"
-' CookieField ..> PhysicsBody : "pickup test"
-RectCookieSpawner ..|> ICookieSpawner : "implements"
-RectCookieSpawner ..> Cookie : "creates"
-MazeCookieSpawner ..|> ICookieSpawner : "implements"
-MazeCookieSpawner ..> Cookie : "creates"
+' --- Gameplay Entities ---
+CookieField o--> Cookie
+CookieField ..> ICookieSpawner
+RectCookieSpawner ..|> ICookieSpawner
+MazeCookieSpawner ..|> ICookieSpawner
+GameState --> RunningStatus
 
-' Graphics
-GraphicsManager ..> PhysicsBody : "draws ball"
-GraphicsManager ..> Cookie : "draws cookies"
-GraphicsManager ..> GameState : "draws HUD"
-GraphicsManager ..> MazeManager : "renders board"
+' --- Physics Layer ---
+PhysicsEngine o--> PhysicsParams
+PhysicsEngine ..> PhysicsBody
+PhysicsEngine ..> Vec2
+PhysicsEngine ..> ICollider
+BorderCollider ..|> ICollider
+MazeCollider ..|> ICollider
 
-@endumlP
+' --- Maze & Graphics Layer ---
+Game1Labyrinth --> MazeManager
+MazeCookieSpawner ..> MazeManager
+
+@enduml
