@@ -62,7 +62,8 @@ The engine uses semi-implicit Euler integration~\cite{TRNKA1997277} with a const
     \vec{x}_{t+1} = \vec{x}_t + \vec{v}_{t+1} \cdot dt
 \end{equation}
 
-where $\vec{a}$ is the scaled acceleration derived from the filtered tilt values. The velocity is capped at a configurable \texttt{maxSpeed} threshold. To prevent tunneling errors when dealing with fast movements or thin boundaries, sub-stepping is utilized during collision detection.
+where $\vec{a}$ is the scaled acceleration derived from the filtered tilt values. The velocity is capped at a configurable \texttt{maxSpeed} threshold.
+To prevent tunneling errors when dealing with fast movements or thin boundaries, sub-stepping is utilized during collision detection.
 
 Collisions with the environment are resolved via the \texttt{ICollider} strategy interface. The \texttt{BorderCollider} class checks for rectangular screen boundary crossings, while the \texttt{MazeCollider} evaluates pixel-level collisions against the generated layout grid.
 Upon detecting a collision, the engine extracts the normal vector $\hat{n}$ and calculates the updated velocity according to a restitution model~\cite{wang2017bounce}:
@@ -76,6 +77,8 @@ where $e \in [0, 1]$ represents the bounce restitution factor. The tangential ve
 Collectibles are modeled using the \texttt{CookieField} class.
 When the physical body of the ball overlaps with an active cookie coordinate within a configured pickup radius, the score is incremented and the \texttt{ICookieSpawner} strategy interface instantiates a new cookie.
 The \texttt{RectCookieSpawner} places cookies within random bounds for the open field, whereas the \texttt{MazeCookieSpawner} identifies walkable coordinates within the maze layout using generated cell lists.
+
+The maze was generated using an iterative random Depth-First Search (DFS) algorithm~\cite{maze2026dfs}.
 
 \subsection{Display}
 \label{subsec:display}
