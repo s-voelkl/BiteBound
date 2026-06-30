@@ -1,5 +1,17 @@
 \section{Discussion}
 \label{sec:discussion}
 
-% TODO: formulate - decision on the dashboard 
-% This system utilizes the code-first UIBUILDER package~\cite{Knight_node-red-contrib-uibuilder} rather than the officially deprecated dashboard~\cite{node-red-dashboard-deprecated} as the latter introduces potential security and support liabilities in modern Node.js runtimes. Additionally, UI Builder supports high-frequency telemetry streams by decoupling the client-side representation from the Node-RED backend using optimized WebSockets~\cite{websockets2026}.
+During the development of BiteBound, several technical challenges were encountered, each requiring specific solutions to meet the set requirements.
+
+As already mentioned in~\Cref{subsec:display}, the SPI transmission overhead posed a significant challenge to maintaining a stable 50 Hz frame rate.
+By implementing a hybrid rendering system using the dirty rectangles technique, a substantial reduction in payload size was achieved, allowing for faster transmission times.
+
+As recursive algorithmic approaches could lead to stack overflow errors without setting maze size limits, the iterative DFS implementation for maze generation was a necessary design choice without limiting the system to a upper bound on maze size.
+
+Sensor value noise and drift were expected at the beginning of the project. Implementing a deadzone threshold and an EMA filter was a straightforward solution to ensure stable physical interactions while still allowing for raw telemetry data to be available for diagnostic purposes.
+
+Testing the physics engine after implementation revealed that at high tilt angles, the ball could tunnel through maze walls due to its accelerated velocity. The implementation of sub-stepping during collision detection effectively mitigated this issue, ensuring that boundaries were respected even at high velocities, as described in~\Cref{subsec:physics_simulation_game_logic}.
+
+During the architecture phase, the assumption was made that handling incoming dashboard commands and running the game loop on one core could cause significant frame drops in the game loop.
+Early in development, the two-core possibility was explored, included in the initial design, and later implemented (see ~\Cref{sec:technical_concept}).
+Perspectively, this decision was crucial for the modular system design and therefore the testability, maintainability, and scalability of the system; the dual-core synchronization strategy worked as expected.
