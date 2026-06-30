@@ -1,5 +1,7 @@
 # BiteBound Usage Guide
 
+The usage of the BiteBound project is divided into several components, including hardware setup for the ESP32, Node-RED setup for the dashboard, and Android setup for mobile interaction. This guide provides step-by-step instructions for each component.
+
 ## Hardware Setup (ESP32)
 
 Create a `esp32/wifi_mqtt_secrets.h` file based on the provided `esp32/wifi_mqtt_secrets_template.txt` template to store the WiFi and MQTT credentials for the ESP32 device. Fill in the actual values for WiFi and MQTT credentials in the `wifi_mqtt_secrets.h` file. **Do not push actual credentials to version control.**
@@ -8,9 +10,7 @@ Create a `esp32/wifi_mqtt_secrets.h` file based on the provided `esp32/wifi_mqtt
 
 #### Initial Setup
 
-- Follow the [Getting Started with Arduino](https://docs.arduino.cc/learn/starting-guide/getting-started-arduino/)
-    guide to set up the Arduino IDE and configure it for ESP32 development.
-    Use an Arduino IDE Version 12.3.7 or later.
+- Follow the [Getting Started with Arduino](https://docs.arduino.cc/learn/starting-guide/getting-started-arduino/) guide to set up the Arduino IDE and configure it for ESP32 development. Use an Arduino IDE Version 12.3.7 or later.
 - Install the required board managers (see below).
 - Install the required libraries (see below).
 - Connect the ESP32 to your computer via USB and select the appropriate board and port in the Arduino IDE. The [board](https://docs.waveshare.com/ESP32-S3-Touch-LCD-1.69) is named "ESP32-S3-LCD-1.69" in the board manager.
@@ -40,7 +40,7 @@ Note: Installation of the Waveshare libraries is explained in [this article](htt
 
 ### Hardware MQTT Mock
 
-For developing and testing the dashboard without the need of the ESP32, a hardware MQTT mock in ``tests/mqtt_mock/esp32_sender_mock.py`` is provided.
+For developing and testing the dashboard without the need of the ESP32, a hardware MQTT mock in ``initial_mqtt_test/mqtt_mock/esp32_sender_mock.py`` was developed during the first project iteration. These files are not up to date with the current project state and are only provided for reference.
 It simulates the MQTT communication between the ESP32 and the dashboard (Android/Node-RED) by sending mock telemetry data to the MQTT broker.
 The configuration from `config.json` must be adjusted to match the MQTT and authentication settings.
 Further information can be found in the ``README.md`` in the ``mqtt_mock`` directory.
@@ -53,16 +53,16 @@ See: [Running Node-RED locally](https://nodered.org/docs/getting-started/local)
 
 - Change directory: ``cd nodered``
 - NPM install: ``npm install`` (``sudo`` might be needed. Installs packages from `package.json`)
+- Verify `node-red-contrib-uibuilder` is installed as a dependency in the NodeRED installed nodes (see [UI Builder documentation](https://totallyinformation.github.io/node-red-contrib-uibuilder/#/)).
+- Import project flow from `nodered/flow.json` into the Node-RED editor to set up the dashboard and MQTT communication.
 - Run: ``node-red --settings settings.js flows.json``
-- Open browser: [http://localhost:1880](http://localhost:1880)
-- Edit the flow, then deploy for saving the changes to `flows.json`
-
-Verify that ``node-red-contrib-uibuilder`` is installed as a dependency in the NodeRED installed nodes.
-Import the project flow from `nodered/flow.json` into the Node-RED editor to set up the dashboard and MQTT communication.
-
-For further information regarding the UI Builder Dashboard creation, see the [UI Builder documentation](https://totallyinformation.github.io/node-red-contrib-uibuilder/#/).
+- Workflow: [http://localhost:1880](http://localhost:1880)
+- UI Builder Dashboard: [http://localhost:1880/dashboard/](http://localhost:1880/dashboard/)
+- Happy playing with the BiteBound dashboard!
 
 ### Docker setup for Node-RED
+
+This is not the primary way to run Node-RED, but it is an alternative for users who prefer using Docker.
 
 See: [Running Node-RED with Docker](https://nodered.org/docs/getting-started/docker)
 See: [Docker Hub Node-RED image](https://hub.docker.com/r/nodered/node-red/)
@@ -71,13 +71,41 @@ See: [Docker Hub Node-RED image](https://hub.docker.com/r/nodered/node-red/)
 
 ## Android Setup
 
-tbd
+- Android directory: `android/`
+- Open the project in Android Studio.
+- Select a Google Pixel emulator or connect a physical device. The app was tested with a Google Pixel 6.
+- Gradle sync the project to download dependencies.
+- Run the app on the emulator or physical device.
+- Fill in the MQTT connection settings in the app's settings screen, though these settings are persisted in the app's local storage and do not need to be re-entered after the first setup.
+- Happy playing with the BiteBound app!
 
 ## Documentation
 
 ### LaTeX Documentation
 
 The documentation is written in LaTeX and can be found in the `tex/` directory.
+
+### Prompts
+
+Used AI Prompts are given in the `prompts/` directory as latex files. Follow the markdown template file `PROMPT_TEMPLATE.md` to create new prompts, so these can be automatically gathered and compiled into the documentation.
+
+### Automatic prompt and source file gathering
+
+Use the following Windows Command Prompts to gather all prompts and source files for automatic compilation into the documentation.
+
+- Prompts: Navigate to `tex/sec_prompts.tex`, run the prompt gathering command and copy the output into the list of prompts.``
+- Header files: Navigate to `tex/sec_esp32_code.tex`, run the header/source file gathering commands and copy the output into the list of header/source files:
+
+```shell
+# prompts
+(Get-ChildItem -Path prompts -Filter *.tex | ForEach-Object { $_.BaseName }) -join ",`n`t"
+
+# header files
+(Get-ChildItem -Path esp32 -Filter *.h -Recurse | Where-Object { $_.Name -ne "wifi_mqtt_secrets.h" } | ForEach-Object { ($_.FullName -replace [regex]::Escape("$PWD\esp32\"), "").Replace("\", "/") }) -join ",`n`t"
+
+# source files
+(Get-ChildItem -Path esp32 -Filter *.cpp -Recurse | Where-Object { $_.Name -ne "wifi_mqtt_secrets.h" } | ForEach-Object { ($_.FullName -replace [regex]::Escape("$PWD\esp32\"), "").Replace("\", "/") }) -join ",`n`t"
+```
 
 ### PlantUML Diagrams
 
