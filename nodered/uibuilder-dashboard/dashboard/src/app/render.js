@@ -65,11 +65,12 @@ export class TelemetryRenderer {
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Aspect configuration matching standard layout
-        const devW = config.screenWidth || 240;
-        const devH = config.screenHeight || 280;
-        const scaleX = canvas.width / devW;
-        const scaleY = canvas.height / devH;
+        // The play arena is square (side = screen_width); ball_pos_x/y both
+        // range over it. Use one uniform scale so the ball reaches all four
+        // walls symmetrically instead of being stretched to the display's
+        // taller screen_height.
+        const arena = config.screenWidth || 240;
+        const scale = Math.min(canvas.width, canvas.height) / arena;
 
         // Custom palette bindings
         const styles = getComputedStyle(document.body);
@@ -83,16 +84,24 @@ export class TelemetryRenderer {
         ctx.fillStyle = milkCream;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Draw structural play boundaries
-        const wt = (config.wallThicknessPx || 10) * scaleX;
+        // Draw structural play boundaries (thinner wall)
+        const wt = Math.max(3, (config.wallThicknessPx || 10) * scale * 0.45);
         ctx.strokeStyle = caramelBrown;
         ctx.lineWidth = wt;
         ctx.strokeRect(wt / 2, wt / 2, canvas.width - wt, canvas.height - wt);
 
-        // Render cherry/ball body
-        const ballX = physics.ballPosX * scaleX;
-        const ballY = physics.ballPosY * scaleY;
-        const ballRadius = 8 * scaleX;
+        // Render cherry/ball body.
+        // Keep the ball's full proportional position, but clamp its centre so
+        // the ball edge rests exactly against the inner wall — it travels all
+        // the way to each wall (touching it) without overlapping or sinking in.
+        const ballRadius = 8 * scale;
+        const minX = wt + ballRadius;
+        const minY = wt + ballRadius;
+        const maxX = canvas.width - wt - ballRadius;
+        const maxY = canvas.height - wt - ballRadius;
+
+        const ballX = Math.min(Math.max(physics.ballPosX * scale, minX), maxX);
+        const ballY = Math.min(Math.max(physics.ballPosY * scale, minY), maxY);
 
         ctx.beginPath();
         ctx.arc(ballX, ballY, ballRadius, 0, 2 * Math.PI);
@@ -104,8 +113,8 @@ export class TelemetryRenderer {
         ctx.beginPath();
         ctx.moveTo(ballX, ballY);
         ctx.lineTo(
-            ballX + (physics.velocityX * 0.1 * scaleX), 
-            ballY + (physics.velocityY * 0.1 * scaleY)
+            ballX + (physics.velocityX * 0.1 * scale),
+            ballY + (physics.velocityY * 0.1 * scale)
         );
         ctx.strokeStyle = honey;
         ctx.lineWidth = 2.5;
