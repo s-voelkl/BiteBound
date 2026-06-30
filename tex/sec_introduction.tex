@@ -1,27 +1,22 @@
 \section{Introduction}
 \label{sec:introduction}
 
-\subsection{Introduction}
-\label{subsec:introduction}
-
-BiteBound is an interactive labyrinth game that leverages the Waveshare ESP32-S3-Touch-LCD-1.69 development board to create a physical, tilt-controlled gaming device using an onboard inertial measurement unit (IMU).
-By combining a real-time embedded physics simulation with secure network communication via the Message Queuing Telemetry Transport (MQTT) protocol, BiteBound establishes a complete Internet of Things (IoT) ecosystem.
-This setup connects physical hardware interactions with digital dashboards on Android and web to enable real-time telemetry streaming, remote configuration, and external visualization.
+\subsection{Abstract}
+\label{subsec:abstract}
+\textbf{Background:} Designing responsive, cross-device IoT games on resource-constrained microcontrollers requires balancing low-latency local execution with secure, asynchronous network communication.
+\textbf{Objective:} This project presents BiteBound, a physical, tilt-controlled labyrinth game built on a Waveshare ESP32-S3-Touch-LCD-1.69 featuring real-time communication with two remote dashboards.
+\textbf{Methods:} The system utilizes a dual-core ESP32-S3 microcontroller to handle network communication, sensor inputs, physics simulation, game logic and display rendering, while a Kotlin-based Android app and a Node-RED interface provide bidirectional control via telemetry and command messages over the Message Queuing Telemetry Transport (MQTT) protocol.
+\textbf{Results:} The firmware, running on a network and game logic core, achieves a stable 50\,Hz frame rate. A bakery-themed frontend provides a playful user experience, while the companion interfaces successfully allow for remote monitoring and control of the game state during gameplay.
+\textbf{Conclusion:} BiteBound demonstrates a robust, responsive end-to-end architecture bridging physical embedded interactions with digital companion interfaces.
 
 \subsection{Mission Statement}
 \label{subsec:mission_statement}
-
-The primary objective of the BiteBound project is to build a responsive, low-latency gaming system that demonstrates effective multi-core task scheduling on resource-constrained hardware.
-Utilizing a playful, bakery-themed design, the gameplay challenges players to navigate a virtual cherry (ball) through procedural mazes or flatland to collect cookies.
-A key technical focus is maintaining a stable, high-frame-rate rendering pipeline on the device while concurrently handling bi-directional network transmission via MQTT.
-To support this goal, the project aims to deliver a native Kotlin-based Android application and a web-based Node-RED operator dashboard, providing a seamless multi-platform experience.
+The objective of the BiteBound project is to implement a highly responsive, low-latency gaming platform demonstrating efficient multi-core task scheduling on resource-constrained hardware. Centered on a playful, bakery-themed aesthetic, the system requires navigating a virtual cherry (ball) through procedural mazes. The main technical challenge is maintaining a stable, high-frame-rate rendering pipeline alongside bi-directional MQTT communication, supported by native Android and Node-RED dashboards to deliver a unified, multi-platform user experience.
 
 \subsection{Document Structure}
 \label{subsec:document_structure}
-
-The remainder of this report details the design, implementation, and discussion of the BiteBound platform.
-~\Cref{sec:technical_concept} presents the high-level system architecture and its core components.
-The hardware-specific firmware, including sensor readings, the two-dimensional physics simulation, display driver optimizations, and concurrent task management, is detailed in~\Cref{sec:hardware}.
-~\Cref{sec:android_app} describes the design and architecture of the Android companion application, followed by the presentation of the Node-RED web-based operator dashboard in~\Cref{sec:nodered}.
-The project management methodology, milestone schedules, and developer task distributions are outlined in~\Cref{sec:project_management}.
-Finally,~\Cref{sec:discussion} highlights the faced challenges and found solutions, and~\Cref{sec:summary-future-work} provides a summary of results along with potential future work.
+The remainder of this report is organized as follows:
+\Cref{sec:technical_concept} outlines the high-level system architecture.
+\Cref{sec:hardware} details the firmware, sensor integration, physics, game logic, and display optimizations.
+The companion interfaces are presented in \Cref{sec:android_app} (Android App) and \Cref{sec:nodered} (Node-RED).
+Finally, \Cref{sec:project_management} covers project organization and milestones, while \Cref{sec:discussion, sec:summary-future-work} provide evaluation, conclusions, and future outlook.
