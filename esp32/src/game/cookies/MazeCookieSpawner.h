@@ -31,9 +31,8 @@ public:
             return Cookie(0.0f, 0.0f, _r, false); // no maze -> inactive cookie
         }
 
-        // TODO: Check if the usage of the default value is fine here. Changed 3.0f to constant.
         const std::vector<MazeManager::FreeCell> &cells = *_cells;
-        const float minD = avoid.radius + _r + 2 * default_cookie_radius;
+        const float minD = avoid.radius + _r + 2 * _r;
 
         Cookie c(0.0f, 0.0f, _r, true);
         for (int t = 0; t < 20; ++t) // retry until far enough from the ball
