@@ -133,6 +133,8 @@ data class Sensors(
     val gyroX: Double,
     val gyroY: Double,
     val gyroZ: Double,
+    val batteryVoltage: Double,
+    val button: Boolean,
 ) {
     companion object {
         fun from(o: JSONObject?): Sensors {
@@ -144,6 +146,8 @@ data class Sensors(
                 gyroX = j.optDouble("gyro_x", 0.0),
                 gyroY = j.optDouble("gyro_y", 0.0),
                 gyroZ = j.optDouble("gyro_z", 0.0),
+                batteryVoltage = j.optDouble("battery_voltage", 0.0),
+                button = j.optBoolean("button", false),
             )
         }
     }

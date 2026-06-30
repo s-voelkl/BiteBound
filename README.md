@@ -1,5 +1,12 @@
 # BiteBound
 
+<div align="center">
+  <img src="assets/logo/logo.png" alt="BiteBound Logo" width="150">
+</div>
+
+A tilt-controlled IoT game for the ESP32-S3, featuring real-time physics and dual-dashboard synchronization via MQTT on an Android app and Node-RED flow. The game is designed to be played on a Waveshare ESP32-S3 1.69" Touch LCD, with a ball navigating through procedurally generated mazes or flat arenas, collecting cookies while beating the clock.
+
+<!-- TODO: Remove -->
 ## Before making this repo public
 
 Before making this repository public, the following steps have to be done:
@@ -14,7 +21,7 @@ The GitHub repository for this project is located at: [https://github.com/s-voel
 
 ## License
 
-The MIT License (MIT) applies to this project. See the [LICENSE](LICENSE) file for details.
+The MIT License (MIT) applies to this project, as stated in [LICENSE](LICENSE). The documentation and diagrams are licensed under the Creative Commons Attribution 4.0 International Public License (CC BY 4.0) in accordance with the [LICENSE](tex/LICENSE) file.
 
 ## Usage
 
@@ -25,6 +32,8 @@ See [Usage Guide](USAGE.md) for detailed instructions on how to set up and run t
 The ESP32 firmware is split into self-contained, unit-tested modules under `esp32/src/`, orchestrated from the main sketch `esp32/esp32.ino`. All tunable values and hardware pins are centralized in `esp32/config.h`.
 
 See the component diagram in [diagrams/src/architecture.puml](diagrams/src/architecture.puml).
+
+![Architecture Diagram](diagrams/out/architecture/architecture.png)
 
 ### Concurrency Model (ESP32-S3 Dual Core)
 
@@ -74,6 +83,7 @@ BiteBound/
 └── tex/                      # LaTeX report sources
 ```
 
+<!-- TODO: Remove -->
 ## Projectmanagement
 
 Spiel 1 & 2:
@@ -353,7 +363,7 @@ Implemented in `esp32/src/network/json-builder/JsonBuilder.h` and `esp32/src/net
     "velocity_x": 1.85,
     "velocity_y": -0.92,
     "acc_x": 0.15,
-    "acc_y": -0.34,
+    "acc_y": -0.34
   },
   "sensors": {
     "accel_x": 0.12,
@@ -399,8 +409,8 @@ Commands received on the `mauc2026/group_03/game/command` topic are decoded by t
   "command": "start",
   "meta": {
     "source_ui": "NODE_RED",
-    "request_id": "1234",
-    "timestamp": "2024-06-08T11:50:00Z"
+    "request_id": "908f4600-5fc3-4be5-b872-27ca816d6273",
+    "timestamp": "2026-06-29T11:50:00Z"
   },
   "player": {
     "name": "Cookie-Lover"
@@ -413,9 +423,9 @@ Commands received on the `mauc2026/group_03/game/command` topic are decoded by t
     "wall_thickness_px": 6
   },
   "physics": {
-    "imu_sensitivity_multiplier": 1.25,
-    "bounce_restitution": 0.75,
-    "ema_alpha": 0.25,
+    "imu_sensitivity_multiplier": 100,
+    "bounce_restitution": 0.3,
+    "ema_alpha": 0.5,
     "deadzone_threshold": 0.04
   }
 }

@@ -12,7 +12,8 @@
 %
 \documentclass[12pt,oneside]{article}
 \usepackage[T1]{fontenc}		% Einstellungen fuer Umlaute usw.
-\usepackage[utf8x]{inputenc}
+% \usepackage[utf8x]{inputenc}
+\usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 
 \usepackage{parskip}			% Einstellungen fuer Absaetze: Abstand statt Einrueckung
@@ -62,6 +63,7 @@
 
 \usepackage{graphicx}							% Einbinden von Graphiken
 \usepackage[svgnames,cmyk,table,hyperref]{xcolor} 	% Verwendung von Farben
+\usepackage{pgffor} % Loops for the prompts section
 
 \definecolor{aoenglish}{rgb}{0.0, 0.5, 0.0}
 \definecolor{battleshipgrey}{rgb}{0.52, 0.52, 0.51}
@@ -91,6 +93,8 @@
 %\usepackage[european, siunitx]{circuitikz}	% Darstellung von Schaltungen
 %
 %\usepackage{enumerate}			% Formatierung nummerierter Listen
+
+\usepackage{rotating} % Required for sidewaysfigure
 
 % 
 % Persoenliche Angaben
@@ -133,31 +137,52 @@
 \thispagestyle{empty}
 %\originalTeX
 \begin{center}
-	\Large
-	Ostbayerische Technische Hochschule Amberg\-/Weiden\\
-	Department of Electrical Engineering, Media, and Computer Science\\[.8cm]
-	\large \IhrErstpruefer\\[.8cm]
-	\Large \IhreArbeit\\[.8cm]
-	\large \IhreGruppe: \IhrVornameEins\ \IhrNachnameEins\ \&
-	\IhrVornameZwei\ \IhrNachnameZwei\\[.8cm]
-	\large Courses of study: \IhrStudiengang\\[.8cm]
-	\today\\[2.5cm]
+    \Large
+    Ostbayerische Technische Hochschule Amberg\-/Weiden\\
+    Department of Electrical Engineering, Media, and Computer Science\\[.8cm]
+    \large \IhrErstpruefer\\[.8cm]
+    \Large \IhreArbeit\\[.8cm]
+    \large \IhreGruppe: \IhrVornameEins\ \IhrNachnameEins\ \&
+    \IhrVornameZwei\ \IhrNachnameZwei\\[.8cm]
+    \large Courses of study: \IhrStudiengang\\[.8cm]
+    \today\\[2.5cm]
 \end{center}
+
+% logo of the project and device picture
+\begin{figure}[h]
+    \centering
+    \begin{minipage}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{../assets/logo/logo.png}
+        \caption[BiteBound Project Logo]{Project Logo of the BiteBound Game. Designed by Simon Völkl.}
+        \label{fig:bitebound_logo}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{../assets/esp32-s3-display.png}
+        \caption[Waveshare ESP32-S3]{Waveshare ESP32-S3 1.69inch Touch Display. Source: waveshare.com}
+        \label{fig:esp32_s3_display}
+    \end{minipage}
+\end{figure}
+\clearpage
 
 \tableofcontents
 
 \clearpage
-\input{sec_abstract}
+% \input{sec_abstract}
 \input{sec_introduction}
-\input{sec_related_work}
-\input{sec_project_management}
+% \input{sec_related_work}
 \input{sec_technical_concept}
 \input{sec_hardware}
-\input{sec_nodered}
 \input{sec_android_app}
-\input{sec_evaluation}
+\input{sec_nodered}
+\input{sec_project_management}
+\input{sec_discussion}
 \input{sec_summary}
 
+% TODO: Include the appendix section!
+\clearpage
 \appendix
 \input{sec_prompts}
 \input{sec_esp32_code}
@@ -213,7 +238,7 @@
 \phantomsection
 \addcontentsline{toc}{section}{References}
 \bibliographystyle{natdin}
-\bibliography{references}
+\bibliography{references} % in case of reference error, run "bibtex main" first, then "pdflatex main" twice
 
 %\include{anhang} % zum Beispiel hier die ChatGPT-Chatprotokolle einbinden (oder als extra-Datei)
 
