@@ -45,7 +45,7 @@
         </header>
 
         <main class="dashboard-container">
-            <div class="dashboard-workspace">
+            <div class="dashboard-workspace is-waiting">
                 <!-- Waiting for Oven Placeholder -->
                 <section id="placeholderOven" class="placeholder-section">
                     <div class="card card-alert">
@@ -55,7 +55,7 @@
                 </section>
 
                 <!-- Telemetry-Bound Cards (Self-revealed when telemetry is present) -->
-                <div id="activeTelemetryGrid" class="telemetry-columns hidden">
+                <div id="activeTelemetryGrid" class="telemetry-columns">
                     <!-- Column 1: Score & Sensors -->
                     <div class="layout-col col-left">
                         <!-- Score Card -->
@@ -215,7 +215,7 @@
                         <section class="card board-card">
                             <h2 class="card-title">🎯 Live Board</h2>
                             <div class="board-canvas-container">
-                                <canvas id="physicsCanvas" width="240" height="280"></canvas>
+                                <canvas id="physicsCanvas" width="480" height="480"></canvas>
                             </div>
                         </section>
                     </div>

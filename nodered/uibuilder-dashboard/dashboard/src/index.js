@@ -241,9 +241,8 @@ window.addEventListener('DOMContentLoaded', () => {
         state.messageCount++;
         state.telemetry = telemetry;
 
-        // Reveal active views
-        document.getElementById('placeholderOven').classList.add('hidden');
-        document.getElementById('activeTelemetryGrid').classList.remove('hidden');
+        // Reveal the full live view once the first telemetry arrives
+        document.querySelector('.dashboard-workspace').classList.remove('is-waiting');
 
         // Render configuration headers and statuses
         const statusText = telemetry.state.runningStatus.charAt(0).toUpperCase() + telemetry.state.runningStatus.slice(1);
