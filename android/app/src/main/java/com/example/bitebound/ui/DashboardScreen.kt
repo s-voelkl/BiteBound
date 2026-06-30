@@ -20,7 +20,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -32,9 +34,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -49,6 +53,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.bitebound.R
 import com.example.bitebound.UiState
+import com.example.bitebound.data.BallType
+import com.example.bitebound.data.GameConfigConstants
 import com.example.bitebound.data.Telemetry
 import com.example.bitebound.mqtt.ConnectionState
 import com.example.bitebound.ui.components.CookieCard
@@ -64,8 +70,9 @@ import com.example.bitebound.ui.theme.MintGreen
 @Composable
 fun DashboardScreen(
     state: UiState,
-    onStart: (playerName: String, gameId: Int, cookiesCount: Int, wallThickness: Int) -> Unit,
+    onStart: (playerName: String, gameId: Int, cookies: Int, wall: Int, restitution: Double, sensitivity: Double, emaAlpha: Double) -> Unit,
     onStop: () -> Unit,
+    onResume: (playerName: String) -> Unit,
     onDisconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -119,9 +126,13 @@ fun DashboardScreen(
                 defaultCookies = state.credentials.cookiesCount,
                 defaultGameId = state.credentials.gameId,
                 defaultWall = state.credentials.wallThickness,
+                defaultRestitution = state.credentials.restitution,
                 connected = state.connection is ConnectionState.Connected,
+                running = telemetry?.state?.isRunning == true,
+                hasTelemetry = telemetry != null,
                 onStart = onStart,
                 onStop = onStop,
+                onResume = onResume,
             )
 
             if (telemetry != null) {
@@ -195,6 +206,17 @@ private fun ScoreCard(telemetry: Telemetry) {
             HeroStat("Round", telemetry.state.currentRound.toString(), Honey)
             HeroStat("Time", formatDuration(telemetry.state.elapsedTimeSec), MintGreen)
         }
+        if (telemetry.state.isFinished) {
+            Spacer(Modifier.height(12.dp))
+            Text(
+                "🎉 Round complete! Next round starting…",
+                style = MaterialTheme.typography.titleMedium,
+                color = MintGreen,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+            )
+        }
         Spacer(Modifier.height(10.dp))
         Text(
             "Player: ${telemetry.config.playerName}  ·  Remaining: ${telemetry.state.cookiesRemaining}",
@@ -220,20 +242,26 @@ private fun ControlsCard(
     defaultCookies: Int,
     defaultGameId: Int,
     defaultWall: Int,
+    defaultRestitution: Double,
     connected: Boolean,
-    onStart: (String, Int, Int, Int) -> Unit,
+    running: Boolean,
+    hasTelemetry: Boolean,
+    onStart: (String, Int, Int, Int, Double, Double, Double) -> Unit,
     onStop: () -> Unit,
+    onResume: (String) -> Unit,
 ) {
     var player by remember { mutableStateOf(defaultPlayer) }
     var cookies by remember { mutableStateOf(defaultCookies.toString()) }
-    var gameId by remember { mutableStateOf(defaultGameId) }
+    var gameId by remember { mutableIntStateOf(defaultGameId) }
     var wall by remember { mutableStateOf(defaultWall.toString()) }
+    var ballType by remember { mutableStateOf(BallType.fromRestitution(defaultRestitution)) }
+    var showNewGameConfirm by remember { mutableStateOf(false) }
 
     CookieCard(title = "Game Controls", emoji = "🎮") {
         OutlinedTextField(
             value = player,
             onValueChange = { player = it },
-            label = { Text("Player name") },
+            label = { Text("Player Name") },
             singleLine = true,
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier.fillMaxWidth(),
@@ -250,7 +278,7 @@ private fun ControlsCard(
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Labyrinth")
+                Text("Dough Maze")
             }
             Button(
                 onClick = { gameId = 2 },
@@ -261,64 +289,126 @@ private fun ControlsCard(
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Flatland")
+                Text("Baking Tray")
+            }
+        }
+
+        Spacer(Modifier.height(10.dp))
+        // Wall thickness only matters for the Labyrinth - the Baking Tray has no walls.
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = cookies,
+                onValueChange = { cookies = clampCookieInput(it) },
+                label = { Text("Cookies (1-20)") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.weight(1f),
+            )
+            if (gameId == 1) {
+                OutlinedTextField(
+                    value = wall,
+                    onValueChange = { wall = clampWallInput(it) },
+                    label = { Text("Wall Px (5-20)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.weight(1f),
+                )
+            } else {
+                Spacer(Modifier.weight(1f))
             }
         }
         
         Spacer(Modifier.height(10.dp))
+        // Ball type picks the bounce (restitution) sent with the next start.
+        Text(
+            "Cookie Monster",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 4.dp),
+        )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
-                value = cookies,
-                onValueChange = { cookies = it.filter(Char::isDigit) },
-                label = { Text("Cookies") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.weight(1f),
-            )
-            OutlinedTextField(
-                value = wall,
-                onValueChange = { wall = it.filter(Char::isDigit) },
-                label = { Text("Wall Px") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.weight(1f),
-            )
+            BallType.entries.forEach { ball ->
+                val selected = ballType == ball
+                Button(
+                    onClick = { ballType = ball },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(ball.label)
+                }
+            }
         }
-        
+
         Spacer(Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Starts a fresh game - asks first because it throws away the current run.
             Button(
-                onClick = { 
-                    onStart(
-                        player.trim().ifBlank { "Cookie-Lover" }, 
-                        gameId,
-                        cookies.toIntOrNull()?.coerceIn(1, 1000) ?: 10,
-                        wall.toIntOrNull()?.coerceIn(5, 40) ?: 10
-                    ) 
-                },
+                onClick = { showNewGameConfirm = true },
                 enabled = connected,
                 modifier = Modifier.weight(1f).height(50.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MintGreen, contentColor = Color.White),
             ) {
-                Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                Icon(Icons.Filled.Refresh, contentDescription = null)
                 Spacer(Modifier.width(6.dp))
-                Text("Start", fontWeight = FontWeight.Bold)
+                Text("New Game", fontWeight = FontWeight.Bold)
             }
+            // One button does both: pause a running game, resume a paused one.
+            // Disabled until we have telemetry, otherwise it would misleadingly
+            // show "Resume" while we're still waiting for the ESP.
             Button(
-                onClick = { onStop() },
-                enabled = connected,
+                onClick = {
+                    if (running) onStop() else onResume(player.trim().ifBlank { "Player 1" })
+                },
+                enabled = connected && hasTelemetry,
                 modifier = Modifier.weight(1f).height(50.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = BerryRed, contentColor = Color.White),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (running) BerryRed else Honey,
+                    contentColor = Color.White,
+                ),
             ) {
-                Icon(Icons.Filled.Stop, contentDescription = null)
+                Icon(
+                    if (running) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                    contentDescription = null,
+                )
                 Spacer(Modifier.width(6.dp))
-                Text("Stop", fontWeight = FontWeight.Bold)
+                Text(if (running) "Pause" else "Resume", fontWeight = FontWeight.Bold)
             }
         }
+    }
+
+    if (showNewGameConfirm) {
+        AlertDialog(
+            onDismissRequest = { showNewGameConfirm = false },
+            title = { Text("Start a new game?") },
+            text = { Text("This starts a fresh game and the current progress will be lost.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showNewGameConfirm = false
+                        onStart(
+                            player.trim().ifBlank { "Cookie-Lover" },
+                            gameId,
+                            cookies.toIntOrNull()?.coerceIn(1, 20) ?: 10,
+                            wall.toIntOrNull()?.coerceIn(5, 40) ?: 10,
+                            ballType.restitution,
+                            ballType.sensitivity,
+                            ballType.emaAlpha
+                        )
+                    }
+                ) { Text("New Game") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNewGameConfirm = false }) { Text("Cancel") }
+            },
+        )
     }
 }
 
@@ -333,25 +423,9 @@ private fun BoardCard(telemetry: Telemetry) {
                 velocityY = telemetry.physics.velocityY,
                 screenWidth = telemetry.config.screenWidth,
                 screenHeight = telemetry.config.screenHeight,
-                collision = telemetry.physics.collisionDetected,
                 modifier = Modifier.fillMaxWidth(0.8f)
             )
         }
-
-        /*
-        Spacer(Modifier.height(16.dp))
-        
-        StatGrid(
-            stats = listOf(
-                "Pos X" to fmt(telemetry.physics.ballPosX, 2),
-                "Pos Y" to fmt(telemetry.physics.ballPosY, 2),
-                "Collision" to if (telemetry.physics.collisionDetected) "Yes 💥" else "No",
-                "Vel X" to fmt(telemetry.physics.velocityX, 2),
-                "Vel Y" to fmt(telemetry.physics.velocityY, 2),
-                "Accel X" to fmt(telemetry.physics.accX, 2),
-            ),
-        )
-        */
     }
 }
 
@@ -369,8 +443,10 @@ private fun SensorsCard(telemetry: Telemetry) {
             )
             HeroStat(
                 label = "Button",
+                // Was Color.White before, which is invisible on the light card -
+                // use a theme color so "Released" is actually readable.
                 value = if (telemetry.sensors.button) "Pressed" else "Released",
-                color = if (telemetry.sensors.button) Honey else Color.White
+                color = if (telemetry.sensors.button) Honey else MaterialTheme.colorScheme.onSurface
             )
         }
 
@@ -418,11 +494,23 @@ private fun InfoRow(label: String, value: String) {
     }
 }
 
-private fun runningStatusColor(runningStatus: String): Color = when (runningStatus.lowercase()) {
-    "running" -> MintGreen
-    "completed" -> Honey
-    "stopped", "idle" -> ChocolateChip
-    else -> ChocolateChip
+// Keep only digits and clamp to the cookie max as you type, so e.g. 20000 turns
+// into 20 right in the field. Empty stays empty so the box can be cleared;
+// over-long numbers (too big for Int) are treated as over the max.
+private fun clampCookieInput(raw: String): String {
+    val digits = raw.filter(Char::isDigit)
+    if (digits.isEmpty()) return ""
+    val value = digits.toIntOrNull() ?: GameConfigConstants.MAX_COOKIES
+    return value.coerceAtMost(GameConfigConstants.MAX_COOKIES).toString()
+}
+
+// Live max-clamp for wall thickness. Minimum (5) is left to the Start coerceIn
+// so you can still type "40" without the first digit jumping to the minimum.
+private fun clampWallInput(raw: String): String {
+    val digits = raw.filter(Char::isDigit)
+    if (digits.isEmpty()) return ""
+    val value = digits.toIntOrNull() ?: GameConfigConstants.MAX_WALL_THICKNESS
+    return value.coerceAtMost(GameConfigConstants.MAX_WALL_THICKNESS).toString()
 }
 
 private fun fmt(value: Double, decimals: Int): String = "%.${decimals}f".format(value)

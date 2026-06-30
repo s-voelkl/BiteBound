@@ -7,7 +7,7 @@ import com.hivemq.client.mqtt.mqtt5.Mqtt5AsyncClient
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 
-/** High-level outcome of an MQTT connection attempt, surfaced to the UI. */
+/** The connection states the UI cares about. */
 sealed interface ConnectionState {
     data object Disconnected : ConnectionState
     data object Connecting : ConnectionState
@@ -16,11 +16,12 @@ sealed interface ConnectionState {
 }
 
 /**
- * Thin wrapper around the HiveMQ MQTT 5 client. Handles a TLS + username/password
- * connection to HiveMQ Cloud, subscribes to the telemetry topic and publishes
- * game commands. All client callbacks arrive on Netty threads, so the manager
- * only forwards raw values to the supplied listeners — state fan-out happens in
- * the ViewModel.
+ * Wraps the HiveMQ MQTT 5 client. Connects over TLS with username/password,
+ * subscribes to the telemetry topic and publishes the game commands.
+ *
+ * The client callbacks run on the library's own (Netty) threads, so we just
+ * hand the raw values back through the listeners and let the ViewModel deal with
+ * the state.
  */
 class MqttManager {
 
