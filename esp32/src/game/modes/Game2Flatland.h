@@ -42,7 +42,9 @@ protected:
         _ball.y = _h * 0.5f;
         _ball.vx = 0.0f;
         _ball.vy = 0.0f;
-        _spawner = RectCookieSpawner((float)_w, (float)_h, default_cookie_radius);
+        // Open field has no corridor to scale to - use fixed, clearly visible sizes.
+        _ball.radius = default_flatland_ball_radius;
+        _spawner = RectCookieSpawner((float)_w, (float)_h, default_flatland_cookie_radius);
         _cookies.start(cfg.visibleCookies, cfg.targetCookies, _spawner, _ball);
     }
 

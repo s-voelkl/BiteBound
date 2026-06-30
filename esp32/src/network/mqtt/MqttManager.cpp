@@ -4,6 +4,7 @@
 #include "../../../wifi_mqtt_secrets.h"
 #include "../../../config.h"
 #include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 #include <freertos/queue.h>
 
 // Extern queue variable declared in the main sketch
@@ -70,42 +71,54 @@ bool MqttManager::connect()
     {
         return true;
     }
-
-    Serial.print("Connecting to MQTT server: ");
-    Serial.print(_server);
-    Serial.print(":");
-    Serial.print(_port);
-    Serial.println("...");
-
-    if (_client.connect(_clientId, _username, _password))
+    for (int attempt = 1; attempt <= mqtt_retry_attempts; attempt++)
     {
-        Serial.println("MQTT connected successfully!");
+        Serial.print("Connecting to MQTT server (attempt ");
+        Serial.print(attempt);
+        Serial.print("/");
+        Serial.print(mqtt_retry_attempts);
+        Serial.println("): " + String(_server) + ":" + String(_port) + "...");
 
-        // Subscribe to the command topic to receive incoming commands from the dashboard.
-        bool command_subscribed = _client.subscribe(mqtt_command_topic, mqtt_qos);
-        Serial.println("Subscribed to command topic at QoS " + String(mqtt_qos) +
-                       ", success: " + String(command_subscribed) +
-                       ", topic: " + String(mqtt_command_topic));
+        // Ensure the underlying client is stopped before a new attempt to clear any stale state
+        _secureClient.stop();
 
-        // Verify the connection by subscribing to the test topic. PubSubClient
-        // supports QoS 0 and QoS 1 for subscriptions.
-        bool test_subscribed = _client.subscribe(mqtt_test_topic, mqtt_qos);
-        Serial.println("Subscribed at QoS " + String(mqtt_qos) +
-                       ", success: " + String(test_subscribed) +
-                       ", topic: " + String(mqtt_test_topic));
+        if (_client.connect(_clientId, _username, _password))
+        {
+            Serial.println("MQTT connected successfully!");
 
-        // Verify the connection by publishing a test message. PubSubClient
-        // only supports QoS 0 for publishing; the configured retain flag is
-        // honoured.
-        String testPayload = "Test message from " + String(_clientId);
-        bool published = _client.publish(mqtt_test_topic, testPayload.c_str(), mqtt_retain);
-        Serial.println("Published test message, success: " + String(published) +
-                       ", topic: " + String(mqtt_test_topic));
+            // Subscribe to the command topic to receive incoming commands from the dashboard.
+            bool command_subscribed = _client.subscribe(mqtt_command_topic, mqtt_qos);
+            Serial.println("Subscribed to command topic at QoS " + String(mqtt_qos) +
+                           ", success: " + String(command_subscribed) +
+                           ", topic: " + String(mqtt_command_topic));
 
-        return true;
+            // Verify the connection by subscribing to the test topic.
+            // PubSubClient supports QoS 0 and QoS 1 for subscriptions.
+            bool test_subscribed = _client.subscribe(mqtt_test_topic, mqtt_qos);
+            Serial.println("Subscribed at QoS " + String(mqtt_qos) +
+                           ", success: " + String(test_subscribed) +
+                           ", topic: " + String(mqtt_test_topic));
+
+            // Verify the connection by publishing a test message.
+            // PubSubClient only supports QoS 0 for publishing.
+            // The configured retain flag is forwarded to the broker.
+            String testPayload = "Test message from " + String(_clientId);
+            bool published = _client.publish(mqtt_test_topic, testPayload.c_str(), mqtt_retain);
+            Serial.println("Published test message, success: " + String(published) +
+                           ", topic: " + String(mqtt_test_topic));
+
+            return true;
+        }
+
+        Serial.println("MQTT connection attempt " + String(attempt) + " failed, state: " + String(_client.state()));
+
+        if (attempt < mqtt_retry_attempts)
+        {
+            // Short delay between retries to give the network/stack a moment
+            vTaskDelay(pdMS_TO_TICKS(mqtt_retry_interval_ms));
+        }
     }
 
-    Serial.println("MQTT connection failed, state: " + String(_client.state()));
     return false;
 }
 
