@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/** Everything the dashboard needs to render, in one immutable snapshot. */
+/** One snapshot of everything the screens need to draw. */
 data class UiState(
     val credentials: Credentials = Credentials(),
     val connection: ConnectionState = ConnectionState.Disconnected,
@@ -35,7 +35,7 @@ class BiteBoundViewModel(app: Application) : AndroidViewModel(app) {
     private val _uiState = MutableStateFlow(UiState(credentials = store.load()))
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
-    /** Connect using [credentials], persisting them for next launch. */
+    /** Saves the credentials and opens the MQTT connection. */
     fun connect(credentials: Credentials) {
         store.save(credentials)
         _uiState.value = _uiState.value.copy(
@@ -64,7 +64,7 @@ class BiteBoundViewModel(app: Application) : AndroidViewModel(app) {
                         val previousState = _uiState.value.connection
                         _uiState.value = _uiState.value.copy(connection = state)
                         
-                        // If we just connected, send the start command as requested
+                        // Just went from "not connected" to "connected" -> kick off a game.
                         if (state == ConnectionState.Connected && previousState != ConnectionState.Connected) {
                             startGame()
                             resetTimeout()
@@ -135,6 +135,17 @@ class BiteBoundViewModel(app: Application) : AndroidViewModel(app) {
         mqtt.publish(
             credentials.commandTopic,
             GameCommand.stop(playerName, gameId, cookiesCount, wallThickness),
+        )
+    }
+
+    fun resumeGame(playerName: String) {
+        val credentials = _uiState.value.credentials
+        val telemetry = _uiState.value.telemetry
+        val gameId = telemetry?.config?.gameId ?: 1
+        val cookiesCount = telemetry?.config?.targetCookies ?: 10
+        mqtt.publish(
+            credentials.commandTopic,
+            GameCommand.resume(playerName, gameId, cookiesCount),
         )
     }
 
