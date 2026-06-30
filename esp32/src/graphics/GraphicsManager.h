@@ -79,6 +79,9 @@ private:
     // Local registers tracking changes between consecutive frames
     PhysicsBody _prevBall;
     bool _prevCookieActiveStates[max_rendered_cookies];
+    // Previous cookie positions, so a respawn (cookie stays active but moves)
+    // can be erased at the old spot and redrawn at the new one.
+    Cookie _prevCookies[max_rendered_cookies];
     int _prevCookieCount;
     GameState _prevGameState;
 
@@ -106,6 +109,18 @@ private:
      * @brief Draws the sphere.
      */
     void drawSphere(const PhysicsBody &ball);
+
+    /**
+     * @brief Draws a "paused" symbol (two vertical bars, like a stopped video)
+     * centered over the play area. Shown while the game is idle/paused.
+     */
+    void drawPauseOverlay();
+
+    /**
+     * @brief Draws a "round complete" banner centered over the play area, shown
+     * for the brief moment between finishing a round and the next one starting.
+     */
+    void drawCompletedOverlay();
 };
 
 #endif // GRAPHICS_MANAGER_H

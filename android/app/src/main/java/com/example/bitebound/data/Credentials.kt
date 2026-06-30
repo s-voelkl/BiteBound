@@ -4,10 +4,9 @@ import android.content.Context
 import androidx.core.content.edit
 
 /**
- * MQTT connection settings. The broker host, port and topics are pre-filled
- * with the BiteBound project defaults (the same HiveMQ Cloud instance the
- * Node-RED dashboard uses) so the user normally only has to add a username and
- * password.
+ * Holds the broker login plus the current game setup. Host, port and topics are
+ * pre-filled with our group's HiveMQ Cloud values (same broker the Node-RED
+ * dashboard uses), so normally you only have to add the username and password.
  */
 data class Credentials(
     val host: String = DEFAULT_HOST,
@@ -41,8 +40,8 @@ data class Credentials(
 }
 
 /**
- * Persists [Credentials] in SharedPreferences so they survive app restarts —
- * "add credentials once" is the whole point.
+ * Saves and loads [Credentials] in SharedPreferences so you don't have to type
+ * everything in again on the next app start.
  */
 class CredentialsStore(context: Context) {
     private val prefs = context.getSharedPreferences("bitebound_mqtt", Context.MODE_PRIVATE)

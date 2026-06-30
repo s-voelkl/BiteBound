@@ -1,8 +1,0 @@
-{
-  "broker": "61775de8f674480cae63ae7690a8ffae.s1.eu.hivemq.cloud",
-  "port": 8883,
-  "username": "BiteBound",
-  "password": "3bn!6vyhXBngZd!",
-  "topic": "mauc2026/group_03/game/telemetry",
-  "client_id": "BiteBound-Local-Python-Mock"
-}

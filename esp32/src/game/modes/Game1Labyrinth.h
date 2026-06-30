@@ -32,7 +32,9 @@ public:
         _world = MazeCollider(board, playW, playH);
         // Spawner reads the maze's free-cell list, which is re-filled in place
         // on each generate(); the pointer stays valid across regenerations.
-        _spawner = MazeCookieSpawner(&_maze.getFreeCells(), default_cookie_radius);
+        // Cookie size scales with the corridor too (like the ball, just smaller).
+        _spawner = MazeCookieSpawner(&_maze.getFreeCells(),
+                                     wallThickness * cookie_diameter_wall_ratio / 2.0f);
     }
 
     const ICollider &collider() const override { return _world; }
@@ -55,6 +57,9 @@ protected:
         }
         _ball.vx = 0.0f;
         _ball.vy = 0.0f;
+        // Derive the ball size from the wall thickness so it always fits the
+        // corridor: diameter = 70% of a corridor's width.
+        _ball.radius = cfg.wallThicknessPx * ball_diameter_wall_ratio / 2.0f;
 
         _cookies.start(cfg.visibleCookies, cfg.targetCookies, _spawner, _ball);
     }

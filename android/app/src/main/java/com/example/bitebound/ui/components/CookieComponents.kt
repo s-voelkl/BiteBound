@@ -25,7 +25,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -33,12 +32,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.bitebound.data.GameConfigConstants
+import com.example.bitebound.ui.theme.BerryRed
 import com.example.bitebound.ui.theme.CaramelBrown
 import com.example.bitebound.ui.theme.ChocolateChip
 import com.example.bitebound.ui.theme.CookieDough
-import com.example.bitebound.ui.theme.CookieGolden
-import com.example.bitebound.ui.theme.Honey
-import com.example.bitebound.ui.theme.MintGreen
 
 /** A titled, slightly raised card used for every dashboard section. */
 @Composable
@@ -71,9 +68,9 @@ fun CookieCard(
 }
 
 /**
- * The hero of the dashboard: a freshly-baked cookie with a progress ring that
- * fills as cookies are collected. [collected] / [target] drives the arc; the
- * cookie itself is hand-drawn so it scales crisply at any size.
+ * Score display: a plain progress ring with the count in the middle. Kept simple
+ * (flat disc + track + filled part) but in warm brown cookie colors so the
+ * number stays easy to read.
  */
 @Composable
 fun CookieProgress(
@@ -85,92 +82,73 @@ fun CookieProgress(
     val animated by animateFloatAsState(
         targetValue = fraction,
         animationSpec = tween(600),
-        label = "cookieProgress",
+        label = "scoreProgress",
     )
-    val ringTrack = CookieDough.copy(alpha = 0.35f)
+    val percent = (animated * 100).toInt()
 
-    Box(modifier = modifier.size(200.dp), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.size(200.dp)) {
-            val stroke = 16.dp.toPx()
+    // Brownish palette pulled from the cookie colors - a lighter chocolate disc
+    // with a golden-dough fill, so the number still reads, but it's warm, not gray.
+    val centerColor = ChocolateChip
+    val progressColor = CookieDough
+    val trackColor = CaramelBrown.copy(alpha = 0.35f)
+
+    Box(modifier = modifier.size(210.dp), contentAlignment = Alignment.Center) {
+        Canvas(Modifier.size(210.dp)) {
+            val stroke = 14.dp.toPx()
             val inset = stroke / 2
-            // Progress ring
+            val arcSize = androidx.compose.ui.geometry.Size(size.width - stroke, size.height - stroke)
+
+            // Flat dark circle behind the number.
+            val center = Offset(size.width / 2, size.height / 2)
+            val innerRadius = size.minDimension / 2 - stroke - 8.dp.toPx()
+            drawCircle(color = centerColor, radius = innerRadius, center = center)
+
+            // Empty track ring, so you can see how much is left.
             drawArc(
-                color = ringTrack,
+                color = trackColor,
                 startAngle = -90f,
                 sweepAngle = 360f,
                 useCenter = false,
                 topLeft = Offset(inset, inset),
-                size = androidx.compose.ui.geometry.Size(size.width - stroke, size.height - stroke),
+                size = arcSize,
                 style = Stroke(width = stroke, cap = StrokeCap.Round),
             )
+            // Filled part grows clockwise with the score.
             drawArc(
-                brush = Brush.sweepGradient(listOf(CookieGolden, Honey, CaramelBrown, CookieGolden)),
+                color = progressColor,
                 startAngle = -90f,
                 sweepAngle = 360f * animated,
                 useCenter = false,
                 topLeft = Offset(inset, inset),
-                size = androidx.compose.ui.geometry.Size(size.width - stroke, size.height - stroke),
+                size = arcSize,
                 style = Stroke(width = stroke, cap = StrokeCap.Round),
             )
-
-            // Cookie body
-            val center = Offset(size.width / 2, size.height / 2)
-            val cookieRadius = size.minDimension / 2 - stroke - 12.dp.toPx()
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(CookieDough, CookieGolden),
-                    center = center,
-                    radius = cookieRadius,
-                ),
-                radius = cookieRadius,
-                center = center,
-            )
-            // Toasted rim
-            drawCircle(
-                color = CaramelBrown.copy(alpha = 0.45f),
-                radius = cookieRadius,
-                center = center,
-                style = Stroke(width = 3.dp.toPx()),
-            )
-            // Chocolate chips at fixed, evenly-scattered spots
-            val chips = listOf(
-                Offset(-0.35f, -0.30f) to 0.13f,
-                Offset(0.28f, -0.38f) to 0.10f,
-                Offset(0.40f, 0.12f) to 0.12f,
-                Offset(-0.05f, 0.05f) to 0.11f,
-                Offset(-0.42f, 0.22f) to 0.10f,
-                Offset(0.10f, 0.42f) to 0.12f,
-                Offset(0.32f, 0.40f) to 0.08f,
-                Offset(-0.20f, -0.05f) to 0.07f,
-            )
-            chips.forEach { (rel, r) ->
-                drawCircle(
-                    color = ChocolateChip,
-                    radius = cookieRadius * r,
-                    center = Offset(
-                        center.x + rel.x * cookieRadius,
-                        center.y + rel.y * cookieRadius,
-                    ),
-                )
-            }
         }
+
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 "$collected",
-                style = MaterialTheme.typography.headlineLarge,
+                style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
             )
             Text(
                 "of $target",
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White.copy(alpha = 0.9f),
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White.copy(alpha = 0.65f),
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "$percent%",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White.copy(alpha = 0.85f),
             )
         }
     }
 }
 
-/** A compact labelled value, used in grids of sensor / physics readings. */
+/** A compact labeled value, used in grids of sensor / physics readings. */
 @Composable
 fun StatTile(
     label: String,
@@ -213,8 +191,8 @@ fun StatTile(
 @Composable
 fun StatGrid(
     stats: List<Pair<String, String>>,
-    columns: Int = 3,
     modifier: Modifier = Modifier,
+    columns: Int = 3,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         stats.chunked(columns).forEach { rowItems ->
@@ -232,23 +210,23 @@ fun StatGrid(
 }
 
 /**
- * A miniature of the ESP32 game board showing the ball's live position.
- * The board preserves the aspect ratio of the remote device screen.
+ * Small copy of the ESP32 board that shows where the ball currently is. Keeps
+ * the same width/height ratio as the real device screen so the position lines up.
  */
 @Composable
 fun MiniGameBoard(
     ballX: Double,
     ballY: Double,
-    velocityX: Double = 0.0,
-    velocityY: Double = 0.0,
     screenWidth: Int,
     screenHeight: Int,
-    collision: Boolean,
     modifier: Modifier = Modifier,
+    velocityX: Double = 0.0,
+    velocityY: Double = 0.0,
 ) {
     val xFraction = if (screenWidth > 0) (ballX / screenWidth).toFloat().coerceIn(0f, 1f) else 0.5f
     val yFraction = if (screenHeight > 0) (ballY / screenHeight).toFloat().coerceIn(0f, 1f) else 0.5f
-    val ballColor = if (collision) MaterialTheme.colorScheme.error else ChocolateChip
+    // Red ball to match the sphere on the ESP display.
+    val ballColor = BerryRed
 
     // Calculate aspect ratio. Default to 16:9 if unknown.
     val aspectRatio = if (screenWidth > 0 && screenHeight > 0) {
@@ -301,7 +279,7 @@ fun MiniGameBoard(
 
                 if (vx != 0f || vy != 0f) {
                     drawLine(
-                        color = MintGreen,
+                        color = Color.Black,
                         start = Offset(cx, cy),
                         end = Offset(cx + vx, cy + vy),
                         strokeWidth = 3.dp.toPx(),
@@ -309,19 +287,7 @@ fun MiniGameBoard(
                     )
                 }
 
-                if (collision) {
-                    drawCircle(
-                        color = ballColor.copy(alpha = 0.25f),
-                        radius = ballRadius * 1.8f,
-                        center = Offset(cx, cy),
-                    )
-                }
                 drawCircle(color = ballColor, radius = ballRadius, center = Offset(cx, cy))
-                drawCircle(
-                    color = CookieGolden,
-                    radius = ballRadius * 0.4f,
-                    center = Offset(cx - ballRadius * 0.2f, cy - ballRadius * 0.2f)
-                )
             }
         }
     }
