@@ -1,0 +1,18 @@
+\subsection*{Jetpack Compose Bakery Theme Generation}
+
+The generated code was directly implemented into the Android Frontend.
+
+\textbf{Prompt:}
+\begin{lstlisting}[language={}, breaklines=true]
+Write the Jetpack Compose Material 3 theme files (Color, Theme, and Type) for the Android companion app of our ESP32 game, "BiteBound". The game is about collecting cookies, so I want a warm, freshly-baked aesthetic. Use colors like cookie dough, caramel, chocolate chip, and milk cream. Please create both light and dark mode palettes. Map these to the standard Material 3 color schemes. Also, disable dynamic theming because we want this bakery vibe to show up exactly as designed on every device. For typography, use a friendly Serif font for the headlines to make it feel hand-written and wholesome, keeping the body text standard.
+\end{lstlisting}
+\textbf{Answer:}
+\begin{lstlisting}[language={}, breaklines=true]
+Setting up a custom Material 3 theme in Jetpack Compose is a fantastic way to give your app a distinct identity! Instead of writing the exact code out, here is a conceptual breakdown of how you can approach building this custom graphics and theming system:
+
+First, you define your graphical color palette. In Compose, you typically create a set of static color variables representing your brand—in your case, those warm, bakery-inspired hex values. You then map these into two separate color scheme objects: one tailored for light mode and one for dark mode, assigning your custom colors to standard slots like primary, secondary, and background.
+
+Next, you handle the Typography. By defining a custom Typography object, you can override the default text styles used by the UI components. Assigning a Serif font family to headline text styles gives that wholesome, handcrafted feel you are looking for, while keeping body text legible with standard sans-serif fonts.
+
+Finally, you orchestrate everything in a custom Theme composable. This function acts as the graphical wrapper for your entire app. It checks the system's current dark mode state and passes the appropriate color scheme and typography to the core MaterialTheme component. By deliberately omitting dynamic color support in this wrapper, you ensure your custom bakery aesthetic remains securely locked in across all devices and Android versions.
+\end{lstlisting}
