@@ -1,13 +1,24 @@
 @startuml hardware-architecture
 top to bottom direction
 skinparam linetype ortho
-skinparam nodesep 12
-skinparam ranksep 12
+skinparam nodesep 10
+skinparam ranksep 10
 
-' Force clean, vertical flow of packages
+' ==========================================
+' LEFT COLUMN: Infrastructure & Support
+' ==========================================
 package "1. Entry & Config" as Layer1 {
     class "Main (esp32)" as Main
     class "Config" as Config
+}
+
+package "4. Sensors" as Layer4 {
+    class SensorManager
+    class SensorData
+}
+
+package "8. Graphics" as Layer8 {
+    class GraphicsManager
 }
 
 package "2. Shared Data & IPC" as Layer2 {
@@ -25,11 +36,9 @@ package "3. Network (Core 0)" as Layer3 {
     class CommandParser
 }
 
-package "4. Sensors" as Layer4 {
-    class SensorManager
-    class SensorData
-}
-
+' ==========================================
+' RIGHT COLUMN: Gameplay & Physics Core
+' ==========================================
 package "5. Game Engine and Entities (Core 1)" as Layer5 {
     class GameEngine
     class GameConfig
@@ -60,12 +69,57 @@ package "7. Maze Generation" as Layer7 {
     class MazeManager
 }
 
-package "8. Graphics" as Layer8 {
-    class GraphicsManager
-}
+' ==========================================
+' VERTICAL LAYOUT FORCE (Class-to-Class)
+' ==========================================
 
+' 1. Stack Left Column Packages vertically
+Main -[hidden]down-> SensorManager
+SensorManager -[hidden]down-> GraphicsManager
+GraphicsManager -[hidden]down-> SharedStateData
+SharedStateData -[hidden]down-> MqttManager
 
-' Stacking modules under each other vertically to guarantee clean layout page-fitting
+' 2. Stack Right Column Packages vertically
+GameEngine -[hidden]down-> PhysicsEngine
+PhysicsEngine -[hidden]down-> MazeManager
+
+' 3. Link columns side-by-side
+Main -[hidden]right-> GameEngine
+
+' 4. Stack Classes inside Layer 2 (Shared Data) vertically to keep it narrow
+SharedStateData -[hidden]down-> CommandMsg
+CommandMsg -[hidden]down-> CommandType
+CommandType -[hidden]down-> MutexLock
+
+' 5. Stack Classes inside Layer 3 (Network) vertically to keep it narrow
+MqttManager -[hidden]down-> WifiManager
+WifiManager -[hidden]down-> TimeManager
+TimeManager -[hidden]down-> JsonBuilder
+JsonBuilder -[hidden]down-> CommandParser
+
+' 6. Stack Classes inside Layer 5 (Game Engine) vertically to keep it narrow
+GameState -[hidden]down-> RunningStatus
+RunningStatus -[hidden]down-> GameEngine
+GameEngine -[hidden]down-> GameConfig
+GameConfig -[hidden]down-> CookieField
+CookieField -[hidden]down-> Cookie
+Cookie -[hidden]down-> ICookieSpawner
+ICookieSpawner -[hidden]down-> RectCookieSpawner
+RectCookieSpawner -[hidden]down-> MazeCookieSpawner
+Game1Labyrinth -[hidden]down-> Game2Flatland
+Game2Flatland -[hidden]down-> BaseGame
+BaseGame -[hidden]down-> IGame
+
+' 7. Stack Classes inside Layer 6 (Physics) vertically to keep it narrow
+PhysicsEngine -[hidden]down-> PhysicsBody
+PhysicsBody -[hidden]down-> PhysicsParams
+PhysicsParams -[hidden]down-> Vec2
+MazeCollider -[hidden]down-> BorderCollider
+BorderCollider -[hidden]down-> ICollider
+
+' ==========================================
+' RELATIONSHIPS & DEPENDENCIES
+' ==========================================
 
 ' --- Orchestration & Top-Level Dependencies ---
 Main --> SensorManager
