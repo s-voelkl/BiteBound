@@ -1,34 +1,24 @@
 @startuml hardware-architecture
 top to bottom direction
 skinparam linetype ortho
-skinparam nodesep 10
-skinparam ranksep 10
+skinparam nodesep 12
+skinparam ranksep 12
 
-' ==========================================
-' LEFT COLUMN: Infrastructure & Support
-' ==========================================
-package "1. Entry & Config" as Layer1 {
+package "Entry & Config" as Layer1 {
     class "Main (esp32)" as Main
     class "Config" as Config
 }
 
-package "4. Sensors" as Layer4 {
+package "Sensors" as Layer4 {
     class SensorManager
     class SensorData
 }
 
-package "8. Graphics" as Layer8 {
+package "Graphics" as Layer8 {
     class GraphicsManager
 }
 
-package "2. Shared Data & IPC" as Layer2 {
-    class SharedStateData
-    class CommandMsg
-    enum CommandType
-    class MutexLock
-}
-
-package "3. Network (Core 0)" as Layer3 {
+package "Network (Core 0)" as Layer3 {
     class MqttManager
     class WifiManager
     class TimeManager
@@ -36,10 +26,14 @@ package "3. Network (Core 0)" as Layer3 {
     class CommandParser
 }
 
-' ==========================================
-' RIGHT COLUMN: Gameplay & Physics Core
-' ==========================================
-package "5. Game Engine and Entities (Core 1)" as Layer5 {
+package "Shared Data & IPC" as Layer2 {
+    class SharedStateData
+    class CommandMsg
+    enum CommandType
+    class MutexLock
+}
+
+package "Game Engine and Entities (Core 1)" as Layer5 {
     class GameEngine
     class GameConfig
     interface IGame
@@ -55,7 +49,7 @@ package "5. Game Engine and Entities (Core 1)" as Layer5 {
     enum RunningStatus
 }
 
-package "6. Physics Simulation" as Layer6 {
+package "Physics Simulation" as Layer6 {
     class PhysicsEngine
     class PhysicsBody
     class PhysicsParams
@@ -65,61 +59,67 @@ package "6. Physics Simulation" as Layer6 {
     class MazeCollider
 }
 
-package "7. Maze Generation" as Layer7 {
+package "Maze Generation" as Layer7 {
     class MazeManager
 }
 
-' ==========================================
-' VERTICAL LAYOUT FORCE (Class-to-Class)
-' ==========================================
 
-' 1. Stack Left Column Packages vertically
-Main -[hidden]down-> SensorManager
-SensorManager -[hidden]down-> GraphicsManager
-GraphicsManager -[hidden]down-> SharedStateData
-SharedStateData -[hidden]down-> MqttManager
+' STRICT VERTICAL LAYOUT FLOW (Package-to-Package Chaining)
+Config -[hidden]down-> SensorManager            
+SensorData -[hidden]down-> GraphicsManager       
+' GraphicsManager -[hidden]down-> MqttManager      
+CommandParser -[hidden]down-> SharedStateData    
+Config -[hidden]right-> GameState
+MazeCookieSpawner -[hidden]down-> PhysicsEngine  
+' CommandType -[hidden]left-> MazeManager                
 
-' 2. Stack Right Column Packages vertically
-GameEngine -[hidden]down-> PhysicsEngine
-PhysicsEngine -[hidden]down-> MazeManager
 
-' 3. Link columns side-by-side
-Main -[hidden]right-> GameEngine
+' INTERNAL VERTICAL STACKING CONSTRAINTS
 
-' 4. Stack Classes inside Layer 2 (Shared Data) vertically to keep it narrow
+' Layer 1
+Main -[hidden]down-> Config
+
+' Layer 4
+SensorManager -[hidden]down-> SensorData
+
+' Layer 3
+' MqttManager -[hidden]down-> WifiManager
+' WifiManager -[hidden]down-> TimeManager
+TimeManager -[hidden]down-> JsonBuilder
+WifiManager -[hidden]down-> CommandParser
+
+' Layer 2
 SharedStateData -[hidden]down-> CommandMsg
 CommandMsg -[hidden]down-> CommandType
 CommandType -[hidden]down-> MutexLock
 
-' 5. Stack Classes inside Layer 3 (Network) vertically to keep it narrow
-MqttManager -[hidden]down-> WifiManager
-WifiManager -[hidden]down-> TimeManager
-TimeManager -[hidden]down-> JsonBuilder
-JsonBuilder -[hidden]down-> CommandParser
-
-' 6. Stack Classes inside Layer 5 (Game Engine) vertically to keep it narrow
+' Layer 5 (Two narrow parallel columns)
 GameState -[hidden]down-> RunningStatus
 RunningStatus -[hidden]down-> GameEngine
 GameEngine -[hidden]down-> GameConfig
 GameConfig -[hidden]down-> CookieField
-CookieField -[hidden]down-> Cookie
-Cookie -[hidden]down-> ICookieSpawner
+' CookieField -[hidden]right-> Cookie
+' CookieField-[hidden]down-> ICookieSpawner
 ICookieSpawner -[hidden]down-> RectCookieSpawner
 RectCookieSpawner -[hidden]down-> MazeCookieSpawner
+
 Game1Labyrinth -[hidden]down-> Game2Flatland
 Game2Flatland -[hidden]down-> BaseGame
 BaseGame -[hidden]down-> IGame
 
-' 7. Stack Classes inside Layer 6 (Physics) vertically to keep it narrow
+GameEngine -[hidden]right-> BaseGame
+
+' Layer 6 (Two narrow parallel columns)
 PhysicsEngine -[hidden]down-> PhysicsBody
 PhysicsBody -[hidden]down-> PhysicsParams
-PhysicsParams -[hidden]down-> Vec2
-MazeCollider -[hidden]down-> BorderCollider
+' PhysicsParams -[hidden]down-> Vec2
+
+' MazeCollider -[hidden]down-> BorderCollider
 BorderCollider -[hidden]down-> ICollider
 
-' ==========================================
+PhysicsEngine -[hidden]right-> MazeCollider
+
 ' RELATIONSHIPS & DEPENDENCIES
-' ==========================================
 
 ' --- Orchestration & Top-Level Dependencies ---
 Main --> SensorManager
