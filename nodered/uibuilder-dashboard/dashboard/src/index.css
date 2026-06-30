@@ -1,0 +1,443 @@
+/* Import Theme Palette variables */
+@import url('./app/theme.css');
+
+/* Root layout reset and configuration */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.2s, color 0.2s;
+    line-height: 1.5;
+}
+
+.screen-view {
+    width: 100%;
+    min-height: 100vh;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Connection Screen styling */
+.connection-card {
+    max-width: 480px;
+    margin: 40px auto;
+    border-radius: 24px;
+}
+
+.brand-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.brand-logo-large {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+}
+
+.brand-title {
+    font-size: 2rem;
+    margin: 8px 0 0 0;
+    color: var(--caramel-brown);
+}
+
+.section-label {
+    margin-top: 16px;
+    margin-bottom: 6px;
+}
+
+/* Accordion Component UI */
+.accordion {
+    margin: 12px 0;
+}
+
+.btn-text {
+    background: none;
+    border: none;
+    color: var(--caramel-brown);
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+}
+
+.btn-text .icon {
+    font-size: 0.7rem;
+    margin-right: 6px;
+    transition: transform 0.2s;
+}
+
+.accordion-panel {
+    max-height: 500px;
+    overflow: hidden;
+    transition: max-height 0.2s ease-out, opacity 0.15s;
+    opacity: 1;
+}
+
+.accordion-panel.collapsed {
+    max-height: 0;
+    opacity: 0;
+}
+
+/* Password Input Toggle Alignment */
+.password-group .input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-group .btn-icon {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+/* Status Banner styling */
+.status-banner {
+    background-color: var(--bg-surface);
+    border: 2px solid var(--border-color);
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.status-dot {
+    width: 10.5px;
+    height: 10.5px;
+    border-radius: 50%;
+    margin-right: 10px;
+    background-color: var(--text-muted);
+}
+
+/* Score Card progress ring styling matching CookieProgress */
+.cookie-progress-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 14px 0;
+}
+
+.cookie-progress-wrapper {
+    position: relative;
+    width: 210px;
+    height: 210px;
+}
+
+.progress-ring {
+    transform: rotate(-90deg);
+}
+
+.progress-ring__bg {
+    fill: var(--chocolate-chip);
+}
+
+.progress-ring__track {
+    fill: none;
+    stroke: var(--caramel-brown);
+    stroke-opacity: 0.35;
+    stroke-width: 14px;
+}
+
+.progress-ring__circle {
+    fill: none;
+    stroke: var(--cookie-dough);
+    stroke-width: 14px;
+    stroke-linecap: round;
+    stroke-dasharray: 596.9;
+    /* 2 * PI * r (95) */
+    stroke-dashoffset: 596.9;
+    transition: stroke-dashoffset 0.6s ease-in-out;
+}
+
+.progress-text-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+}
+
+.collected-count {
+    font-size: 2.8rem;
+    font-weight: bold;
+    color: #ffffff;
+    line-height: 1;
+}
+
+.target-count {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.percent-count {
+    font-size: 1rem;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 4px;
+}
+
+/* Stat elements */
+.hero-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-highlight {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.text-honey {
+    color: var(--honey);
+}
+
+.text-mint {
+    color: var(--mint-green);
+}
+
+.announcement {
+    background-color: rgba(76, 140, 90, 0.15);
+    color: var(--mint-green);
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+    margin-top: 12px;
+}
+
+.subline {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* Board canvas wrapper */
+.board-canvas-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 8px 0;
+}
+
+/* Details and Stat tables */
+.sensor-grid-stat {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.stat-tile {
+    background-color: rgba(224, 185, 120, 0.25);
+    border-radius: 12px;
+    padding: 10px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-tile-val {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.detail-rows {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px dashed rgba(181, 114, 46, 0.2);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    color: var(--text-muted);
+}
+
+.info-val {
+    font-weight: 500;
+}
+
+/* Dashboard spacing / alignment utility classes */
+.margin-top-sm {
+    margin-top: 8px;
+}
+
+.margin-top-md {
+    margin-top: 16px;
+}
+
+/* Dashboard Grids */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .col-1 {
+        grid-column: 1;
+    }
+
+    .col-2 {
+        grid-column: 2;
+    }
+}
+
+/* Confirmation Dialog Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-box {
+    max-width: 400px;
+    width: 90%;
+    border-radius: 18px;
+    text-align: center;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: space-evenly;
+    margin-top: 18px;
+}
+
+/* Toggle Buttons */
+.btn-toggle {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+}
+
+.btn-toggle.active {
+    background-color: var(--caramel-brown);
+    color: var(--milk-cream);
+}
+
+.disclaimer {
+    font-size: 0.75rem;
+    text-align: center;
+    margin-top: 16px;
+    color: rgba(90, 58, 34, 0.6);
+}
+
+/* Center Aligned Top App Bar */
+.top-app-bar {
+    width: 100%;
+    background-color: var(--bg-surface);
+    border-bottom: 3px solid var(--border-color);
+    padding: 10px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 500;
+}
+
+.app-bar-content {
+    max-width: 1160px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.app-bar-brand {
+    display: flex;
+    align-items: center;
+}
+
+.brand-logo-small {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.app-bar-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    font-family: Georgia, Garamond, serif;
+    color: var(--caramel-brown);
+    margin-left: 8px;
+}
+
+.btn-logout {
+    background: none;
+    border: 2px solid var(--berry-red);
+    color: var(--berry-red);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+.btn-logout:hover {
+    background-color: rgba(192, 73, 47, 0.1);
+}
+
+.error-notice {
+    color: var(--berry-red);
+    font-weight: bold;
+    font-size: 0.85rem;
+    text-align: center;
+    margin-top: 8px;
+}
+
+.error-notice.border-notice {
+    padding: 10px;
+    background-color: rgba(192, 73, 47, 0.1);
+    border: 2px solid var(--berry-red);
+    border-radius: 12px;
+}
+
+.flex-btn {
+    flex: 1;
+    height: 50px;
+}
+
+.action-row {
+    display: flex;
+    gap: 12px;
+}

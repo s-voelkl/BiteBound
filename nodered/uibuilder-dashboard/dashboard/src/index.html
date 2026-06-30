@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,10 +11,315 @@
 
     <link type="text/css" rel="stylesheet" href="./index.css" media="all">
 
-    <script defer src="../uibuilder/uibuilder.iife.min.js">/* THE UIBUILDER LIBRARY MUST BE IN THE HTML! DO NOT REMOVE */</script>
+    <script defer
+        src="../uibuilder/uibuilder.iife.min.js">/* THE UIBUILDER LIBRARY MUST BE IN THE HTML! DO NOT REMOVE */</script>
     <script type="module" defer src="./index.js">/* Main dashboard app */</script>
 </head>
+
 <body>
-    
+    <!-- Connection Screen (Credential Entry) -->
+    <div id="connectionScreen" class="screen-view">
+        <div class="connection-card card">
+            <div class="brand-header">
+                <img src="./assets/logo.png" alt="BiteBound Logo" class="brand-logo-large">
+                <h1 class="brand-title">BiteBound</h1>
+            </div>
+
+            <h2 class="card-title">Game Settings</h2>
+
+            <div class="form-group">
+                <label for="inputPlayerName" class="metric-label">Player Name</label>
+                <input type="text" id="inputPlayerName" class="form-control" placeholder="Player Name">
+            </div>
+
+            <div class="grid-2">
+                <button id="btnModeLabyrinth" class="btn btn-toggle active">Dough Maze</button>
+                <button id="btnModeFlatland" class="btn btn-toggle">Baking Tray</button>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="inputCookiesCount" class="metric-label">Cookies (1-20)</label>
+                    <input type="text" id="inputCookiesCount" class="form-control" placeholder="10">
+                </div>
+                <div class="form-group" id="wallThicknessFormGroup">
+                    <label for="inputWallThickness" class="metric-label">Wall Px (5-20)</label>
+                    <input type="text" id="inputWallThickness" class="form-control" placeholder="10">
+                </div>
+            </div>
+
+            <p class="metric-label section-label">Cookie Monster Ball Preset</p>
+            <div class="grid-3">
+                <button id="btnBallChonk" class="btn btn-toggle">Chonk</button>
+                <button id="btnBallChomper" class="btn btn-toggle active">Chomper</button>
+                <button id="btnBallScrappy" class="btn btn-toggle">Scrappy</button>
+            </div>
+
+            <!-- Server Connection Accordion -->
+            <div class="accordion">
+                <button id="toggleServerConnection" class="btn-text">
+                    <span class="icon">▼</span> Server Connection
+                </button>
+                <div id="panelServerConnection" class="accordion-panel collapsed">
+                    <div class="form-group">
+                        <label for="inputBrokerHost" class="metric-label">Broker Host Address</label>
+                        <input type="text" id="inputBrokerHost" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="inputBrokerPort" class="metric-label">Port</label>
+                        <input type="text" id="inputBrokerPort" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="inputUsername" class="metric-label">Username for Connection</label>
+                        <input type="text" id="inputUsername" class="form-control">
+                    </div>
+                    <div class="form-group password-group">
+                        <label for="inputPassword" class="metric-label">Password for Connection</label>
+                        <div class="input-container">
+                            <input type="password" id="inputPassword" class="form-control">
+                            <button id="btnTogglePassword" class="btn-icon">👁</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Connection Topics Accordion -->
+            <div class="accordion">
+                <button id="toggleTopics" class="btn-text">
+                    <span class="icon">▼</span> Connection Topics
+                </button>
+                <div id="panelTopics" class="accordion-panel collapsed">
+                    <div class="form-group">
+                        <label for="inputTelemetryTopic" class="metric-label">Telemetry Topic</label>
+                        <input type="text" id="inputTelemetryTopic" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="inputCommandTopic" class="metric-label">Command Topic</label>
+                        <input type="text" id="inputCommandTopic" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <button id="btnConnect" class="btn btn-success btn-submit">Bake the connection 🍪</button>
+
+            <div id="missingFieldsNotice" class="error-notice hidden">
+                Still needed: <span id="missingFieldsList"></span>
+            </div>
+
+            <div id="connectionErrorBox" class="error-notice border-notice hidden">
+                Row error indicator
+            </div>
+
+            <p class="disclaimer">Credentials are stored on this device locally only.</p>
+        </div>
+    </div>
+
+    <!-- Active Dashboard Screen -->
+    <div id="dashboardScreen" class="screen-view hidden">
+        <!-- Center Aligned Top App Bar -->
+        <header class="top-app-bar">
+            <div class="app-bar-content">
+                <div class="app-bar-brand">
+                    <img src="./assets/logo.png" alt="BiteBound Logo" class="brand-logo-small">
+                    <span class="app-bar-title">BiteBound</span>
+                </div>
+                <button id="btnDisconnect" class="btn-logout" title="Disconnect">
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <main class="dashboard-container">
+            <!-- Connection Banner -->
+            <section class="full-width">
+                <div class="status-banner">
+                    <span class="status-dot"></span>
+                    <span id="connectionBannerText">Disconnected</span>
+                </div>
+            </section>
+
+            <!-- Waiting for Oven Placeholder -->
+            <section id="placeholderOven" class="full-width">
+                <div class="card card-alert">
+                    <h2 class="card-title">⏳ Warming up the oven</h2>
+                    <p>Connected — waiting for the first telemetry message from the ESP32. Start the game below.</p>
+                </div>
+            </section>
+
+            <!-- Telemetry-Bound Cards (Self-revealed when telemetry is present) -->
+            <div id="activeTelemetryGrid" class="dashboard-grid hidden">
+                <!-- Score Card -->
+                <section class="card col-1">
+                    <h2 class="card-title">🏆 Cookie Score</h2>
+                    <div class="cookie-progress-container">
+                        <div class="cookie-progress-wrapper">
+                            <!-- Circular SVG progress representation of com.example.bitebound.ui.components.CookieProgress -->
+                            <svg class="progress-ring" width="210" height="210">
+                                <circle class="progress-ring__bg" cx="105" cy="105" r="80"></circle>
+                                <circle class="progress-ring__track" cx="105" cy="105" r="95"></circle>
+                                <circle class="progress-ring__circle" id="scoreCircle" cx="105" cy="105" r="95">
+                                </circle>
+                            </svg>
+                            <div class="progress-text-overlay">
+                                <span id="textCollected" class="collected-count">0</span>
+                                <span id="textTarget" class="target-count">of 0</span>
+                                <span id="textPercent" class="percent-count">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2 margin-top-md">
+                        <div class="hero-stat">
+                            <span id="stateRound" class="stat-highlight text-honey">0</span>
+                            <span class="metric-label">Round</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span id="stateElapsedTime" class="stat-highlight text-mint">00:00</span>
+                            <span class="metric-label">Time</span>
+                        </div>
+                    </div>
+
+                    <div id="roundCompleteAnnouncement" class="announcement hidden">
+                        🎉 Round complete! Next round starting…
+                    </div>
+
+                    <p id="gameStateSubline" class="subline margin-top-sm">
+                        Player: — · Remaining: 0
+                    </p>
+                </section>
+
+                <!-- Board Card -->
+                <section class="card col-2">
+                    <h2 class="card-title">🎯 Live Board</h2>
+                    <div class="board-canvas-container">
+                        <canvas id="physicsCanvas" width="240" height="280"></canvas>
+                    </div>
+                </section>
+
+                <!-- Sensors Card -->
+                <section class="card col-1">
+                    <h2 class="card-title">📡 Sensors</h2>
+                    <div class="grid-2">
+                        <div class="hero-stat">
+                            <span id="sensorBattery" class="stat-highlight">—</span>
+                            <span class="metric-label">Battery</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span id="sensorButton" class="btn-indicator">Released</span>
+                            <span class="metric-label">Button</span>
+                        </div>
+                    </div>
+
+                    <div class="sensor-grid-stat margin-top-md">
+                        <div class="stat-tile">
+                            <span id="sensorAccelX" class="stat-tile-val">0.00</span>
+                            <span class="metric-label">Accel X</span>
+                        </div>
+                        <div class="stat-tile">
+                            <span id="sensorAccelY" class="stat-tile-val">0.00</span>
+                            <span class="metric-label">Accel Y</span>
+                        </div>
+                        <div class="stat-tile">
+                            <span id="sensorAccelZ" class="stat-tile-val">0.00</span>
+                            <span class="metric-label">Accel Z</span>
+                        </div>
+                        <div class="stat-tile">
+                            <span id="sensorGyroX" class="stat-tile-val">0.00</span>
+                            <span class="metric-label">Gyro X</span>
+                        </div>
+                        <div class="stat-tile">
+                            <span id="sensorGyroY" class="stat-tile-val">0.00</span>
+                            <span class="metric-label">Gyro Y</span>
+                        </div>
+                        <div class="stat-tile">
+                            <span id="sensorGyroZ" class="stat-tile-val">0.00</span>
+                            <span class="metric-label">Gyro Z</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Device Card -->
+                <section class="card col-2">
+                    <h2 class="card-title">🔌 Device</h2>
+                    <div class="detail-rows">
+                        <div class="info-row">
+                            <span class="info-label">Client ID</span>
+                            <span id="deviceClientId" class="info-val">—</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Hardware</span>
+                            <span id="deviceHardware" class="info-val">—</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Firmware</span>
+                            <span id="deviceFirmware" class="info-val">—</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Wi-Fi</span>
+                            <span id="deviceWifi" class="info-val">—</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Uptime</span>
+                            <span id="deviceUptime" class="info-val">—</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Game Controls Card -->
+            <section class="card full-width">
+                <h2 class="card-title">🎮 Game Controls</h2>
+                <div class="form-group">
+                    <label for="ctrlPlayerName" class="metric-label">Player Name</label>
+                    <input type="text" id="ctrlPlayerName" class="form-control" placeholder="Player Name">
+                </div>
+
+                <div class="grid-2 margin-top-sm">
+                    <button id="ctrlModeLabyrinth" class="btn btn-toggle active">Dough Maze</button>
+                    <button id="ctrlModeFlatland" class="btn btn-toggle">Baking Tray</button>
+                </div>
+
+                <div class="grid-2 margin-top-sm">
+                    <div class="form-group">
+                        <label for="ctrlCookiesCount" class="metric-label">Cookies (1-20)</label>
+                        <input type="text" id="ctrlCookiesCount" class="form-control">
+                    </div>
+                    <div class="form-group" id="ctrlWallThicknessFormGroup">
+                        <label for="ctrlWallThickness" class="metric-label">Wall Px (5-20)</label>
+                        <input type="text" id="ctrlWallThickness" class="form-control">
+                    </div>
+                </div>
+
+                <p class="metric-label section-label">Cookie Monster Ball Preset</p>
+                <div class="grid-3">
+                    <button id="ctrlBallChonk" class="btn btn-toggle">Chonk</button>
+                    <button id="ctrlBallChomper" class="btn btn-toggle active">Chomper</button>
+                    <button id="ctrlBallScrappy" class="btn btn-toggle">Scrappy</button>
+                </div>
+
+                <div class="grid-2 action-row margin-top-md">
+                    <button id="btnNewGame" class="btn btn-warning flex-btn">
+                        New Game
+                    </button>
+                    <button id="btnPauseResume" class="btn btn-danger flex-btn" disabled>
+                        Pause
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Confirmation Modal Dialog -->
+    <div id="newGameModal" class="modal-overlay hidden">
+        <div class="modal-box card">
+            <h2>Start a new game?</h2>
+            <p>This starts a fresh game and the current progress will be lost.</p>
+            <div class="modal-actions">
+                <button id="btnConfirmCancel" class="btn btn-secondary">Cancel</button>
+                <button id="btnConfirmStart" class="btn btn-success">New Game</button>
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>
