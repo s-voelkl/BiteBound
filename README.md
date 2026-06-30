@@ -6,14 +6,20 @@
 
 A tilt-controlled IoT game for the ESP32-S3, featuring real-time physics and dual-dashboard synchronization via MQTT on an Android app and Node-RED flow. The game is designed to be played on a Waveshare ESP32-S3 1.69" Touch LCD, with a ball navigating through procedurally generated mazes or flat arenas, collecting cookies while beating the clock.
 
+## Important Note on this Readme
+
+This readme was developed during the project but is not the single source of truth for the project; *some parts could be outdated*. The most up-to-date version is contained in the LaTeX documentation in the `tex/` folder, which is compiled into a PDF report. Though, this readme contains the most important information for developers.
+
+**For setup and usage instructions, see [USAGE.md](USAGE.md).**
+
 <!-- TODO: Remove -->
-## Before making this repo public
+<!-- ## Before making this repo public
 
 Before making this repository public, the following steps have to be done:
 
 - Delete examples folder, as we dont have the rights to use or publish this information.
 - Restructure folders and files: Make ``src`` with each Subproject and ``docs`` with extensive documentation and tex-files.
-- Delete prompts folder
+- Delete prompts folder -->
 
 ## GitHub Repository
 
@@ -23,17 +29,46 @@ The GitHub repository for this project is located at: [https://github.com/s-voel
 
 The MIT License (MIT) applies to this project, as stated in [LICENSE](LICENSE). The documentation and diagrams are licensed under the Creative Commons Attribution 4.0 International Public License (CC BY 4.0) in accordance with the [LICENSE](tex/LICENSE) file.
 
-## Usage
-
-See [Usage Guide](USAGE.md) for detailed instructions on how to set up and run the project.
-
 ## Architecture Overview
 
 The ESP32 firmware is split into self-contained, unit-tested modules under `esp32/src/`, orchestrated from the main sketch `esp32/esp32.ino`. All tunable values and hardware pins are centralized in `esp32/config.h`.
 
-See the component diagram in [diagrams/src/architecture.puml](diagrams/src/architecture.puml).
+### Architecture Diagrams
 
-![Architecture Diagram](diagrams/out/architecture/architecture.png)
+See the relevant diagrams in `diagrams/out/`. System Architecture Diagram:
+
+![System Architecture Diagram](diagrams/out/system-architecture/system-architecture.png)
+
+Hardware Architecure Diagram:
+![Hardware Architecture Diagram](diagrams/out/hardware-architecture/hardware-architecture.png)
+
+### ESP32 Screens
+
+ESP32 screen examples:
+
+<div align="left">
+  <img src="assets/esp32-loading.png" alt="BiteBound ESP32 Loading Screen" width="200">
+  <img src="assets/esp32-labyrinth.png" alt="BiteBound ESP32 Game Screen" width="200">
+</div>
+
+### Node-RED Dashboard
+
+Node-RED workflow:
+
+![Node-RED Workflow](assets/nodered-workflow.png)
+
+Node-RED web dashboard example:
+
+![Node-RED Web Dashboard](assets/nodered-dashboard.png)
+
+### Android App
+
+Android App examples:
+
+<div align="left">
+  <img src="assets/android-app-1.png" alt="BiteBound Android App Screenshot 1" width="250">
+  <img src="assets/android-app-2.png" alt="BiteBound Android App Screenshot 2" width="250">
+</div>
 
 ### Concurrency Model (ESP32-S3 Dual Core)
 
@@ -82,112 +117,6 @@ BiteBound/
 ├── screenshots/              # UI / dashboard / flow screenshots
 └── tex/                      # LaTeX report sources
 ```
-
-<!-- TODO: Remove -->
-## Projectmanagement
-
-Spiel 1 & 2:
-Benutzen beide selbe Grundlage (Sensorwerte, MQTT, WiFi, Cookies, Display)
-
-### Erweiterungen
-
-Spiel 1:
-
-- Ghost Enemy (A-Star Algorithm)
-
-Spiel 2:
-
-- Hindernisse, Löcher, ...
-
-Beide Spiele:
-
-- Vibrationsbuzzer
-- Sound spielen (tricky!!!)
-
-<!-- update? -->
-
-### Aufgaben
-
-#### Hardware
-
-- ESP32 Setup
-- MQTT + WiFi Verbindung, JSON-Parsing (In + Out)
-- Sensorwerte lesen, glätten, usw.
-- Physiksimulation (Geschwindigkeit, Beschleunigung, Kollision, Cookie-Kollision, ...)
-- Maze Generation
-- Cookies generieren
-- Displaylogik mit GFX-Bibliothek
-- Spiel 1: Labyrinth
-- Spiel 2: Kugel auf Bildschirm
-- Threads aufsetzen, Safety testen
-- AUnit Unit Tests
-
-#### Nodered
-
-- MQTT Signale lesen
-- Dashboard für Anzeige von Punkten, Name, Runden, Zeit, Physikdaten, Sensorwerte, ...
-- Eingabemaske für Spielername, Keksanzahl, Wandstärke, Buttons für Start/Stop
-
-#### Android: Android-App in Kotlin
-
-- Repo aufsetzen
-- Credentials file
-- HiveMQ-Bibliothek für MQTT benutzen
-- Subscribe: Live-Anzeige der Daten
-- Publish: Senden von Befehlen (+Eingabemaske für Inputs)
-
-#### TechRep
-
-### TechRep Specs
-
-- 10 Seiten, 3-4 Screenshots
-- Node-Red-Workflow (Screenshot)
-- ESP32-Code in Anhang
-
-Struktur:
-
-- Introduction:
-  - Intro
-  - Mission Statement
-  - Motivation
-  - Document Structure
-- Related Work:
-  - tbd
-- Projektmanagement:
-  - SMART
-  - User Stories (Anforderungen)
-  - MVP
-  - Erweiterungen
-  - Aufgabenverteilung (Guidelines/Standards, PRs, Code Coverage, Git, ...)
- -Technical Concept:
-  - Grobarchitektur (+Bild)
-  - Komponenten (Hardware, Nodered, Android)
-- Hardware:
-  - Komponenten (ESP32) im Detail
-  - Sensorerfassung
-  - Physiksimulation (+Formeln)
-  - Display (+Screenshots)
-  - MQTT Topics + Payloads (+listing JSON)
-- Nodered:
-  - Workflow (+Screenshot)
-  - Dashboard + Userinput (+Screenshot)
-- Android App:
-  - Softwarekomponenten, Klassen, Views
-  - Dashboard + UserInput (+Screenshot)
-- Evaluation:
-  - Probleme + Lösungen
-  - Code Coverage
-  - (Cost Estimation)
-- Summary:
-  - Summary + Future Work
-- Anhang:
-  - Prompts
-  - ESP32 Code
-
-### Guidelines
-
-- Test Coverage: ESP32 ohne Display 80%, Android 40% max., NodeRed nichts.
-- main Branch Protection, mit PRs
 
 ## Documentation
 
