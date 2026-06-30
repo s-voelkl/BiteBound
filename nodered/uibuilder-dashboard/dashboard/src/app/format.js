@@ -14,13 +14,13 @@ export function formatUptime(ms) {
 }
 
 /**
- * Formats stopwatch seconds to mm:ss.ms
+ * Formats stopwatch seconds to mm:ss
+ * Milliseconds have been omitted for clean presentation.
  */
 export function formatElapsedTime(sec) {
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60);
-    const ms = Math.floor((sec % 1) * 1000);
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
 /**

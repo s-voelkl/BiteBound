@@ -26,117 +26,46 @@ body {
     display: none !important;
 }
 
-/* Connection Screen styling */
-.connection-card {
-    max-width: 480px;
-    margin: 40px auto;
-    border-radius: 24px;
+/* Status Banner styling with added margin and padding padding towards components */
+.banner-section {
+    padding: 0 4px;
 }
 
-.brand-header {
-    text-align: center;
-    margin-bottom: 24px;
-}
-
-.brand-logo-large {
-    width: 100px;
-    height: 100px;
-    object-fit: contain;
-}
-
-.brand-title {
-    font-size: 2rem;
-    margin: 8px 0 0 0;
-    color: var(--caramel-brown);
-}
-
-.section-label {
-    margin-top: 16px;
-    margin-bottom: 6px;
-}
-
-/* Accordion Component UI */
-.accordion {
-    margin: 12px 0;
-}
-
-.btn-text {
-    background: none;
-    border: none;
-    color: var(--caramel-brown);
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    padding: 6px 0;
-}
-
-.btn-text .icon {
-    font-size: 0.7rem;
-    margin-right: 6px;
-    transition: transform 0.2s;
-}
-
-.accordion-panel {
-    max-height: 500px;
-    overflow: hidden;
-    transition: max-height 0.2s ease-out, opacity 0.15s;
-    opacity: 1;
-}
-
-.accordion-panel.collapsed {
-    max-height: 0;
-    opacity: 0;
-}
-
-/* Password Input Toggle Alignment */
-.password-group .input-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.password-group .btn-icon {
-    position: absolute;
-    right: 8px;
-    background: none;
-    border: none;
-    font-size: 1.2rem;
-    cursor: pointer;
-    color: var(--text-muted);
-}
-
-/* Status Banner styling */
 .status-banner {
     background-color: var(--bg-surface);
     border: 2px solid var(--border-color);
     border-radius: 14px;
-    padding: 10px 14px;
+    padding: 12px 20px;
     display: inline-flex;
     align-items: center;
+    margin-bottom: 12px;
 }
 
 .status-dot {
-    width: 10.5px;
-    height: 10.5px;
+    width: 11px;
+    height: 11px;
     border-radius: 50%;
-    margin-right: 10px;
+    margin-right: 12px;
     background-color: var(--text-muted);
 }
 
-/* Score Card progress ring styling matching CookieProgress */
-.cookie-progress-container {
+/* Horizontal Score Layout with circular SVGs on the Left */
+.cookie-score-layout {
     display: flex;
-    justify-content: center;
     align-items: center;
-    margin: 14px 0;
+    gap: 16px;
+    justify-content: flex-start;
+    padding: 8px 0;
+}
+
+.cookie-progress-left {
+    flex: 0 0 auto;
 }
 
 .cookie-progress-wrapper {
     position: relative;
-    width: 210px;
-    height: 210px;
+    width: 120px;
+    height: 120px;
 }
 
 .progress-ring {
@@ -151,17 +80,16 @@ body {
     fill: none;
     stroke: var(--caramel-brown);
     stroke-opacity: 0.35;
-    stroke-width: 14px;
+    stroke-width: 8px;
 }
 
 .progress-ring__circle {
     fill: none;
     stroke: var(--cookie-dough);
-    stroke-width: 14px;
+    stroke-width: 8px;
     stroke-linecap: round;
-    stroke-dasharray: 596.9;
-    /* 2 * PI * r (95) */
-    stroke-dashoffset: 596.9;
+    stroke-dasharray: 326.72;
+    stroke-dashoffset: 326.72;
     transition: stroke-dashoffset 0.6s ease-in-out;
 }
 
@@ -179,33 +107,39 @@ body {
 }
 
 .collected-count {
-    font-size: 2.8rem;
+    font-size: 1.8rem;
     font-weight: bold;
     color: #ffffff;
     line-height: 1;
 }
 
 .target-count {
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     color: rgba(255, 255, 255, 0.65);
 }
 
 .percent-count {
-    font-size: 1rem;
+    font-size: 0.8rem;
     font-weight: bold;
     color: rgba(255, 255, 255, 0.85);
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
-/* Stat elements */
-.hero-stat {
+.cookie-stats-right {
+    flex: 1;
     display: flex;
     flex-direction: column;
+    gap: 6px;
+}
+
+.cookie-stat-item {
+    display: flex;
     align-items: center;
 }
 
+/* Stat Elements */
 .stat-highlight {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     font-weight: bold;
 }
 
@@ -221,46 +155,38 @@ body {
     background-color: rgba(76, 140, 90, 0.15);
     color: var(--mint-green);
     border-radius: 12px;
-    padding: 10px;
+    padding: 8px;
     text-align: center;
     font-weight: bold;
-    margin-top: 12px;
+    font-size: 0.85rem;
 }
 
 .subline {
-    text-align: center;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--text-muted);
+    margin: 4px 0 0 0;
 }
 
-/* Board canvas wrapper */
+/* Board Canvas wrapper styling */
 .board-canvas-container {
     display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
-    padding: 8px 0;
+    padding: 4px 0;
 }
 
-/* Details and Stat tables */
-.sensor-grid-stat {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-}
-
-.stat-tile {
-    background-color: rgba(224, 185, 120, 0.25);
+#physicsCanvas {
+    max-width: 100%;
+    height: auto;
     border-radius: 12px;
-    padding: 10px 4px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 }
 
-.stat-tile-val {
-    font-size: 1rem;
-    font-weight: bold;
+/* Structured Device table rows restricting width expansion */
+.device-table-container {
+    max-width: 320px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 .detail-rows {
@@ -271,7 +197,7 @@ body {
 .info-row {
     display: flex;
     justify-content: space-between;
-    padding: 6px 0;
+    padding: 8px 0;
     border-bottom: 1px dashed rgba(181, 114, 46, 0.2);
 }
 
@@ -287,38 +213,83 @@ body {
     font-weight: 500;
 }
 
-/* Dashboard spacing / alignment utility classes */
-.margin-top-sm {
-    margin-top: 8px;
-}
-
-.margin-top-md {
-    margin-top: 16px;
-}
-
-/* Dashboard Grids */
-.dashboard-grid {
+/* Sensors grid metrics layout */
+.sensor-grid-stat {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 14px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.stat-tile {
+    background-color: rgba(224, 185, 120, 0.2);
+    border-radius: 12px;
+    padding: 8px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-tile-val {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+/* Input elements styling in Game Controls */
+.form-control {
     width: 100%;
+    padding: 10px 14px;
+    font-size: 1rem;
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
 }
 
-@media (min-width: 768px) {
-    .dashboard-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .col-1 {
-        grid-column: 1;
-    }
-
-    .col-2 {
-        grid-column: 2;
-    }
+.form-control:focus {
+    border-color: var(--cookie-golden);
+    box-shadow: 0 0 0 3px rgba(217, 162, 74, 0.2);
 }
 
-/* Confirmation Dialog Modal */
+.form-control:disabled {
+    background-color: rgba(90, 58, 34, 0.1);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    border-color: rgba(181, 114, 46, 0.3);
+    opacity: 0.65;
+}
+
+/* Toggle Preset selection buttons */
+.btn-toggle {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+}
+
+.btn-toggle.active {
+    background-color: var(--caramel-brown);
+    color: var(--milk-cream);
+}
+
+/* Aligned side button group rules */
+.action-row-container {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-start;
+}
+
+.btn-compact {
+    max-width: 140px;
+    width: 100%;
+    height: 42px;
+    padding: 8px 16px;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+/* Confirmation modal card styles */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -333,38 +304,24 @@ body {
 }
 
 .modal-box {
-    max-width: 400px;
+    background-color: var(--bg-surface);
+    border: 3px solid var(--border-color);
+    max-width: 420px;
     width: 90%;
-    border-radius: 18px;
+    border-radius: 20px;
     text-align: center;
+    padding: 24px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
 }
 
 .modal-actions {
     display: flex;
     justify-content: space-evenly;
     margin-top: 18px;
+    gap: 12px;
 }
 
-/* Toggle Buttons */
-.btn-toggle {
-    background-color: var(--bg-surface);
-    color: var(--text-primary);
-    border: 2px solid var(--border-color);
-}
-
-.btn-toggle.active {
-    background-color: var(--caramel-brown);
-    color: var(--milk-cream);
-}
-
-.disclaimer {
-    font-size: 0.75rem;
-    text-align: center;
-    margin-top: 16px;
-    color: rgba(90, 58, 34, 0.6);
-}
-
-/* Center Aligned Top App Bar */
+/* Top App Bar configuration */
 .top-app-bar {
     width: 100%;
     background-color: var(--bg-surface);
@@ -376,7 +333,7 @@ body {
 }
 
 .app-bar-content {
-    max-width: 1160px;
+    max-width: 1200px;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
@@ -402,42 +359,145 @@ body {
     margin-left: 8px;
 }
 
-.btn-logout {
-    background: none;
-    border: 2px solid var(--berry-red);
-    color: var(--berry-red);
-    border-radius: 8px;
-    padding: 6px 12px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.1s;
+/* Compact utility grid layouts */
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
 }
 
-.btn-logout:hover {
-    background-color: rgba(192, 73, 47, 0.1);
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
 }
 
-.error-notice {
-    color: var(--berry-red);
-    font-weight: bold;
-    font-size: 0.85rem;
-    text-align: center;
+.margin-top-sm {
     margin-top: 8px;
 }
 
-.error-notice.border-notice {
-    padding: 10px;
-    background-color: rgba(192, 73, 47, 0.1);
-    border: 2px solid var(--berry-red);
-    border-radius: 12px;
+.margin-top-md {
+    margin-top: 16px;
 }
 
-.flex-btn {
-    flex: 1;
-    height: 50px;
-}
-
-.action-row {
+/* Base Card structure */
+.card {
+    background-color: var(--bg-surface);
+    border: 3.5px solid var(--border-color);
+    border-radius: 18px;
+    padding: 14px;
     display: flex;
-    gap: 12px;
+    flex-direction: column;
+}
+
+.card-title {
+    font-size: 1.15rem;
+    margin: 0 0 12px 0;
+    color: var(--caramel-brown);
+    border-bottom: 2px dashed rgba(181, 114, 46, 0.2);
+    padding-bottom: 4px;
+}
+
+/* Primary viewport containers & layout columns targeting zero desktop scrolling */
+.dashboard-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+@media (min-width: 1024px) {
+    body {
+        overflow: hidden;
+        /* Lock viewport scrolling on desktop */
+    }
+
+    .screen-view {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        padding: 12px;
+    }
+
+    .dashboard-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .dashboard-workspace {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1.15fr 1fr 1.1fr;
+        gap: 16px;
+        overflow: hidden;
+        height: calc(100vh - 120px);
+    }
+
+    /* Fallback logic adjustments when active telemetry streams are pending */
+    .dashboard-workspace:has(.telemetry-columns.hidden) {
+        grid-template-columns: 1.5fr 1fr;
+    }
+
+    .telemetry-columns {
+        display: contents !important;
+    }
+
+    .layout-col {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        height: 100%;
+        overflow-y: auto;
+        /* Contain any overflow to side columns */
+    }
+
+    .layout-col::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .layout-col::-webkit-scrollbar-thumb {
+        background-color: rgba(181, 114, 46, 0.35);
+        border-radius: 3px;
+    }
+
+    .controls-wrapper {
+        overflow-y: auto;
+    }
+}
+
+/* Mobile Compatibility Fallbacks */
+@media (max-width: 1023px) {
+    .dashboard-workspace {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .telemetry-columns {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .layout-col {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .sensor-grid-stat {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .btn-compact {
+        max-width: none;
+        flex: 1;
+    }
+}
+
+@media (min-width: 480px) and (max-width: 1023px) {
+    .sensor-grid-stat {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
