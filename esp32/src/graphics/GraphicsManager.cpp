@@ -1,4 +1,5 @@
 #include "GraphicsManager.h"
+#include "src/game/RunningStatus.h"
 
 GraphicsManager::GraphicsManager(int width, int height)
     : _width(width), _height(height), _gfx(nullptr), _needsFullRedraw(true), _prevCookieCount(0)
@@ -67,7 +68,7 @@ void GraphicsManager::drawUI(const GameState &state, bool forceDraw)
         return;
 
     // Prevent screen flicker by executing heavy character renders only when data shifts
-    bool statusChanged = strcmp(state.status, _prevGameState.status) != 0;
+    bool statusChanged = state.runningStatus != _prevGameState.runningStatus;
     bool scoreChanged = state.cookiesCollected != _prevGameState.cookiesCollected ||
                         state.cookiesRemaining != _prevGameState.cookiesRemaining;
     bool roundChanged = state.currentRound != _prevGameState.currentRound;
@@ -95,10 +96,26 @@ void GraphicsManager::drawUI(const GameState &state, bool forceDraw)
         // _gfx->print((int)state.elapsedTimeSec);
         // _gfx->print("s");
 
-        // Align status string
+        // Align runningStatus string
         // _gfx->setCursor(_width - 60, 5);
+        String runningStatusStr;
+        switch (state.runningStatus)
+        {
+        case RunningStatus::IDLE:
+            runningStatusStr = "idle";
+            break;
+        case RunningStatus::RUNNING:
+            runningStatusStr = "running";
+            break;
+        case RunningStatus::COMPLETED:
+            runningStatusStr = "completed";
+            break;
+        default:
+            runningStatusStr = "unknown";
+            break;
+        }
         _gfx->print(" ");
-        _gfx->print(state.status);
+        _gfx->print(runningStatusStr);
     }
 }
 
@@ -107,11 +124,14 @@ void GraphicsManager::eraseRegion(int cx, int cy, int radius, const uint8_t *maz
     if (!_gfx || !mazeGrid)
         return;
 
+    // Map play-area relative cy to screen coordinates
+    int sy = cy + ui_header_height;
+
     // Define localized bounding box surrounding the shape
     int minX = max(0, cx - radius - 1);
     int maxX = min(_width - 1, cx + radius + 1);
-    int minY = max(ui_header_height, cy - radius - 1);
-    int maxY = min(_height - 1, cy + radius + 1);
+    int minY = max(ui_header_height, sy - radius - 1);
+    int maxY = min(_height - 1, sy + radius + 1);
 
     for (int y = minY; y <= maxY; ++y)
     {
@@ -145,14 +165,14 @@ void GraphicsManager::drawCookie(const Cookie &cookie)
 {
     if (!_gfx || !cookie.active)
         return;
-    _gfx->fillCircle((int16_t)cookie.x, (int16_t)cookie.y, (int16_t)cookie.radius, color_cookie);
+    _gfx->fillCircle((int16_t)cookie.x, (int16_t)(cookie.y + ui_header_height), (int16_t)cookie.radius, color_cookie);
 }
 
 void GraphicsManager::drawSphere(const PhysicsBody &ball)
 {
     if (!_gfx)
         return;
-    _gfx->fillCircle((int16_t)ball.x, (int16_t)ball.y, (int16_t)ball.radius, color_sphere);
+    _gfx->fillCircle((int16_t)ball.x, (int16_t)(ball.y + ui_header_height), (int16_t)ball.radius, color_sphere);
 }
 
 void GraphicsManager::update(
@@ -168,7 +188,7 @@ void GraphicsManager::update(
         return;
 
     // Detect structural system shifts requiring a complete redraw
-    bool statusChanged = strcmp(state.status, _prevGameState.status) != 0;
+    bool statusChanged = state.runningStatus != _prevGameState.runningStatus;
     bool roundChanged = state.currentRound != _prevGameState.currentRound;
 
     if (statusChanged || roundChanged)

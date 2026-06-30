@@ -2,14 +2,20 @@
 #include "src/network/wifi-connection/WifiManager.h"
 #include "src/network/mqtt/MqttManager.h"
 #include "src/network/json-builder/JsonBuilder.h"
+#include "src/network/json-parser/CommandParser.h"
+#include "src/network/shared/SharedStateData.h"
+#include "src/network/shared/MutexLock.h"
 #include "src/sensors/SensorManager.h"
 #include "src/graphics/GraphicsManager.h"
-#include "src/maze/MazeManager.h"
+#include "src/engine/GameEngine.h"
 #include "config.h"
 
 #include <AUnit.h>
 #include <ArduinoJson.h>
 #include <Arduino_GFX_Library.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
+#include <freertos/queue.h>
 
 // Set to 1 to use mock sensor data instead of real hardware
 #ifndef MOCK_SENSORS
@@ -22,29 +28,43 @@
 #define RUN_TESTS 0
 #endif
 
+// Threading Synchronizations
+SemaphoreHandle_t stateMutex = nullptr;
+QueueHandle_t commandQueue = nullptr;
+SharedStateData sharedState;
+
 // Global Graphics Setup
 Arduino_DataBus *bus = new Arduino_ESP32SPI(pin_lcd_dc, pin_lcd_cs, pin_lcd_sck, pin_lcd_mosi);
-Arduino_GFX *gfx = new Arduino_ST7789(bus, pin_lcd_rst /* RST */,0 /* rotation */, 
+Arduino_GFX *gfx = new Arduino_ST7789(bus, pin_lcd_rst /* RST */, 0 /* rotation */,
   true /* IPS */, display_width, display_height, 0, 20, 0, 0);
 GraphicsManager graphicsManager(display_width, display_height);
 
-// Play space calculations
+// Play space calculations (HUD occupies the top ui_header_height pixels)
 const int play_width = display_width;
 const int play_height = display_height - ui_header_height;
 
-// Global Maze Manager Setup
-MazeManager mazeManager(play_width, play_height, default_wall_thickness_px);
+// Game orchestration: owns physics and both games, and drives the active one.
+GameEngine gameEngine;
 
-// Memory allocation for the game board bitmap
-uint8_t *gameBoard = nullptr;
+// FreeRTOS Task on Core 0 to isolate network operations.
+void vNetworkTask(void *pvParameters);
+
+// Helper function declarations
+void processIncomingCommands();
+void updateGameStep();
 
 /**
  * @brief Main setup function for the MCU controller.
- * This function initializes the serial communication, connects to WiFi and MQTT.
+ * This function initializes processing primitives, connectivity, and the game loop.
  */
 void setup() {
   Serial.begin(115200);
   Serial.println("ESP32 BiteBound Hardware starting...");
+
+  // Initialize threading primitives
+  stateMutex = xSemaphoreCreateMutex();
+  commandQueue = xQueueCreate(cmd_queue_length, cmd_queue_item_size);
+  initSharedState(sharedState);
 
 #if RUN_TESTS
   // serial initialization delay for test output
@@ -69,7 +89,7 @@ void setup() {
   timeManager.sync();
 
   // Seed standard library random engine with timing noise
-  std::srand(micros()); 
+  std::srand(micros());
 
   // Initialize sensors
   graphicsManager.drawLoadingScreen("Initializing Sensors...");
@@ -78,106 +98,276 @@ void setup() {
   // Setup MQTT client
   graphicsManager.drawLoadingScreen("Starting MQTT...");
   mqttManager.begin();
+  mqttManager.connect(); // initial connection attempt
+  mqttManager.loop(); // once to verify connection
 
-  // TODO: Move game board init and maze gen!
+  // Initialize the game engine and start in idle mode.
   graphicsManager.drawLoadingScreen("Creating Maze...");
-  // Allocate memory for the global gameBoard
-  gameBoard = new uint8_t[play_width * play_height];
+  gameEngine.begin(play_width, play_height);
+  gameEngine.chooseGameMode(default_game_id);
 
-  // Generate maze
-  if (gameBoard) {
-    bool generated = mazeManager.generate(gameBoard);
-    if (generated) {
-      Serial.println("Procedural maze successfully generated.");
-    } else {
-      Serial.println("Maze generation failed.");
-    }
+  // Set running state to true to match main branch behavior (playable on boot).
+  {
+      MutexLock lock(stateMutex);
+      if (lock.isLocked()) {
+          sharedState.gameId = default_game_id;
+          sharedState.runningStatus = RunningStatus::RUNNING;
+      }
   }
 
-  // End of setup, ready to enter main loop
+  // Create Network Task on Core 0 (isolated from logic/rendering)
+  xTaskCreatePinnedToCore(
+      vNetworkTask,
+      "NetworkTask",
+      8192,
+      NULL,
+      1,
+      NULL,
+      core_network
+  );
+
   graphicsManager.drawLoadingScreen("BiteBound is Ready!");
 #endif
 }
 
 /**
- * @brief Main loop function for the MCU controller.
- * This function runs continuously after setup.
+ * @brief Main loop function for the MCU controller (running on Core 1).
  */
 void loop() {
 #if RUN_TESTS
   // aunit::TestRunner::list(); // List all registered tests.
-  aunit::TestRunner::setTimeout(30) ; // Set a timeout of 30 seconds for tests.
+  aunit::TestRunner::setTimeout(30); // Set a timeout of 30 seconds for tests.
   aunit::TestRunner::run();
 #else
+  static TickType_t lastTickTime = xTaskGetTickCount();
 
-  // Ensure the MQTT connection is active
-  mqttManager.connect();
+  // 1. Core 1 Command Processing
+  processIncomingCommands();
 
-  // Handle MQTT communication and keep alive
-  mqttManager.loop();
+  // 2. Local Game Step & Rendering
+  updateGameStep();
 
-  // Read sensor values (mock or real based on definition)
+  // Preserve precision step constraints (e.g. 50Hz for smooth physics)
+  vTaskDelayUntil(&lastTickTime, pdMS_TO_TICKS(game_tick_rate_ms));
+#endif
+}
+
+/**
+ * @brief Processes incoming command structures transmitted from the network task.
+ */
+void processIncomingCommands() {
+  CommandMsg commandMsg;
+  while (xQueueReceive(commandQueue, &commandMsg, 0) == pdPASS) {
+    {
+      MutexLock lock(stateMutex);
+      if (lock.isLocked()) {
+        if (commandMsg.type == CommandType::START) {
+          GameConfig config;
+          config.gameId = commandMsg.gameId;
+          config.targetCookies = commandMsg.cookiesCount;
+          config.wallThicknessPx = commandMsg.wallThicknessPx;
+          config.physics.sensitivity = commandMsg.imuSensitivity;
+          config.physics.restitution = commandMsg.bounceRestitution;
+          config.physics.emaAlpha = commandMsg.emaAlpha;
+          config.physics.deadzone = commandMsg.deadzoneThreshold;
+          
+          gameEngine.applyConfig(config);
+          gameEngine.chooseGameMode(commandMsg.gameId);
+          
+          sharedState.runningStatus = RunningStatus::RUNNING;
+          sharedState.gameId = commandMsg.gameId;
+          strncpy(sharedState.playerName, commandMsg.playerName, sizeof(sharedState.playerName) - 1);
+        } 
+        else if (commandMsg.type == CommandType::STOP) {
+          sharedState.runningStatus = RunningStatus::IDLE;
+        } 
+        else if (commandMsg.type == CommandType::PARAM_CHANGE) {
+          GameConfig config;
+          config.physics.sensitivity = commandMsg.imuSensitivity;
+          config.physics.restitution = commandMsg.bounceRestitution;
+          config.physics.emaAlpha = commandMsg.emaAlpha;
+          config.physics.deadzone = commandMsg.deadzoneThreshold;
+          gameEngine.applyConfig(config);
+        }
+      }
+    }
+
+    // Debugging output for command processing is outside the critical lock
+    // section, as printing to Serial can be slow and blocking.
+    if (commandMsg.type == CommandType::START) {
+      Serial.println("Command: Start game received.");
+    } else if (commandMsg.type == CommandType::STOP) {
+      Serial.println("Command: Stop game received.");
+    } else if (commandMsg.type == CommandType::PARAM_CHANGE) {
+      Serial.println("Command: Parameter Change received.");
+    } else {
+      Serial.println("Command: Unknown command type received.");
+    }
+  }
+}
+
+/**
+ * @brief Computes physics, game state transitions and rendering on Core 1.
+ *
+ * This function is called at a fixed rate (50Hz) to ensure smooth physics and rendering.
+ * It reads the latest sensor data, updates the game engine, renders the display, and updates
+ * the shared state for telemetry.
+ */
+void updateGameStep() {
+  // 1. Sensors: Read sensor values (mock or real hardware)
 #if MOCK_SENSORS
-  Serial.println("Reading mock sensor data...");
   SensorData sensorData = sensorManager.readMock();
 #else
-  Serial.println("Reading real sensor data...");
   SensorData sensorData = sensorManager.read();
 #endif
 
-  // Populate telemetry data struct from sensors and configuration
-  TelemetryData telemetry;
+  // Avoid unnecessary updating of the game engine if the game is not running.
+  bool isRunningStatus = false;
+  {
+      MutexLock lock(stateMutex);
+      if (lock.isLocked()) {
+          isRunningStatus = (sharedState.runningStatus == RunningStatus::RUNNING);
+      }
+  }
 
-  // Device Information
-  telemetry.client_id = device_id;
-  telemetry.hardware = device_hardware;
-  telemetry.firmware_version = device_firmware_version;
-  telemetry.uptime_ms = millis();
-  telemetry.wifi_ssid = wifiManager.getSSID();
+  // 2. Time: Frame timing calculation
+  static uint32_t lastFrameMs = 0;
+  const uint32_t nowMs = millis();
+  if (lastFrameMs == 0) lastFrameMs = nowMs;
+  const float dt = (nowMs - lastFrameMs) / 1000.0f;
+  lastFrameMs = nowMs;
 
-  // Game Configuration
-  telemetry.game_id = 1;
-  telemetry.player_name = "Player 1";
-  telemetry.target_cookies = default_cookies_count;
-  telemetry.screen_width = display_width;
-  telemetry.screen_height = display_height;
-  telemetry.wall_thickness_px = default_wall_thickness_px;
+  // 3. Physics: Advance the active game by one physics frame if running.
+  if (isRunningStatus) {
+    // Coordinate system is rotated by 90 degrees.
+    gameEngine.update(-sensorData.accelerometerY, sensorData.accelerometerX, dt);
+  }
 
-  // Game State
-  telemetry.status = "running";
-  telemetry.cookies_collected = 0;
-  telemetry.cookies_remaining = 10;
-  telemetry.current_round = 1;
-  telemetry.elapsed_time_sec = 0.0f;
+  // 4. Display: Render the current game state to the display.
+  if (gameEngine.consumeRedraw()) {
+    graphicsManager.forceFullRedraw();
+  }
+  graphicsManager.update(
+      gameEngine.board(),
+      play_width,
+      play_height,
+      gameEngine.ball(),
+      gameEngine.cookies().data(),
+      (int)gameEngine.cookies().count(),
+      gameEngine.state());
 
-  // Physics Simulation State
-  telemetry.ball_pos_x = 112.45f;
-  telemetry.ball_pos_y = 145.2f;
-  telemetry.velocity_x = 1.85f;
-  telemetry.velocity_y = -0.92f;
-  telemetry.acc_x = 0.15f;
-  telemetry.acc_y = -0.34f;
+  // 5. Telemetry: Update shared state for the network core to publish as telemetry.
+  {
+    MutexLock lock(stateMutex);
+    if (lock.isLocked()) {
+      const GameState &gs = gameEngine.state();
+      const PhysicsBody &ball = gameEngine.ball();
 
-  // Sensor Readings (from SensorManager)
-  telemetry.accel_x = sensorData.accelerometerX;
-  telemetry.accel_y = sensorData.accelerometerY;
-  telemetry.accel_z = sensorData.accelerometerZ;
-  telemetry.gyro_x = sensorData.gyroscopeX;
-  telemetry.gyro_y = sensorData.gyroscopeY;
-  telemetry.gyro_z = sensorData.gyroscopeZ;
-  telemetry.battery_voltage = sensorData.batteryVoltage;
-  telemetry.button = sensorData.button;
+      sharedState.ballPosX = ball.x;
+      sharedState.ballPosY = ball.y;
+      sharedState.velocityX = ball.vx;
+      sharedState.velocityY = ball.vy;
+      sharedState.accX = 0; // Not currently calculated separately from tilt inputs
+      sharedState.accY = 0;
 
-  // Build JSON payload
-  String payload = buildTelemetryJson(telemetry);
+      sharedState.cookiesCollected = gs.cookiesCollected;
+      sharedState.cookiesRemaining = gs.cookiesRemaining;
+      sharedState.currentRound = gs.currentRound;
+      sharedState.elapsedTimeSec = gs.elapsedTimeSec;
+      sharedState.gameId = gameEngine.activeGameId();
+      sharedState.runningStatus = gs.runningStatus;
+    }
+  }
+}
 
-  // Log to Serial output
-  // Serial.print("Telemetry Payload: ");
-  // Serial.println(payload);
+/**
+ * @brief Concurrent FreeRTOS network management task pinned to Core 0.
+ * Handles MQTT connection, keeps the client alive, and publishes telemetry.
+ */
+void vNetworkTask(void *pvParameters) {
+  TickType_t lastTelemetryTime = xTaskGetTickCount();
+  while (true) {
+    // 1. Service MQTT loop and maintain connection status
+    // Must be called frequently to handle keep-alives and incoming messages.
+    if (wifiManager.isConnected()) {
+      mqttManager.loop();
+    }
 
-  // Publish to MQTT Broker
-  mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
+    // 2. Periodic telemetry publishing
+    TickType_t currentTick = xTaskGetTickCount();
+    if ((currentTick - lastTelemetryTime) >= pdMS_TO_TICKS(telemetry_rate_ms)) {
+      lastTelemetryTime = currentTick;
 
-  delay(1000);
-#endif
+      // Check WiFi and MQTT connection before publishing
+      if (wifiManager.isConnected()) {
+        if (!mqttManager.isConnected()) {
+          mqttManager.connect();
+        }
+
+        if (mqttManager.isConnected()) {
+          SensorData sensorData = sensorManager.getLastData();
+          TelemetryData telemetry;
+
+          // Populate hardware information.
+          telemetry.client_id = device_id;
+          telemetry.hardware = device_hardware;
+          telemetry.firmware_version = device_firmware_version;
+          telemetry.uptime_ms = millis();
+          telemetry.wifi_ssid = wifiManager.getSSID();
+
+          // Populate raw sensor readings.
+          telemetry.accel_x = sensorData.accelerometerX;
+          telemetry.accel_y = sensorData.accelerometerY;
+          telemetry.accel_z = sensorData.accelerometerZ;
+          telemetry.gyro_x = sensorData.gyroscopeX;
+          telemetry.gyro_y = sensorData.gyroscopeY;
+          telemetry.gyro_z = sensorData.gyroscopeZ;
+          telemetry.battery_voltage = sensorData.batteryVoltage;
+          telemetry.button = sensorData.button;
+
+          // Thread-safe capture of current game progress and physics state.
+          {
+            MutexLock lock(stateMutex);
+            if (lock.isLocked()) {
+              telemetry.game_id = sharedState.gameId;
+              telemetry.player_name = sharedState.playerName;
+              telemetry.target_cookies = sharedState.cookiesCount;
+              telemetry.screen_width = display_width;
+              telemetry.screen_height = display_height;
+              telemetry.wall_thickness_px = sharedState.wallThicknessPx;
+
+              String runningStatusStr = "idle";
+              if (sharedState.runningStatus == RunningStatus::RUNNING) {
+                runningStatusStr = "running";
+              } else if (sharedState.runningStatus == RunningStatus::COMPLETED) {
+                runningStatusStr = "completed";
+              }
+              telemetry.runningStatus = runningStatusStr;
+
+              telemetry.cookies_collected = sharedState.cookiesCollected;
+              telemetry.cookies_remaining = sharedState.cookiesRemaining;
+              telemetry.current_round = sharedState.currentRound;
+              telemetry.elapsed_time_sec = sharedState.elapsedTimeSec;
+
+              telemetry.ball_pos_x = sharedState.ballPosX;
+              telemetry.ball_pos_y = sharedState.ballPosY;
+              telemetry.velocity_x = sharedState.velocityX;
+              telemetry.velocity_y = sharedState.velocityY;
+              telemetry.acc_x = sharedState.accX;
+              telemetry.acc_y = sharedState.accY;
+            }
+          }
+
+          // Send telemetry JSON payload to MQTT broker
+          String payload = buildTelemetryJson(telemetry);
+          mqttManager.publish(mqtt_telemetry_topic, payload.c_str(), mqtt_retain);
+        }
+      }
+    }
+
+    // Short yield to feed the IDLE task and watchdogs.
+    // vTaskDelay(): Delays the task for a specified number of ticks. 
+    // pdMS_TO_TICKS(): Converts milliseconds to ticks.
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
 }

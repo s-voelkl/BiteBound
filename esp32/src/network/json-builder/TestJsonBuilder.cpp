@@ -17,7 +17,7 @@ test(JsonBuilderBasicStructure)
     data.screen_height = 280;
     data.wall_thickness_px = 6;
 
-    data.status = "running";
+    data.runningStatus = "running";
     data.cookies_collected = 5;
     data.cookies_remaining = 5;
     data.current_round = 1;
@@ -74,7 +74,7 @@ test(JsonBuilderTestMethod)
     assertEqual(doc["config"]["target_cookies"].as<int>(), 15);
 
     // Verify state
-    assertEqual(doc["state"]["status"].as<String>(), "running");
+    assertEqual(doc["state"]["runningStatus"].as<String>(), "running");
     assertEqual(doc["state"]["cookies_collected"].as<int>(), 4);
     assertEqual(doc["state"]["cookies_remaining"].as<int>(), 11);
 
@@ -109,7 +109,7 @@ test(JsonBuilderAllFieldsPresent)
     data.screen_width = 240;
     data.screen_height = 280;
     data.wall_thickness_px = 6;
-    data.status = "running";
+    data.runningStatus = "running";
     data.cookies_collected = 5;
     data.cookies_remaining = 5;
     data.current_round = 1;
@@ -147,7 +147,7 @@ test(JsonBuilderAllFieldsPresent)
     assertTrue(doc["config"]["screen_height"].is<int>());
     assertTrue(doc["config"]["wall_thickness_px"].is<int>());
 
-    assertTrue(doc["state"]["status"].is<String>());
+    assertTrue(doc["state"]["runningStatus"].is<String>());
     assertTrue(doc["state"]["cookies_collected"].is<int>());
     assertTrue(doc["state"]["cookies_remaining"].is<int>());
     assertTrue(doc["state"]["current_round"].is<int>());

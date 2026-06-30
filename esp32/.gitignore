@@ -75,3 +75,4 @@ wifi_mqtt_secrets.h
 
 # tests
 test_output.*
+test-coverage.*

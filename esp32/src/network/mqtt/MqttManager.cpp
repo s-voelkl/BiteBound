@@ -1,6 +1,14 @@
 #include "MqttManager.h"
+#include "../json-parser/CommandParser.h"
+#include "../shared/CommandMsg.h"
 #include "../../../wifi_mqtt_secrets.h"
 #include "../../../config.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
+
+// Extern queue variable declared in the main sketch
+// Needed to pass parsed command messages from the MQTT callback to the main loop for processing
+extern QueueHandle_t commandQueue;
 
 /**
  * @brief Pointer to the instance whose member callback should receive
@@ -73,11 +81,17 @@ bool MqttManager::connect()
     {
         Serial.println("MQTT connected successfully!");
 
+        // Subscribe to the command topic to receive incoming commands from the dashboard.
+        bool command_subscribed = _client.subscribe(mqtt_command_topic, mqtt_qos);
+        Serial.println("Subscribed to command topic at QoS " + String(mqtt_qos) +
+                       ", success: " + String(command_subscribed) +
+                       ", topic: " + String(mqtt_command_topic));
+
         // Verify the connection by subscribing to the test topic. PubSubClient
         // supports QoS 0 and QoS 1 for subscriptions.
-        bool subscribed = _client.subscribe(mqtt_test_topic, mqtt_qos);
+        bool test_subscribed = _client.subscribe(mqtt_test_topic, mqtt_qos);
         Serial.println("Subscribed at QoS " + String(mqtt_qos) +
-                       ", success: " + String(subscribed) +
+                       ", success: " + String(test_subscribed) +
                        ", topic: " + String(mqtt_test_topic));
 
         // Verify the connection by publishing a test message. PubSubClient
@@ -145,7 +159,27 @@ void MqttManager::messageTrampoline(char *topic, byte *payload, unsigned int len
 
 void MqttManager::onMessage(char *topic, byte *payload, unsigned int length)
 {
-    (void)payload; // Payload is not consumed in the default implementation.
     Serial.println("MQTT message received on topic " + String(topic) +
                    " with payload length " + String(length));
+
+    // Target the verified group topic configuration
+    // Pass parsed command messages to the FreeRTOS processing queue
+    if (strcmp(topic, mqtt_command_topic) == 0)
+    {
+        CommandMsg cmdMsg;
+        if (CommandParser::parse(payload, length, cmdMsg))
+        {
+            if (commandQueue != nullptr)
+            {
+                if (xQueueSend(commandQueue, &cmdMsg, 0) != pdPASS)
+                {
+                    Serial.println("Warning: commandQueue is full. Message discarded.");
+                }
+            }
+        }
+        else
+        {
+            Serial.println("Failed to parse command payload structure.");
+        }
+    }
 }

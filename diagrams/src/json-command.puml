@@ -1,0 +1,26 @@
+@startjson json-command
+{
+  "command": "start",
+  "meta": {
+    "source_ui": "NODE_RED",
+    "request_id": "908f4600-5fc3-4be5-b872-27ca816d6273",
+    "timestamp": "2026-06-29T11:50:00Z"
+  },
+  "player": {
+    "name": "Cookie-Monster"
+  },
+  "game": {
+    "game_id": 1
+  },
+  "parameters": {
+    "cookies_count": 10,
+    "wall_thickness_px": 6
+  },
+  "physics": {
+    "imu_sensitivity_multiplier": 100,
+    "bounce_restitution": 0.3,
+    "ema_alpha": 0.5,
+    "deadzone_threshold": 0.04
+  }
+}
+@endjson

@@ -53,7 +53,7 @@ function renderHero(state) {
     setText('#cookies-target', String(target));
     setText('#round-value', String(telemetry?.state.current_round ?? 0));
     setText('#time-value', formatDuration(telemetry?.state.elapsed_time_sec ?? 0));
-    setText('#status-value', formatStatus(telemetry?.state.status ?? 'idle'));
+    setText('#running-status-value', formatStatus(telemetry?.state.runningStatus ?? 'idle'));
 
     const player = telemetry?.config.player_name || DEFAULT_PLAYER_NAME;
     const remaining = telemetry?.state.cookies_remaining ?? target;
