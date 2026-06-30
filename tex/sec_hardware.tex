@@ -14,7 +14,7 @@ The code operates on a dual-core microcontroller to separate timing-sensitive ga
 \label{subsec:esp32_s3_microcontroller}
 The core processing unit is a Waveshare ESP32-S3 1.69-inch Touch LCD development board~\cite{wavesharedoku2026}.
 Onboard peripherals integrated on the board include a QMI8658 six-axis Inertial Measurement Unit (IMU), a Real-Time Clock (RTC), and an ST7789-driven 240$\times$280 pixel Liquid Crystal Display (LCD).
-Dedicated hardware pins and interface buses (I2C for sensors, SPI for the display) are managed centrally via the \texttt{config.h} configuration file~\cite{waveshare2026pinconfig}.
+Dedicated hardware pins and interface buses, like Inter-Integrated Circuit (I2C) for sensors and Serial Peripheral Interface (SPI) for the display, are managed centrally via the \texttt{config.h} configuration file~\cite{waveshare2026pinconfig}.
 
 \subsection{Concurrency}
 \label{subsec:concurrency}
@@ -82,11 +82,11 @@ The \texttt{RectCookieSpawner} places cookies within random bounds for the open 
 
 The rendering of the interface is performed by the \texttt{GraphicsManager} using the Adafruit GFX-compatible \texttt{Arduino\_GFX} library~\cite{arduino2026gfx}.
 
-Transmitting a full 16-bit color frame ($240 \times 280$ pixels) requires writing 131.25 KB of data. Since SPI transfers one bit per clock cycle, a 27 MHz bus provides a theoretical throughput of 27 Mbit/s, resulting in a frame transmission time of approximately 40 ms, derived from the ratio between total frame size and bus bandwidth.
+Transmitting a full 16-bit color frame ($240 \times 280$ pixels) requires writing 131.25 KB of data. Since SPI transfers one bit per clock cycle, a 27 MHz bus provides a theoretical throughput of 27 Mbit/s, resulting in a frame transmission time of approximately 40 ms, derived from the ratio between total frame size and bus bandwidth~\cite{computools2026spi}.
 This exceeds the 20\,ms limit of the 50\,Hz game loop.
 To achieve a consistent frame rate, the display module utilizes a hybrid update scheme:
 
-Updating a $240 \times 280$ display in 16-bit color (RGB565) requires pushing **131.25 KB** of data per frame. Over a standard, stable 27 MHz SPI bus, a full frame transmission takes **~40ms**, which physically violates the 20ms constraint of a 50Hz game loop.
+Updating a $240 \times 280$ display in 16-bit color (RGB565) requires pushing 131.25 KB of data per frame. Over a standard, stable 27 MHz SPI bus, a full frame transmission takes roughly 40 ms, which physically violates the 20ms constraint of a 50Hz game loop.
 
 To circumvent this hardware bottleneck, the \texttt{GraphicsManager} implements a hybrid rendering architecture utilizing the dirty rectangles technique~\cite{studyraid2025dirtyrect}:
 
