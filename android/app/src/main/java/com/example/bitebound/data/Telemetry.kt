@@ -78,20 +78,20 @@ data class GameConfig(
 }
 
 data class GameState(
-    val status: String,
+    val runningStatus: String,
     val cookiesCollected: Int,
     val cookiesRemaining: Int,
     val currentRound: Int,
     val elapsedTimeSec: Double,
 ) {
-    val isRunning: Boolean get() = status.equals("running", ignoreCase = true)
-    val isFinished: Boolean get() = status.equals("finished", ignoreCase = true)
+    val isRunning: Boolean get() = runningStatus.equals("running", ignoreCase = true)
+    val isFinished: Boolean get() = runningStatus.equals("completed", ignoreCase = true)
 
     companion object {
         fun from(o: JSONObject?): GameState {
             val j = o ?: JSONObject()
             return GameState(
-                status = j.optString("status", "idle"),
+                runningStatus = j.optString("runningStatus", "idle"),
                 cookiesCollected = j.optInt("cookies_collected", 0),
                 cookiesRemaining = j.optInt("cookies_remaining", 0),
                 currentRound = j.optInt("current_round", 0),
@@ -133,6 +133,8 @@ data class Sensors(
     val gyroX: Double,
     val gyroY: Double,
     val gyroZ: Double,
+    val batteryVoltage: Double,
+    val button: Boolean,
 ) {
     companion object {
         fun from(o: JSONObject?): Sensors {
@@ -144,6 +146,8 @@ data class Sensors(
                 gyroX = j.optDouble("gyro_x", 0.0),
                 gyroY = j.optDouble("gyro_y", 0.0),
                 gyroZ = j.optDouble("gyro_z", 0.0),
+                batteryVoltage = j.optDouble("battery_voltage", 0.0),
+                button = j.optBoolean("button", false),
             )
         }
     }
