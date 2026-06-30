@@ -351,13 +351,16 @@ void vNetworkTask(void *pvParameters) {
       Serial.println("NetworkTask: WiFi connection lost, attempting to reconnect...");
       wifiManager.connect();
     }
-    mqttManager.loop();
+
+    if (wifiManager.isConnected()) {
+      mqttManager.loop();
+    }
 
     // 2. Periodic telemetry publishing
     TickType_t currentTick = xTaskGetTickCount();
 
     // Reconnect MQTT if disconnected
-    if (!mqttManager.isConnected()) {
+    if (wifiManager.isConnected() && !mqttManager.isConnected()) {
       if (currentTick - lastMqttRetryTime >= mqttRetryInterval) {
         lastMqttRetryTime = currentTick;
         mqttManager.connect();
