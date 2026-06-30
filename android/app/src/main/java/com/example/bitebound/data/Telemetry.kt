@@ -26,7 +26,7 @@ data class Telemetry(
                 physics = Physics.from(root.optJSONObject("physics")),
                 sensors = Sensors.from(root.optJSONObject("sensors")),
             )
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }

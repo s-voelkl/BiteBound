@@ -38,6 +38,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -251,7 +252,7 @@ private fun ControlsCard(
 ) {
     var player by remember { mutableStateOf(defaultPlayer) }
     var cookies by remember { mutableStateOf(defaultCookies.toString()) }
-    var gameId by remember { mutableStateOf(defaultGameId) }
+    var gameId by remember { mutableIntStateOf(defaultGameId) }
     var wall by remember { mutableStateOf(defaultWall.toString()) }
     var ballType by remember { mutableStateOf(BallType.fromRestitution(defaultRestitution)) }
     var showNewGameConfirm by remember { mutableStateOf(false) }
@@ -443,7 +444,7 @@ private fun SensorsCard(telemetry: Telemetry) {
             HeroStat(
                 label = "Button",
                 // Was Color.White before, which is invisible on the light card -
-                // use a theme colour so "Released" is actually readable.
+                // use a theme color so "Released" is actually readable.
                 value = if (telemetry.sensors.button) "Pressed" else "Released",
                 color = if (telemetry.sensors.button) Honey else MaterialTheme.colorScheme.onSurface
             )

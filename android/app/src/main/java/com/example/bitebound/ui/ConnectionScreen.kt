@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -65,14 +66,14 @@ fun ConnectionScreen(
     var username by remember { mutableStateOf(credentials.username) }
     var password by remember { mutableStateOf(credentials.password) }
     var playerName by remember { mutableStateOf(credentials.playerName) }
-    var gameId by remember { mutableStateOf(credentials.gameId) }
+    var gameId by remember { mutableIntStateOf(credentials.gameId) }
     var cookiesCount by remember { mutableStateOf(credentials.cookiesCount.toString()) }
     var wallThickness by remember { mutableStateOf(credentials.wallThickness.toString()) }
     var telemetryTopic by remember { mutableStateOf(credentials.telemetryTopic) }
     var commandTopic by remember { mutableStateOf(credentials.commandTopic) }
     var ballType by remember { mutableStateOf(BallType.fromRestitution(credentials.restitution)) }
     var showPassword by remember { mutableStateOf(false) }
-    var showServerConnetion by remember { mutableStateOf(false)}
+    var showServerConnection by remember { mutableStateOf(false)}
     var showTopics by remember { mutableStateOf(false) }
 
     val connecting = connection is ConnectionState.Connecting
@@ -120,22 +121,22 @@ fun ConnectionScreen(
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
-                    onClick = { gameId = 1 },
+                    onClick = { gameId = GameConfigConstants.GAME_ID_LABYRINTH },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (gameId == 1) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = if (gameId == 1) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        containerColor = if (gameId == GameConfigConstants.GAME_ID_LABYRINTH) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (gameId == GameConfigConstants.GAME_ID_LABYRINTH) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text("Labyrinth")
                 }
                 Button(
-                    onClick = { gameId = 2 },
+                    onClick = { gameId = GameConfigConstants.GAME_ID_FLATLAND },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (gameId == 2) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = if (gameId == 2) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        containerColor = if (gameId == GameConfigConstants.GAME_ID_FLATLAND) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (gameId == GameConfigConstants.GAME_ID_FLATLAND) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -154,7 +155,7 @@ fun ConnectionScreen(
                     enabled = !connecting,
                     modifier = Modifier.weight(1f)
                 )
-                if (gameId == 1) {
+                if (gameId == GameConfigConstants.GAME_ID_LABYRINTH) {
                     CredentialField(
                         value = wallThickness,
                         onValueChange = { wallThickness = clampWallInput(it) },
@@ -194,17 +195,17 @@ fun ConnectionScreen(
             Spacer(Modifier.height(16.dp))
             // Server Connection Section
             TextButton(
-                onClick = { showServerConnetion = !showServerConnetion },
+                onClick = { showServerConnection = !showServerConnection },
                 modifier = Modifier.align(Alignment.Start),
             ) {
                 Icon(
-                    if (showServerConnetion) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    if (showServerConnection) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                     contentDescription = null,
                 )
                 Spacer(Modifier.width(4.dp))
                 Text("Server Connection")
             }
-            AnimatedVisibility(visible = showServerConnetion) {
+            AnimatedVisibility(visible = showServerConnection) {
                 Column {
 
                     CredentialField(
@@ -399,11 +400,11 @@ private fun CredentialField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     keyboardType: KeyboardType = KeyboardType.Text,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     trailingIcon: @Composable (() -> Unit)? = null,
-    modifier: Modifier = Modifier,
 ) {
     OutlinedTextField(
         value = value,

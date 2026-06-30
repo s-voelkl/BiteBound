@@ -51,7 +51,7 @@ private val DarkCookieColors = darkColorScheme(
 )
 
 /**
- * BiteBound's cookie theme. Dynamic (wallpaper-based) colours are intentionally
+ * BiteBound's cookie theme. Dynamic (wallpaper-based) colors are intentionally
  * disabled so the freshly-baked palette shows on every device.
  */
 @Composable

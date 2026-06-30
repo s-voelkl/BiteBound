@@ -69,7 +69,7 @@ fun CookieCard(
 
 /**
  * Score display: a plain progress ring with the count in the middle. Kept simple
- * (flat disc + track + filled part) but in warm brown cookie colours so the
+ * (flat disc + track + filled part) but in warm brown cookie colors so the
  * number stays easy to read.
  */
 @Composable
@@ -86,8 +86,8 @@ fun CookieProgress(
     )
     val percent = (animated * 100).toInt()
 
-    // Brownish palette pulled from the cookie colours - a lighter chocolate disc
-    // with a golden-dough fill, so the number still reads but it's warm, not grey.
+    // Brownish palette pulled from the cookie colors - a lighter chocolate disc
+    // with a golden-dough fill, so the number still reads, but it's warm, not gray.
     val centerColor = ChocolateChip
     val progressColor = CookieDough
     val trackColor = CaramelBrown.copy(alpha = 0.35f)
@@ -148,7 +148,7 @@ fun CookieProgress(
     }
 }
 
-/** A compact labelled value, used in grids of sensor / physics readings. */
+/** A compact labeled value, used in grids of sensor / physics readings. */
 @Composable
 fun StatTile(
     label: String,
@@ -191,8 +191,8 @@ fun StatTile(
 @Composable
 fun StatGrid(
     stats: List<Pair<String, String>>,
-    columns: Int = 3,
     modifier: Modifier = Modifier,
+    columns: Int = 3,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         stats.chunked(columns).forEach { rowItems ->
@@ -217,11 +217,11 @@ fun StatGrid(
 fun MiniGameBoard(
     ballX: Double,
     ballY: Double,
-    velocityX: Double = 0.0,
-    velocityY: Double = 0.0,
     screenWidth: Int,
     screenHeight: Int,
     modifier: Modifier = Modifier,
+    velocityX: Double = 0.0,
+    velocityY: Double = 0.0,
 ) {
     val xFraction = if (screenWidth > 0) (ballX / screenWidth).toFloat().coerceIn(0f, 1f) else 0.5f
     val yFraction = if (screenHeight > 0) (ballY / screenHeight).toFloat().coerceIn(0f, 1f) else 0.5f
