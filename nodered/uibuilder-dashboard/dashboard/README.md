@@ -16,6 +16,8 @@ src/
 ├── index.html               # Main Single-Page Application (SPA) structure
 ├── index.css                # Layout styling and UI overrides
 ├── index.js                 # Event handler orchestrator and uibuilder bridge
+├── assets/
+│   └── logo.png             # Project visual branding asset
 └── app/
     ├── constants.js         # Game limits, physics thresholds, and ball presets
     ├── types.js             # Struct fallbacks to guarantee robust data handling
@@ -24,8 +26,6 @@ src/
     ├── command.js           # JSON command constructors (start, stop, resume)
     ├── render.js            # Canvas painter and dynamic DOM manipulator
     └── theme.css            # Light and dark mode "cookie" palette declarations
-assets/
-└── logo.png             # Project visual branding asset
 ```
 
 ### File Descriptions

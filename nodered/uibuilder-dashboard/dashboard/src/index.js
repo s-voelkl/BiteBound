@@ -128,7 +128,7 @@ function setBallPresetSelection(ball) {
 
 /**
  * Updates progress ring variables programmatically.
- * Calculation scale uses the adjusted 120px ring diameter (circumference: 326.7).
+ * Calculation scale uses the adjusted 180px ring diameter
  */
 function updateCookieProgressRing(collected, target) {
     const circle = document.getElementById('scoreCircle');
@@ -141,8 +141,8 @@ function updateCookieProgressRing(collected, target) {
     const fraction = target > 0 ? Math.min(Math.max(collected / target, 0), 1) : 0;
     const percent = Math.round(fraction * 100);
 
-    // Circumference: 2 * PI * r = 2 * 3.14159 * 52 = 326.72
-    const circumference = 326.72;
+    // Circumference: 2 * PI * r = 2 * 3.14159 * 78 = 490.08
+    const circumference = 490.08;
     const offset = circumference - (fraction * circumference);
     circle.style.strokeDashoffset = offset;
 

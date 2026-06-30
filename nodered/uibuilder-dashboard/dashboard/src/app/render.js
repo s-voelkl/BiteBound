@@ -96,7 +96,7 @@ export class TelemetryRenderer {
 
         ctx.beginPath();
         ctx.arc(ballX, ballY, ballRadius, 0, 2 * Math.PI);
-        ctx.fillStyle = physics.collisionDetected ? berryRed : chocolateChip;
+        ctx.fillStyle = berryRed;
         ctx.fill();
         ctx.closePath();
 

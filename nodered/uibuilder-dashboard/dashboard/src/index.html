@@ -22,22 +22,29 @@
         <!-- Center Aligned Top App Bar -->
         <header class="top-app-bar">
             <div class="app-bar-content">
-                <div class="app-bar-brand">
-                    <img src="../assets/logo.png" alt="BiteBound Logo" class="brand-logo-small">
-                    <span class="app-bar-title">BiteBound</span>
+                <div class="app-bar-left">
+                    <section class="banner-section">
+                        <div class="status-banner">
+                            <span class="status-dot"></span>
+                            <span id="connectionBannerText">Disconnected</span>
+                        </div>
+                    </section>
+                </div>
+                <div class="app-bar-brand-container">
+                    <div class="app-bar-brand">
+                        <img src="assets/logo.png" alt="BiteBound Logo" class="brand-logo-small">
+                        <span class="app-bar-title">BiteBound</span>
+                    </div>
+                </div>
+                <div class="app-bar-right">
+                    <div class="app-credits">
+                        Created by <a href="https://github.com/s-voelkl/BiteBound" target="_blank">Simon Völkl and Johannes Schieder</a>
+                    </div>
                 </div>
             </div>
         </header>
 
         <main class="dashboard-container">
-            <!-- Connection Banner -->
-            <section class="banner-section">
-                <div class="status-banner">
-                    <span class="status-dot"></span>
-                    <span id="connectionBannerText">Disconnected</span>
-                </div>
-            </section>
-
             <div class="dashboard-workspace">
                 <!-- Waiting for Oven Placeholder -->
                 <section id="placeholderOven" class="placeholder-section">
@@ -58,11 +65,10 @@
                                 <div class="cookie-progress-left">
                                     <div class="cookie-progress-wrapper">
                                         <!-- Circular SVG progress representation of CookieProgress -->
-                                        <svg class="progress-ring" width="120" height="120">
-                                            <circle class="progress-ring__bg" cx="60" cy="60" r="45"></circle>
-                                            <circle class="progress-ring__track" cx="60" cy="60" r="52"></circle>
-                                            <circle class="progress-ring__circle" id="scoreCircle" cx="60" cy="60"
-                                                r="52"></circle>
+                                        <svg class="progress-ring" width="180" height="180">
+                                            <circle class="progress-ring__bg" cx="90" cy="90" r="67.5"></circle>
+                                            <circle class="progress-ring__track" cx="90" cy="90" r="78"></circle>
+                                            <circle class="progress-ring__circle" id="scoreCircle" cx="90" cy="90" r="78"></circle>
                                         </svg>
                                         <div class="progress-text-overlay">
                                             <span id="textCollected" class="collected-count">0</span>
@@ -74,12 +80,10 @@
 
                                 <div class="cookie-stats-right">
                                     <div class="cookie-stat-item">
-                                        <span class="stat-highlight text-honey">Round <span
-                                                id="stateRound">0</span></span>
+                                        <span class="stat-highlight text-honey">Round <span id="stateRound">0</span></span>
                                     </div>
                                     <div class="cookie-stat-item">
-                                        <span class="stat-highlight text-mint">Time: <span
-                                                id="stateElapsedTime">00:00</span></span>
+                                        <span class="stat-highlight text-mint">Time: <span id="stateElapsedTime">00:00</span></span>
                                     </div>
                                     <div class="player-info-row">
                                         <p id="gameStateSubline" class="subline">
@@ -133,13 +137,47 @@
                         </section>
                     </div>
 
-                    <!-- Column 2: Board & Device Table -->
-                    <div class="layout-col col-center">
-                        <!-- Board Card -->
-                        <section class="card">
-                            <h2 class="card-title">🎯 Live Board</h2>
-                            <div class="board-canvas-container">
-                                <canvas id="physicsCanvas" width="240" height="280"></canvas>
+                    <!-- Column 2: Game Controls & Device Table -->
+                    <div class="layout-col col-center controls-wrapper">
+                        <!-- Game Controls Card -->
+                        <section class="card control-card-sticky">
+                            <h2 class="card-title">🎮 Game Controls</h2>
+
+                            <div class="form-group">
+                                <label for="ctrlPlayerName" class="metric-label">Player Name</label>
+                                <input type="text" id="ctrlPlayerName" class="form-control" placeholder="Player Name">
+                            </div>
+
+                            <div class="grid-2 margin-top-sm">
+                                <button id="ctrlModeLabyrinth" class="btn btn-toggle active">Dough Maze</button>
+                                <button id="ctrlModeFlatland" class="btn btn-toggle">Baking Tray</button>
+                            </div>
+
+                            <div class="grid-2 margin-top-sm">
+                                <div class="form-group">
+                                    <label for="ctrlCookiesCount" class="metric-label">Cookies (1-20)</label>
+                                    <input type="text" id="ctrlCookiesCount" class="form-control">
+                                </div>
+                                <div class="form-group" id="ctrlWallThicknessFormGroup">
+                                    <label for="ctrlWallThickness" class="metric-label">Wall Px (5-20)</label>
+                                    <input type="text" id="ctrlWallThickness" class="form-control">
+                                </div>
+                            </div>
+
+                            <p class="metric-label section-label">Cookie Monster:</p>
+                            <div class="grid-3">
+                                <button id="ctrlBallChonk" class="btn btn-toggle">Chonk</button>
+                                <button id="ctrlBallChomper" class="btn btn-toggle active">Chomper</button>
+                                <button id="ctrlBallScrappy" class="btn btn-toggle">Scrappy</button>
+                            </div>
+
+                            <div class="action-row-container margin-top-md">
+                                <button id="btnNewGame" class="btn btn-warning btn-compact">
+                                    New Game
+                                </button>
+                                <button id="btnPauseResume" class="btn btn-danger btn-compact" disabled>
+                                    Pause
+                                </button>
                             </div>
                         </section>
 
@@ -170,50 +208,17 @@
                             </div>
                         </section>
                     </div>
-                </div>
 
-                <!-- Column 3: Game Controls Card -->
-                <div class="layout-col col-right controls-wrapper">
-                    <section class="card control-card-sticky">
-                        <h2 class="card-title">🎮 Game Controls</h2>
-
-                        <div class="form-group">
-                            <label for="ctrlPlayerName" class="metric-label">Player Name</label>
-                            <input type="text" id="ctrlPlayerName" class="form-control" placeholder="Player Name">
-                        </div>
-
-                        <div class="grid-2 margin-top-sm">
-                            <button id="ctrlModeLabyrinth" class="btn btn-toggle active">Dough Maze</button>
-                            <button id="ctrlModeFlatland" class="btn btn-toggle">Baking Tray</button>
-                        </div>
-
-                        <div class="grid-2 margin-top-sm">
-                            <div class="form-group">
-                                <label for="ctrlCookiesCount" class="metric-label">Cookies (1-20)</label>
-                                <input type="text" id="ctrlCookiesCount" class="form-control">
+                    <!-- Column 3: Live Board -->
+                    <div class="layout-col col-right">
+                        <!-- Board Card -->
+                        <section class="card board-card">
+                            <h2 class="card-title">🎯 Live Board</h2>
+                            <div class="board-canvas-container">
+                                <canvas id="physicsCanvas" width="240" height="280"></canvas>
                             </div>
-                            <div class="form-group" id="ctrlWallThicknessFormGroup">
-                                <label for="ctrlWallThickness" class="metric-label">Wall Px (5-20)</label>
-                                <input type="text" id="ctrlWallThickness" class="form-control">
-                            </div>
-                        </div>
-
-                        <p class="metric-label section-label">Cookie Monster:</p>
-                        <div class="grid-3">
-                            <button id="ctrlBallChonk" class="btn btn-toggle">Chonk</button>
-                            <button id="ctrlBallChomper" class="btn btn-toggle active">Chomper</button>
-                            <button id="ctrlBallScrappy" class="btn btn-toggle">Scrappy</button>
-                        </div>
-
-                        <div class="action-row-container margin-top-md">
-                            <button id="btnNewGame" class="btn btn-warning btn-compact">
-                                New Game
-                            </button>
-                            <button id="btnPauseResume" class="btn btn-danger btn-compact" disabled>
-                                Pause
-                            </button>
-                        </div>
-                    </section>
+                        </section>
+                    </div>
                 </div>
             </div>
         </main>
