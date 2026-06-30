@@ -4,11 +4,17 @@
   <img src="assets/logo/logo.png" alt="BiteBound Logo" width="150">
 </div>
 
-A tilt-controlled IoT game for the ESP32-S3, featuring real-time physics and dual-dashboard synchronization via MQTT on an Android app and Node-RED flow. The game is designed to be played on a Waveshare ESP32-S3 1.69" Touch LCD, with a ball navigating through procedurally generated mazes or flat arenas, collecting cookies while beating the clock.
+A tilt-controlled **IoT** game for the **ESP32-S3**, featuring real-time **physics** and dual-dashboard synchronization via MQTT on an **Android app** and **Node-RED** flow. The game is designed to be played on a ``Waveshare ESP32-S3 1.69" Touch LCD``, with a ball navigating through mazes or flatland, collecting cookies while beating the clock.
+
+The **bakery-themed game** is controlled by tilting the device, with the ball's movement influenced by a 6-axis **IMU** (accelerometer + gyroscope). The ESP32-S3 runs a dual-core **FreeRTOS** system, separating the game loop from network operations for smooth gameplay.
+
+## GitHub Repository
+
+The **GitHub repository and PM tool** for this project is located at: [github.com/s-voelkl/BiteBound](https://github.com/s-voelkl/BiteBound).
 
 ## Important Note on this Readme
 
-This readme was developed during the project but is not the single source of truth for the project; *some parts could be outdated*. The most up-to-date version is contained in the LaTeX documentation in the `tex/` folder, which is compiled into a PDF report. Though, this readme contains the most important information for developers.
+This readme was developed during the project but is not the single source of truth for the project; *some parts could be outdated*. The most up-to-date version is contained in the **LaTeX documentation** in the `tex/` folder, which is compiled into a **PDF report**. Though, this readme contains the most important information for developers.
 
 **For setup and usage instructions, see [USAGE.md](USAGE.md).**
 
@@ -20,10 +26,6 @@ Before making this repository public, the following steps have to be done:
 - Delete examples folder, as we dont have the rights to use or publish this information.
 - Restructure folders and files: Make ``src`` with each Subproject and ``docs`` with extensive documentation and tex-files.
 - Delete prompts folder -->
-
-## GitHub Repository
-
-The GitHub repository for this project is located at: [https://github.com/s-voelkl/BiteBound](https://github.com/s-voelkl/BiteBound).
 
 ## License
 
