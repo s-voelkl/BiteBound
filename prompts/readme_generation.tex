@@ -1,0 +1,25 @@
+\subsection*{README Generation}
+
+To enhance code readability and accessibility, README files were written for the project.
+The README writing was partly assisted by AI.
+
+\textbf{Prompt:}
+\begin{lstlisting}[language={}, breaklines=true]
+I am developing an embedded 2D game on an ESP32-S3. The application has two main components with vastly different timing requirements: a high-frequency game loop running at circa 50Hz (handling low-pass filtered IMU input, physics sub-stepping, collision resolution, and display rendering) and a low-frequency network stack running at circa 2Hz (handling blocking MQTT connections, TLS handshakes, and telemetry JSON serialization).
+
+Use the provided context to append to, enhance and update the README.md file for the project with the most recent changes.
+Use headings, subheadings, bullet points, inline code, notes, and other formatting to make the README.md file more readable and keeping it professional.
+Do not change the provided README structure, but enhance it with the most recent changes and improvements.
+
+Summarize the code changes and provide a brief overview about the usage.
+\end{lstlisting}
+
+\textbf{Context:}
+\begin{lstlisting}[language={}, breaklines=true]
+Current file (cpp/h), README.md text snippets, and any other relevant information can be used to generate the docstring.
+\end{lstlisting}
+
+\textbf{Answer:}
+\begin{lstlisting}[language={}, breaklines=true]
+Generated README.md content with the most recent changes and improvements.
+\end{lstlisting}
