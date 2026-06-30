@@ -1,4 +1,14 @@
 \section{Summary and Future Work}
 \label{sec:summary-future-work}
-% TODO: write Summary & Future Work
-% Summarize the project and outline ideas for future improvements.
+
+The BiteBound project demonstrates a practical implementation of the objectives outlined in the introduction, achieving a responsive, dual-core scheduled IoT game on resource-constrained hardware.
+By isolating the timing-sensitive 50 Hz physics and rendering pipeline on the Game Core from the asynchronous secure MQTT communication on the Network Core, the system maintains stable local execution.
+Simultaneously, it remains synchronized with both the native Android application and the Node-RED companion dashboard.
+This architecture provides a functional framework for bridging physical, tilt-controlled embedded interactions with cross-device remote telemetry.
+
+Future developments will focus on expanding the device's physical interactivity, sensory feedback, and academic outreach:
+
+The device could utilize an onboard physical button input to trigger special gameplay actions, thereby enriching the user experience.
+A vibration sensor or motor to simulate haptic feedback could be implemented, such as when the ball bumps into maze boundaries.
+Development of routines for the onboard buzzer could generate diverse audio cues, including coin-collection alerts, startup sounds, which would provide a auditive response signal.
+The findings and architecture documented in this technical report should be formatted into a paper suitable for public submission to relevant venues, enabling broader dissemination of this work.
