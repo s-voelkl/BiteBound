@@ -31,9 +31,43 @@ Before making this repository public, the following steps have to be done:
 
 The MIT License (MIT) applies to this project, as stated in [LICENSE](LICENSE). The documentation and diagrams are licensed under the Creative Commons Attribution 4.0 International Public License (CC BY 4.0) in accordance with the [LICENSE](tex/LICENSE) file.
 
+## Folder Structure
+
+```text
+BiteBound/
+├── README.md                       # This documentation
+├── USAGE.md                        # Setup & run instructions
+├── src/
+│   ├── android/                    # Android Studio project (Kotlin app)
+│   ├── esp32/                      # Arduino firmware
+│   │   ├── esp32.ino               # Main sketch (setup/loop, Core 1 orchestration)
+│   │   ├── config.h                # Central config: network, game, display, physics, pins
+│   │   ├── wifi_mqtt_secrets.h     # Network/broker credentials (git-ignored during dev)
+│   │   └── src/
+│   │       ├── sensors/            # SensorManager, SensorData
+│   │       ├── physics/            # PhysicsEngine, PhysicsBody, ICollider, BorderCollider, Vec2
+│   │       ├── game/               # GameState    
+│   │       │   ├── cookies/        # Cookie, CookieField, RectCookieSpawner, MazeCookieSpawner
+│   │       │   └── mode/           # BaseGame, IGame, Game1Labyrinth, Game2Flatland
+│   │       ├── engine/             # GameEngine, GameConfig
+│   │       ├── maze/               # MazeManager (procedural DFS)
+│   │       ├── graphics/           # GraphicsManager (ST7789 rendering)
+│   │       └── network/            # WifiManager, TimeManager, MqttManager, JsonBuilder
+│   └── nodered/                    # Node-RED dashboard flow
+├── doc/
+│   ├── assets/                     # UI / app assets
+│   ├── diagrams/                   # PlantUML architecture diagrams
+│   │   └── src/architecture.puml
+│   ├── prompts/                    # LLM chat transcripts (removed before publishing)
+│   └── screenshots/                # Dashboard / flow screenshots
+└── tex/                            # LaTeX report sources
+```
+
 ## Architecture Overview
 
 The ESP32 firmware is split into self-contained, unit-tested modules under `src/esp32/src/`, orchestrated from the main sketch `src/esp32/esp32.ino`. All tunable values and hardware pins are centralized in `src/esp32/config.h`.
+
+The android app is implemented in Kotlin under `src/android/` and communicates with the ESP32 via MQTT over WiFi. The Node-RED dashboard is implemented under `src/nodered/` and provides a web-based interface for game control and telemetry visualization.
 
 ### Architecture Diagrams
 
@@ -41,7 +75,7 @@ See the relevant diagrams in `diagrams/out/`. System Architecture Diagram:
 
 ![System Architecture Diagram](doc/diagrams/out/system-architecture/system-architecture.png)
 
-Hardware Architecure Diagram:
+Hardware Architecture Diagram:
 ![Hardware Architecture Diagram](doc/diagrams/out/hardware-architecture/hardware-architecture.png)
 
 ### ESP32 Screens
@@ -94,38 +128,6 @@ Shared state (ball position, game state, runtime config received over MQTT) is p
 5. **Publish telemetry** — every ~0.5s the current snapshot is serialized via `buildTelemetryJson()` and published over MQTT (asynchronously on Core 0).
 
 > Note: MQTT messages are sent with **QoS 1** and **retain = false** by default. Topic details and the full telemetry payload are documented in the [MQTT Communication](#mqtt-communication) and [Telemetry JSON Builder](#telemetry-json-builder) sections.
-
-## Folder Structure
-
-```text
-BiteBound/
-├── README.md                       # This documentation
-├── USAGE.md                        # Setup & run instructions
-├── src/
-│   ├── android/                    # Android Studio project (Kotlin app)
-│   ├── esp32/                      # Arduino firmware
-│   │   ├── esp32.ino               # Main sketch (setup/loop, Core 1 orchestration)
-│   │   ├── config.h                # Central config: network, game, display, physics, pins
-│   │   ├── wifi_mqtt_secrets.h     # Network/broker credentials (git-ignored during dev)
-│   │   └── src/
-│   │       ├── sensors/            # SensorManager, SensorData
-│   │       ├── physics/            # PhysicsEngine, PhysicsBody, ICollider, BorderCollider, Vec2
-│   │       ├── game/               # GameState    
-│   │       │   ├── cookies/        # Cookie, CookieField, RectCookieSpawner, MazeCookieSpawner
-│   │       │   └── mode/           # BaseGame, IGame, Game1Labyrinth, Game2Flatland
-│   │       ├── engine/             # GameEngine, GameConfig
-│   │       ├── maze/               # MazeManager (procedural DFS)
-│   │       ├── graphics/           # GraphicsManager (ST7789 rendering)
-│   │       └── network/            # WifiManager, TimeManager, MqttManager, JsonBuilder
-│   └── nodered/                    # Node-RED dashboard flow
-├── doc/
-│   ├── assets/                     # UI / app assets
-│   ├── diagrams/                   # PlantUML architecture diagrams
-│   │   └── src/architecture.puml
-│   ├── prompts/                    # LLM chat transcripts (removed before publishing)
-│   └── screenshots/                # Dashboard / flow screenshots
-└── tex/                            # LaTeX report sources
-```
 
 ## Documentation
 
