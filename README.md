@@ -555,7 +555,7 @@ Invoke the `update()` method on every 20ms tick. The manager automatically deter
 
 ### Maze Generation (Procedural DFS)
 
-A procedural 2D maze generator has been integrated to build the game-board using an iterative, randomized Depth-First Search (DFS) algorithm (see AI prompt in [doc/prompts/prompts.md](doc/prompts/prompts.md)).
+A procedural 2D maze generator has been integrated to build the game-board using an iterative, randomized Depth-First Search (DFS) algorithm (see AI prompt in [doc/prompts/](doc/prompts/)).
 
 #### Implementation Summary
 
