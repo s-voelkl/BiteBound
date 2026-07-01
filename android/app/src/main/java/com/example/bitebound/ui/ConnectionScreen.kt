@@ -1,6 +1,7 @@
 package com.example.bitebound.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,18 +33,23 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.bitebound.data.BallType
+import com.example.bitebound.R
 import com.example.bitebound.data.Credentials
+import com.example.bitebound.data.GameConfigConstants
 import com.example.bitebound.mqtt.ConnectionState
 import com.example.bitebound.ui.theme.BerryRed
 import com.example.bitebound.ui.theme.ChocolateChip
@@ -58,10 +65,16 @@ fun ConnectionScreen(
     var port by remember { mutableStateOf(credentials.port.toString()) }
     var username by remember { mutableStateOf(credentials.username) }
     var password by remember { mutableStateOf(credentials.password) }
+    var playerName by remember { mutableStateOf(credentials.playerName) }
+    var gameId by remember { mutableIntStateOf(credentials.gameId) }
+    var cookiesCount by remember { mutableStateOf(credentials.cookiesCount.toString()) }
+    var wallThickness by remember { mutableStateOf(credentials.wallThickness.toString()) }
     var telemetryTopic by remember { mutableStateOf(credentials.telemetryTopic) }
     var commandTopic by remember { mutableStateOf(credentials.commandTopic) }
+    var ballType by remember { mutableStateOf(BallType.fromRestitution(credentials.restitution)) }
     var showPassword by remember { mutableStateOf(false) }
-    var showAdvanced by remember { mutableStateOf(false) }
+    var showServerConnection by remember { mutableStateOf(false)}
+    var showTopics by remember { mutableStateOf(false) }
 
     val connecting = connection is ConnectionState.Connecting
 
@@ -78,93 +91,209 @@ fun ConnectionScreen(
                 .padding(vertical = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("🍪", style = MaterialTheme.typography.headlineLarge.copy(fontSize = MaterialTheme.typography.headlineLarge.fontSize * 2))
-            Spacer(Modifier.height(8.dp))
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = null,
+                modifier = Modifier.size(100.dp),
+            )
+            Spacer(Modifier.height(16.dp))
             Text(
                 "BiteBound",
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.primary,
             )
-            Text(
-                "Connect to your cookie game",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
             Spacer(Modifier.height(28.dp))
 
-            CredentialField(
-                value = host,
-                onValueChange = { host = it },
-                label = "Broker host",
-                enabled = !connecting,
-            )
-            CredentialField(
-                value = port,
-                onValueChange = { port = it.filter(Char::isDigit) },
-                label = "Port",
-                keyboardType = KeyboardType.Number,
-                enabled = !connecting,
-            )
-            CredentialField(
-                value = username,
-                onValueChange = { username = it },
-                label = "Username",
-                enabled = !connecting,
-            )
-            CredentialField(
-                value = password,
-                onValueChange = { password = it },
-                label = "Password",
-                enabled = !connecting,
-                keyboardType = KeyboardType.Password,
-                visualTransformation = if (showPassword) {
-                    VisualTransformation.None
-                } else {
-                    PasswordVisualTransformation()
-                },
-                trailingIcon = {
-                    IconButton(onClick = { showPassword = !showPassword }) {
-                        Icon(
-                            if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                            contentDescription = if (showPassword) "Hide password" else "Show password",
-                        )
-                    }
-                },
+            // Game Settings Section
+            Text(
+                "Game Settings",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                fontWeight = FontWeight.Bold
             )
 
+            CredentialField(
+                value = playerName,
+                onValueChange = { playerName = it },
+                label = "Player Name",
+                enabled = !connecting,
+            )
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = { gameId = GameConfigConstants.GAME_ID_LABYRINTH },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (gameId == GameConfigConstants.GAME_ID_LABYRINTH) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (gameId == GameConfigConstants.GAME_ID_LABYRINTH) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Dough Maze")
+                }
+                Button(
+                    onClick = { gameId = GameConfigConstants.GAME_ID_FLATLAND },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (gameId == GameConfigConstants.GAME_ID_FLATLAND) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (gameId == GameConfigConstants.GAME_ID_FLATLAND) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Baking Tray")
+                }
+            }
+
+            // The Baking Tray is just an open field with no maze, so wall
+            // thickness has no effect there - only show it for the Labyrinth.
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CredentialField(
+                    value = cookiesCount,
+                    onValueChange = { cookiesCount = clampCookieInput(it) },
+                    label = "Cookies (1-20)",
+                    keyboardType = KeyboardType.Number,
+                    enabled = !connecting,
+                    modifier = Modifier.weight(1f)
+                )
+                if (gameId == GameConfigConstants.GAME_ID_LABYRINTH) {
+                    CredentialField(
+                        value = wallThickness,
+                        onValueChange = { wallThickness = clampWallInput(it) },
+                        label = "Wall Px (5-20)",
+                        keyboardType = KeyboardType.Number,
+                        enabled = !connecting,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            // Ball type maps to a fixed restitution (bounce) value below.
+            Text(
+                "Cookie Monster",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 4.dp),
+            )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                BallType.entries.forEach { ball ->
+                    val selected = ballType == ball
+                    Button(
+                        onClick = { ballType = ball },
+                        enabled = !connecting,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(ball.label)
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+            // Server Connection Section
             TextButton(
-                onClick = { showAdvanced = !showAdvanced },
+                onClick = { showServerConnection = !showServerConnection },
                 modifier = Modifier.align(Alignment.Start),
             ) {
                 Icon(
-                    if (showAdvanced) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    if (showServerConnection) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                     contentDescription = null,
                 )
                 Spacer(Modifier.width(4.dp))
-                Text("Topics & advanced")
+                Text("Server Connection")
             }
-            AnimatedVisibility(visible = showAdvanced) {
+            AnimatedVisibility(visible = showServerConnection) {
+                Column {
+
+                    CredentialField(
+                        value = host,
+                        onValueChange = { host = it },
+                        label = "Broker Host Address",
+                        enabled = !connecting,
+                    )
+                    CredentialField(
+                        value = port,
+                        onValueChange = { port = it.filter(Char::isDigit) },
+                        label = "Port (default 8883)",
+                        keyboardType = KeyboardType.Number,
+                        enabled = !connecting,
+                    )
+                    CredentialField(
+                        value = username,
+                        onValueChange = { username = it },
+                        label = "Username for Connection",
+                        enabled = !connecting,
+                    )
+                    CredentialField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = "Password for Connection",
+                        enabled = !connecting,
+                        keyboardType = KeyboardType.Password,
+                        visualTransformation = if (showPassword) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { showPassword = !showPassword }) {
+                                Icon(
+                                    if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                    contentDescription = if (showPassword) "Hide password" else "Show password",
+                                )
+                            }
+                        },
+                    )
+                }
+            }
+
+            TextButton(
+                onClick = { showTopics = !showTopics },
+                modifier = Modifier.align(Alignment.Start),
+            ) {
+                Icon(
+                    if (showTopics) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = null,
+                )
+                Spacer(Modifier.width(4.dp))
+                Text("Connection Topics")
+            }
+            AnimatedVisibility(visible = showTopics) {
                 Column {
                     CredentialField(
                         value = telemetryTopic,
                         onValueChange = { telemetryTopic = it },
-                        label = "Telemetry topic (subscribe)",
+                        label = "Telemetry topic",
                         enabled = !connecting,
                     )
                     CredentialField(
                         value = commandTopic,
                         onValueChange = { commandTopic = it },
-                        label = "Command topic (publish)",
+                        label = "Command topic",
                         enabled = !connecting,
                     )
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(16.dp))
 
             val parsedPort = port.toIntOrNull() ?: -1
-            val canConnect = host.isNotBlank() && parsedPort in 1..65535 &&
-                username.isNotBlank() && password.isNotBlank() && !connecting
+            val parsedCookies = cookiesCount.toIntOrNull() ?: 10
+            val parsedWall = wallThickness.toIntOrNull() ?: 10
+
+            // List whatever the button is still waiting on, so a greyed-out
+            // button is never a mystery.
+            val missing = buildList {
+                if (playerName.isBlank()) add("Player Name")
+                if (host.isBlank()) add("Broker Host Address")
+                if (parsedPort !in 1..65535) add("Port (1-65535)")
+                if (username.isBlank()) add("Username")
+                if (password.isBlank()) add("Password")
+            }
+            val canConnect = missing.isEmpty() && !connecting
 
             Button(
                 onClick = {
@@ -176,6 +305,14 @@ fun ConnectionScreen(
                             password = password,
                             telemetryTopic = telemetryTopic.trim(),
                             commandTopic = commandTopic.trim(),
+                            playerName = playerName.trim(),
+                            gameId = gameId,
+                            cookiesCount = parsedCookies.coerceIn(1, 20),
+                            wallThickness = parsedWall.coerceIn(5, 40),
+                            imuSensitivity = ballType.sensitivity,
+                            restitution = ballType.restitution,
+                            emaAlpha = ballType.emaAlpha,
+                            deadzone = credentials.deadzone
                         ),
                     )
                 },
@@ -200,6 +337,16 @@ fun ConnectionScreen(
                 } else {
                     Text("Bake the connection 🍪", fontWeight = FontWeight.Bold)
                 }
+            }
+
+            if (!connecting && missing.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Still needed: ${missing.joinToString(", ")}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = BerryRed,
+                    textAlign = TextAlign.Center,
+                )
             }
 
             if (connection is ConnectionState.Failed) {
@@ -227,11 +374,33 @@ fun ConnectionScreen(
     }
 }
 
+// Keep only digits and clamp straight away to the cookie max, so typing 20000
+// snaps to 20 in the field itself instead of waiting for Start. Empty stays
+// empty so the box can still be cleared and retyped. toIntOrNull catches numbers
+// too long to fit an Int and just treats them as "way over the max".
+private fun clampCookieInput(raw: String): String {
+    val digits = raw.filter(Char::isDigit)
+    if (digits.isEmpty()) return ""
+    val value = digits.toIntOrNull() ?: GameConfigConstants.MAX_COOKIES
+    return value.coerceAtMost(GameConfigConstants.MAX_COOKIES).toString()
+}
+
+// Same idea for wall thickness: clamp the max as you type. We only clamp the top
+// end here - the minimum (5) is enforced on Start, otherwise you couldn't type
+// "40" because the first "4" would jump up to the minimum.
+private fun clampWallInput(raw: String): String {
+    val digits = raw.filter(Char::isDigit)
+    if (digits.isEmpty()) return ""
+    val value = digits.toIntOrNull() ?: GameConfigConstants.MAX_WALL_THICKNESS
+    return value.coerceAtMost(GameConfigConstants.MAX_WALL_THICKNESS).toString()
+}
+
 @Composable
 private fun CredentialField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     keyboardType: KeyboardType = KeyboardType.Text,
     visualTransformation: VisualTransformation = VisualTransformation.None,
@@ -247,7 +416,7 @@ private fun CredentialField(
         visualTransformation = visualTransformation,
         trailingIcon = trailingIcon,
         shape = RoundedCornerShape(14.dp),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
     )

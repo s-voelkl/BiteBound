@@ -3,11 +3,10 @@ package com.example.bitebound.data
 import org.json.JSONObject
 
 /**
- * Strongly-typed view of a telemetry message published by the ESP32 on
- * `mauc2026/group_03/game/telemetry`.
+ * The telemetry JSON coming from the ESP32, parsed into plain Kotlin objects.
  *
- * Parsing is deliberately defensive: any missing field falls back to a neutral
- * default so a malformed or partial payload never crashes the dashboard.
+ * Every field falls back to a default if it's missing, so a half-broken message
+ * just shows zeros on the dashboard instead of crashing the whole thing.
  */
 data class Telemetry(
     val device: Device,
@@ -27,7 +26,7 @@ data class Telemetry(
                 physics = Physics.from(root.optJSONObject("physics")),
                 sensors = Sensors.from(root.optJSONObject("sensors")),
             )
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -78,20 +77,20 @@ data class GameConfig(
 }
 
 data class GameState(
-    val status: String,
+    val runningStatus: String,
     val cookiesCollected: Int,
     val cookiesRemaining: Int,
     val currentRound: Int,
     val elapsedTimeSec: Double,
 ) {
-    val isRunning: Boolean get() = status.equals("running", ignoreCase = true)
-    val isFinished: Boolean get() = status.equals("finished", ignoreCase = true)
+    val isRunning: Boolean get() = runningStatus.equals("running", ignoreCase = true)
+    val isFinished: Boolean get() = runningStatus.equals("completed", ignoreCase = true)
 
     companion object {
         fun from(o: JSONObject?): GameState {
             val j = o ?: JSONObject()
             return GameState(
-                status = j.optString("status", "idle"),
+                runningStatus = j.optString("runningStatus", "idle"),
                 cookiesCollected = j.optInt("cookies_collected", 0),
                 cookiesRemaining = j.optInt("cookies_remaining", 0),
                 currentRound = j.optInt("current_round", 0),
@@ -133,6 +132,8 @@ data class Sensors(
     val gyroX: Double,
     val gyroY: Double,
     val gyroZ: Double,
+    val batteryVoltage: Double,
+    val button: Boolean,
 ) {
     companion object {
         fun from(o: JSONObject?): Sensors {
@@ -144,6 +145,8 @@ data class Sensors(
                 gyroX = j.optDouble("gyro_x", 0.0),
                 gyroY = j.optDouble("gyro_y", 0.0),
                 gyroZ = j.optDouble("gyro_z", 0.0),
+                batteryVoltage = j.optDouble("battery_voltage", 0.0),
+                button = j.optBoolean("button", false),
             )
         }
     }

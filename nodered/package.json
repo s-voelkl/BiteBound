@@ -12,17 +12,16 @@
   "license": "MIT",
   "type": "commonjs",
   "_id": "nodered@1.0.1",
-  "path": "C:\\Users\\Völkl\\source\\repos\\BiteBound\\nodered",
-  "devDependencies": {},
-  "peerDependencies": {},
+  "path": "./",
   "dependencies": {
-    "node-red": "^5.0.0"
+    "node-red": "^5.0.0",
+    "node-red-contrib-uibuilder": "^7.7.4"
   },
   "uibuilder": {
     "packages": {
       "node-red": {
         "spec": "^5.0.0",
-        "installFolder": "C:\\Users\\Völkl\\source\\repos\\BiteBound\\nodered\\node_modules\\node-red",
+        "installFolder": "./node_modules/node-red",
         "installedVersion": "5.0.0",
         "estimatedEntryPoint": "?",
         "homepage": "https://www.npmjs.com/search?q=node-red",

@@ -8,9 +8,9 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Builds the JSON command payloads sent to the ESP32 on
- * `mauc2026/group_03/game/command`. The shape mirrors
- * `tests/mqtt_mock/subscribe_command_example.json`.
+ * Builds the JSON we publish to the command topic (start / stop). The field
+ * layout has to line up with what CommandParser on the ESP32 reads, see
+ * tests/mqtt_mock/subscribe_command_example.json for the reference shape.
  */
 object GameCommand {
 
@@ -18,15 +18,26 @@ object GameCommand {
         playerName: String,
         gameId: Int,
         cookiesCount: Int,
-        wallThicknessPx: Int = 6,
-    ): String = build("start", playerName, gameId, cookiesCount, wallThicknessPx)
+        wallThicknessPx: Int,
+        imuSensitivity: Double = GameConfigConstants.DEFAULT_IMU_SENSITIVITY_MULTIPLIER,
+        restitution: Double = GameConfigConstants.DEFAULT_BOUNCE_RESTITUTION,
+        emaAlpha: Double = GameConfigConstants.DEFAULT_EMA_ALPHA,
+        deadzone: Double = GameConfigConstants.DEFAULT_DEADZONE_THRESHOLD,
+    ): String = build("start", playerName, gameId, cookiesCount, wallThicknessPx, imuSensitivity, restitution, emaAlpha, deadzone)
 
     fun stop(
         playerName: String,
         gameId: Int,
         cookiesCount: Int,
-        wallThicknessPx: Int = 6,
+        wallThicknessPx: Int,
     ): String = build("stop", playerName, gameId, cookiesCount, wallThicknessPx)
+
+    fun resume(
+        playerName: String,
+        gameId: Int,
+        cookiesCount: Int,
+        wallThicknessPx: Int = 6,
+    ): String = build("resume", playerName, gameId, cookiesCount, wallThicknessPx)
 
     private fun build(
         command: String,
@@ -34,6 +45,10 @@ object GameCommand {
         gameId: Int,
         cookiesCount: Int,
         wallThicknessPx: Int,
+        imuSensitivity: Double = GameConfigConstants.DEFAULT_IMU_SENSITIVITY_MULTIPLIER,
+        restitution: Double = GameConfigConstants.DEFAULT_BOUNCE_RESTITUTION,
+        emaAlpha: Double = GameConfigConstants.DEFAULT_EMA_ALPHA,
+        deadzone: Double = GameConfigConstants.DEFAULT_DEADZONE_THRESHOLD,
     ): String {
         val meta = JSONObject()
             .put("source_ui", "ANDROID")
@@ -41,10 +56,10 @@ object GameCommand {
             .put("timestamp", isoNow())
 
         val physics = JSONObject()
-            .put("imu_sensitivity_multiplier", 1.25)
-            .put("bounce_restitution", 0.75)
-            .put("ema_alpha", 0.25)
-            .put("deadzone_threshold", 0.04)
+            .put("imu_sensitivity_multiplier", imuSensitivity)
+            .put("bounce_restitution", restitution)
+            .put("ema_alpha", emaAlpha)
+            .put("deadzone_threshold", deadzone)
 
         return JSONObject()
             .put("command", command)

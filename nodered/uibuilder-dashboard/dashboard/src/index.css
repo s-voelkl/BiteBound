@@ -1,453 +1,777 @@
-@import url("../uibuilder/uib-brand.min.css");
-@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap");
+/* Import Theme Palette variables */
+@import url('./app/theme.css');
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap');
 
-:root {
-	--milk-cream: #fff8ec;
-	--frosting-white: #fffdf8;
-	--cookie-dough: #e0b978;
-	--cookie-golden: #d9a24a;
-	--caramel-brown: #b5722e;
-	--chocolate-chip: #5a3a22;
-	--dark-cocoa: #3b2317;
-	--berry-red: #c0492f;
-	--mint-green: #4c8c5a;
-	--honey: #f2b84b;
-
-	--page-gradient: radial-gradient(circle at 10% 0%, #fff5da 0%, #ffe9c2 35%, #f7d39b 100%);
-	--card-shadow: 0 8px 24px rgba(93, 57, 22, 0.14);
-	--card-border: rgba(113, 67, 26, 0.2);
-}
-
+/* Root layout reset and configuration */
 * {
-	box-sizing: border-box;
+    box-sizing: border-box;
 }
 
-html,
 body {
-	margin: 0;
-	min-height: 100%;
-	font-family: "Outfit", "Segoe UI", sans-serif;
-	color: var(--dark-cocoa);
-	background: var(--page-gradient);
+    margin: 0;
+    font-family: "Quicksand", "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.2s, color 0.2s;
+    line-height: 1.5;
 }
 
-body::before {
-	content: "";
-	position: fixed;
-	inset: 0;
-	pointer-events: none;
-	background-image:
-		linear-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px),
-		linear-gradient(90deg, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
-	background-size: 44px 44px;
-	opacity: 0.4;
+.screen-view {
+    width: 100%;
+    min-height: 100vh;
+    padding: 0 16px 16px;
+    box-sizing: border-box;
 }
 
-h1,
-h2,
-h3 {
-	font-family: "DM Serif Display", Georgia, serif;
-	margin: 0;
+.hidden {
+    display: none !important;
 }
 
-h1 {
-	font-size: clamp(1.6rem, 2.7vw, 2.3rem);
+/* Status Banner styling with added margin and padding padding towards components */
+.banner-section {
+    padding: 0 4px;
 }
 
-h2 {
-	font-size: clamp(1.25rem, 1.8vw, 1.6rem);
-	margin-bottom: 0.9rem;
+.status-banner {
+    background-color: var(--bg-surface);
+    border: 2px solid var(--border-color);
+    border-radius: 14px;
+    padding: 8px 16px;
+    display: inline-flex;
+    align-items: center;
 }
 
-p {
-	margin: 0;
+.status-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    margin-right: 12px;
+    background-color: var(--text-muted);
 }
 
-.page-shell {
-	position: relative;
-	z-index: 1;
-	width: min(1320px, 100% - 2rem);
-	margin: 1rem auto 2rem;
-	display: grid;
-	gap: 1rem;
+/* Horizontal Score Layout with circular SVGs on the Left */
+.cookie-score-layout {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    justify-content: flex-start;
+    padding: 8px 0;
 }
 
-.card {
-	background: color-mix(in srgb, var(--frosting-white) 93%, white 7%);
-	border: 1px solid var(--card-border);
-	border-radius: 24px;
-	padding: 1.1rem 1.2rem;
-	box-shadow: var(--card-shadow);
-	backdrop-filter: blur(2px);
+.cookie-progress-left {
+    flex: 0 0 auto;
 }
 
-.topbar {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 0.8rem;
+.cookie-progress-wrapper {
+    position: relative;
+    width: 180px;
+    height: 180px;
 }
 
-.eyebrow {
-	text-transform: uppercase;
-	letter-spacing: 0.14em;
-	font-size: 0.72rem;
-	font-weight: 600;
-	color: var(--caramel-brown);
+.progress-ring {
+    transform: rotate(-90deg);
 }
 
-.topbar-status {
-	display: grid;
-	justify-items: end;
-	gap: 0.3rem;
+.progress-ring__bg {
+    fill: var(--chocolate-chip);
 }
 
-.status-badge {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.45rem;
-	padding: 0.38rem 0.75rem;
-	border-radius: 999px;
-	font-weight: 600;
-	font-size: 0.9rem;
+.progress-ring__track {
+    fill: none;
+    stroke: var(--caramel-brown);
+    stroke-opacity: 0.35;
+    stroke-width: 8px;
 }
 
-.status-badge::before {
-	content: "";
-	width: 0.55rem;
-	height: 0.55rem;
-	border-radius: 999px;
-	background: currentColor;
+.progress-ring__circle {
+    fill: none;
+    stroke: var(--cookie-dough);
+    stroke-width: 8px;
+    stroke-linecap: round;
+    stroke-dasharray: 490.08;
+    stroke-dashoffset: 490.08;
+    transition: stroke-dashoffset 0.6s ease-in-out;
 }
 
-.status-badge.connected {
-	color: var(--mint-green);
-	background: color-mix(in srgb, var(--mint-green) 18%, white 82%);
+.progress-text-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
 }
 
-.status-badge.connecting {
-	color: var(--honey);
-	background: color-mix(in srgb, var(--honey) 25%, white 75%);
+.collected-count {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #ffffff;
+    line-height: 1;
 }
 
-.status-badge.disconnected {
-	color: var(--berry-red);
-	background: color-mix(in srgb, var(--berry-red) 14%, white 86%);
+.target-count {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.65);
 }
 
-.dashboard-grid {
-	display: grid;
-	gap: 1rem;
-	grid-template-columns: 1fr;
+.percent-count {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 2px;
 }
 
-.hero-content {
-	display: grid;
-	gap: 1rem;
-	grid-template-columns: 220px 1fr;
-	align-items: center;
+.cookie-stats-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
-.cookie-progress {
-	width: 200px;
-	aspect-ratio: 1;
-	border-radius: 999px;
-	display: grid;
-	place-items: center;
-	background:
-		conic-gradient(
-			from -90deg,
-			var(--cookie-golden),
-			var(--honey),
-			var(--caramel-brown),
-			var(--cookie-golden)
-		) border-box;
-	position: relative;
+.cookie-stat-item {
+    display: flex;
+    align-items: center;
 }
 
-.cookie-progress::before {
-	content: "";
-	position: absolute;
-	inset: 11px;
-	border-radius: inherit;
-	background:
-		conic-gradient(
-			from -90deg,
-			transparent var(--progress),
-			color-mix(in srgb, var(--cookie-dough) 24%, white 76%) 0
-		);
-	z-index: 0;
+/* Stat Elements */
+.stat-highlight {
+    font-size: 1.35rem;
+    font-weight: bold;
 }
 
-.cookie-center {
-	z-index: 1;
-	width: 146px;
-	aspect-ratio: 1;
-	border-radius: inherit;
-	display: grid;
-	place-items: center;
-	text-align: center;
-	color: var(--chocolate-chip);
-	background: radial-gradient(circle at 32% 26%, #ffdfb2 0%, #e8b977 60%, #cc8d46 100%);
-	box-shadow: inset -8px -10px 18px rgba(72, 40, 12, 0.12), inset 5px 5px 14px rgba(255, 255, 255, 0.45);
+.text-honey {
+    color: var(--honey);
 }
 
-.cookie-value {
-	font-family: "DM Serif Display", Georgia, serif;
-	font-size: 2.1rem;
-	line-height: 1;
+.text-mint {
+    color: var(--mint-green);
 }
 
-.cookie-subtitle {
-	margin-top: -0.6rem;
-	font-size: 0.96rem;
-	opacity: 0.85;
+.announcement {
+    background-color: rgba(76, 140, 90, 0.15);
+    color: var(--mint-green);
+    border-radius: 12px;
+    padding: 8px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.85rem;
 }
 
-.hero-stats {
-	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 0.55rem;
+.subline {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 4px 0 0 0;
 }
 
-.tile {
-	background: color-mix(in srgb, var(--cookie-dough) 22%, white 78%);
-	border-radius: 16px;
-	padding: 0.7rem;
-	border: 1px solid rgba(127, 79, 34, 0.14);
+/* Board Canvas wrapper styling */
+.board-canvas-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 0;
 }
 
-.tile-label {
-	font-size: 0.76rem;
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-	color: color-mix(in srgb, var(--dark-cocoa) 70%, white 30%);
+#physicsCanvas {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
 }
 
-.tile-value {
-	margin-top: 0.25rem;
-	font-size: 1.02rem;
-	font-weight: 700;
+/* Structured Device table rows restricting width expansion */
+.device-table-container {
+    max-width: 320px;
+    margin: 0 auto;
+    width: 100%;
 }
 
-.muted {
-	color: color-mix(in srgb, var(--dark-cocoa) 66%, white 34%);
-	font-size: 0.92rem;
+.detail-rows {
+    display: flex;
+    flex-direction: column;
 }
 
-.form-grid {
-	margin-top: 0.75rem;
-	display: grid;
-	gap: 0.65rem;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px dashed rgba(181, 114, 46, 0.2);
 }
 
-label {
-	display: grid;
-	gap: 0.32rem;
-	font-size: 0.86rem;
-	font-weight: 500;
+.info-row:last-child {
+    border-bottom: none;
 }
 
-input {
-	width: 100%;
-	border: 1px solid rgba(87, 51, 18, 0.32);
-	background: #fffefb;
-	border-radius: 12px;
-	padding: 0.64rem 0.7rem;
-	color: var(--dark-cocoa);
-	font-size: 0.95rem;
-	font-family: inherit;
+.info-label {
+    color: var(--text-muted);
 }
 
-input:focus {
-	outline: 2px solid color-mix(in srgb, var(--honey) 55%, white 45%);
-	border-color: transparent;
+.info-val {
+    font-weight: 500;
 }
 
-.physics-details {
-	margin-top: 0.8rem;
-	border: 1px dashed rgba(108, 63, 23, 0.38);
-	border-radius: 14px;
-	padding: 0.68rem 0.75rem;
+/* Sensors grid metrics layout */
+.sensor-grid-stat {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    /* More horizontal breathing room between the two tile columns;
+       modest vertical gap. Rows still share the card height evenly. */
+    column-gap: 20px;
+    row-gap: 10px;
+    flex: 1;
+    min-height: 0;
+    grid-auto-rows: 1fr;
 }
 
-.physics-details summary {
-	cursor: pointer;
-	font-weight: 600;
-	color: var(--caramel-brown);
+.stat-tile {
+    background-color: rgba(224, 185, 120, 0.2);
+    border-radius: 12px;
+    /* Roomier horizontal padding inside each tile */
+    padding: 8px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-.physics-details ul {
-	margin: 0.65rem 0 0 1rem;
-	padding: 0;
+.stat-tile-val {
+    font-size: 1.1rem;
+    font-weight: bold;
 }
 
-.actions {
-	margin-top: 0.95rem;
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 0.7rem;
+/* Input elements styling in Game Controls */
+.form-control {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 1rem;
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
 }
 
+#ctrlPlayerName {
+    width: 50;
+}
+
+.form-control:focus {
+    border-color: var(--cookie-golden);
+    box-shadow: 0 0 0 3px rgba(217, 162, 74, 0.2);
+}
+
+.form-control:disabled {
+    background-color: rgba(90, 58, 34, 0.1);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    border-color: rgba(181, 114, 46, 0.3);
+    opacity: 0.65;
+}
+
+/* Base button rounding */
 .btn {
-	appearance: none;
-	border: none;
-	border-radius: 14px;
-	padding: 0.8rem 1rem;
-	color: white;
-	font-size: 1rem;
-	font-weight: 700;
-	font-family: inherit;
-	cursor: pointer;
-	transition: transform 140ms ease, filter 140ms ease;
+    border-radius: 8px;
+    transition: all 0.2s ease;
 }
 
-.btn:hover {
-	transform: translateY(-1px);
-	filter: saturate(1.06) brightness(1.03);
+/* Toggle Preset selection buttons */
+.btn-toggle {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+    /* Roomier hit area — the preset labels were cramped against the edges */
+    padding: 11px 14px;
+    line-height: 1.45;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
 }
 
-.btn:active {
-	transform: translateY(0);
+.btn-toggle.active {
+    background-color: var(--caramel-brown);
+    color: var(--milk-cream);
 }
 
-.btn-primary {
-	background: linear-gradient(145deg, #69a676, #488354);
+/* Aligned side button group rules */
+.action-row-container {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn-compact {
+    max-width: 140px;
+    width: 100%;
+    height: 42px;
+    padding: 8px 16px;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+#btnNewGame {
+    background-color: var(--mint-green);
+    border-color: var(--mint-green);
+    color: white;
+}
+
+#btnNewGame:hover {
+    filter: brightness(1.1);
 }
 
 .btn-danger {
-	background: linear-gradient(145deg, #d06a50, #b7432a);
+    background-color: var(--berry-red);
+    border-color: var(--berry-red);
+    color: white;
 }
 
-.board-wrap {
-	width: min(100%, 680px);
+.btn-warning {
+    background-color: var(--honey);
+    border-color: var(--honey);
+    color: white;
 }
 
-.board-area {
-	position: relative;
-	width: 100%;
-	aspect-ratio: 12 / 7;
-	border-radius: 18px;
-	border: 2px solid color-mix(in srgb, var(--caramel-brown) 70%, white 30%);
-	background:
-		linear-gradient(145deg, rgba(233, 199, 136, 0.45), rgba(255, 246, 229, 0.65)),
-		radial-gradient(circle at 88% 18%, rgba(255, 255, 255, 0.44), transparent 38%);
-	overflow: hidden;
+/* Confirmation modal card styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
-.board-empty {
-	position: absolute;
-	inset: auto 0 0;
-	margin: 0;
-	padding: 0.5rem 0.65rem;
-	text-align: center;
-	font-size: 0.9rem;
-	color: color-mix(in srgb, var(--dark-cocoa) 68%, white 32%);
-	background: linear-gradient(to top, rgba(255, 245, 225, 0.92), transparent);
+.modal-box {
+    background-color: var(--bg-surface);
+    border: 3px solid var(--border-color);
+    max-width: 420px;
+    width: 90%;
+    border-radius: 22px;
+    text-align: center;
+    padding: 28px 26px;
+    box-shadow: 0 18px 40px rgba(59, 35, 23, 0.28);
+    animation: modal-pop 0.18s ease-out;
 }
 
-.board-ball {
-	position: absolute;
-	left: 50%;
-	top: 50%;
-	width: 18px;
-	aspect-ratio: 1;
-	border-radius: 999px;
-	transform: translate(-50%, -50%);
-	background: radial-gradient(circle at 35% 30%, #ffd998 0%, #c78534 64%, #8f551d 100%);
-	box-shadow: 0 0 0 3px rgba(255, 230, 194, 0.72);
-	transition: left 180ms linear, top 180ms linear;
+@keyframes modal-pop {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
-.board-ball.collision {
-	box-shadow: 0 0 0 6px rgba(192, 73, 47, 0.26);
+.modal-box h2 {
+    font-family: "Baloo 2", "Quicksand", sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--caramel-brown);
+    margin: 0 0 10px 0;
 }
 
-.stats-grid {
-	margin-top: 0.85rem;
-	display: grid;
-	gap: 0.55rem;
+.modal-box p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin: 0;
 }
 
-.three-up {
-	grid-template-columns: repeat(3, minmax(0, 1fr));
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 24px;
+    gap: 14px;
 }
 
-.four-up {
-	grid-template-columns: repeat(4, minmax(0, 1fr));
+/* Modal buttons carried no padding/size of their own, so they rendered
+   as tiny cramped pills. Give them a comfortable, consistent shape. */
+.modal-actions .btn {
+    flex: 1;
+    max-width: 160px;
+    padding: 12px 18px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
 }
 
-.info-list {
-	display: grid;
-	gap: 0.6rem;
+.btn-secondary {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
 }
 
-.info-list p {
-	display: flex;
-	justify-content: space-between;
-	gap: 1rem;
-	border-bottom: 1px dashed rgba(102, 61, 23, 0.24);
-	padding-bottom: 0.45rem;
+.btn-secondary:hover {
+    background-color: rgba(181, 114, 46, 0.12);
 }
 
-.info-list span {
-	color: color-mix(in srgb, var(--dark-cocoa) 70%, white 30%);
+.btn-success {
+    background-color: var(--mint-green);
+    border: 2px solid var(--mint-green);
+    color: white;
 }
 
-.info-list strong {
-	font-weight: 600;
+.btn-success:hover {
+    filter: brightness(1.08);
 }
 
-@media (min-width: 1080px) {
-	.dashboard-grid {
-		grid-template-columns: 1.2fr 1fr;
-		grid-template-areas:
-			"hero controls"
-			"board sensors"
-			"board device";
-	}
-
-	.hero-card { grid-area: hero; }
-	.controls-card { grid-area: controls; }
-	.board-card { grid-area: board; }
-	.sensors-card { grid-area: sensors; }
-	.device-card { grid-area: device; }
+/* Top App Bar configuration */
+.top-app-bar {
+    width: 100%;
+    background-color: var(--bg-surface);
+    border-bottom: 2px solid var(--border-color);
+    padding: 2px 2px;
+    margin-bottom: 8px;
+    /* margin-top: 2px; */
+    position: sticky;
+    top: 0;
+    z-index: 500;
 }
 
-@media (max-width: 900px) {
-	.hero-content {
-		grid-template-columns: 1fr;
-		justify-items: center;
-	}
-
-	.hero-stats,
-	.form-grid,
-	.three-up,
-	.four-up {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-	}
+.app-bar-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    /* Three equal tracks keep the centre brand fixed even when the
+       left status text or right credits change width. */
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
 }
 
-@media (max-width: 620px) {
-	.page-shell {
-		width: min(100% - 1rem, 100%);
-	}
+.app-bar-left {
+    display: flex;
+    justify-content: flex-start;
+    min-width: 0;
+}
 
-	.topbar {
-		flex-direction: column;
-		align-items: flex-start;
-	}
+.app-bar-brand-container {
+    display: flex;
+    justify-content: center;
+}
 
-	.topbar-status {
-		justify-items: start;
-	}
+.app-bar-right {
+    display: flex;
+    justify-content: flex-end;
+    min-width: 0;
+}
 
-	.actions,
-	.form-grid,
-	.hero-stats,
-	.three-up,
-	.four-up {
-		grid-template-columns: 1fr;
-	}
+.app-bar-brand {
+    display: flex;
+    align-items: center;
+}
+
+.brand-logo-small {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+}
+
+.app-bar-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1;
+    font-family: "Baloo 2", "Quicksand", cursive, sans-serif;
+    color: var(--caramel-brown);
+    margin-left: 12px;
+    white-space: nowrap;
+}
+
+.app-credits {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.app-credits a {
+    color: var(--caramel-brown);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.app-credits a:hover {
+    text-decoration: underline;
+}
+
+/* Compact utility grid layouts */
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.margin-top-sm {
+    margin-top: 6px;
+}
+
+.margin-top-md {
+    margin-top: 10px;
+}
+
+/* Base Card structure */
+.card {
+    background-color: var(--bg-surface);
+    border: 2px solid var(--border-color);
+    border-radius: 18px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-title {
+    font-family: "Baloo 2", "Quicksand", sans-serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    color: var(--caramel-brown);
+    border-bottom: 2px dashed rgba(181, 114, 46, 0.2);
+    padding-bottom: 6px;
+}
+
+#physicsCanvas {
+    /* Scale up to fill the board card while preserving aspect ratio
+       (bounded by whichever of width/height runs out first). */
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid rgba(181, 114, 46, 0.3);
+}
+
+.board-card {
+    padding: 6px;
+}
+
+/* "Warming up the oven" waiting card */
+.placeholder-section {
+    width: 100%;
+    justify-content: center;
+}
+
+/* Placeholder only appears in the waiting state. */
+#placeholderOven {
+    display: none;
+}
+
+.dashboard-workspace.is-waiting #placeholderOven {
+    display: flex;
+}
+
+/* While waiting, show only the placeholder + Game Controls; hide the
+   telemetry-only cards so the screen stays clean. */
+.dashboard-workspace.is-waiting .col-left,
+.dashboard-workspace.is-waiting .col-right {
+    display: none;
+}
+
+.dashboard-workspace.is-waiting .col-center .card:last-child {
+    display: none;
+}
+
+.card-alert {
+    width: 100%;
+    max-width: 520px;
+    text-align: center;
+    align-items: center;
+    padding: 28px 26px;
+    gap: 6px;
+}
+
+.card-alert .card-title {
+    font-size: 1.4rem;
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 4px;
+}
+
+.card-alert p {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.board-card .card-title {
+    margin-left: 6px;
+    margin-right: 6px;
+}
+
+.dashboard-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+@media (min-width: 1024px) {
+    body {
+        overflow: hidden;
+        /* Lock viewport scrolling on desktop */
+    }
+
+    .screen-view {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        /* Flush header on top; breathing room on the sides/bottom */
+        padding: 0 12px 12px;
+    }
+
+    .dashboard-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .dashboard-workspace {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1.15fr 1fr 1.1fr;
+        gap: 16px;
+        overflow: hidden;
+        min-height: 0;
+    }
+
+    .dashboard-workspace.is-waiting {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+    }
+
+    .dashboard-workspace.is-waiting .col-center {
+        height: auto;
+        width: 440px;
+        max-width: 100%;
+        overflow: visible;
+    }
+
+    .telemetry-columns {
+        display: contents !important;
+    }
+
+    .layout-col {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        height: 100%;
+        min-height: 0;
+        overflow-y: auto;
+        /* Contain any overflow to side columns */
+    }
+
+    .col-left {
+        overflow: hidden;
+    }
+
+    .col-left .card:last-child {
+        flex: 1;
+        min-height: 0;
+    }
+
+    /* Centre column: size everything to fit the viewport — no scrollbar. */
+    .col-center {
+        overflow: hidden;
+    }
+
+    .col-center .card:last-child {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .col-center .device-table-container {
+        flex: 1;
+        min-height: 0;
+        justify-content: space-between;
+    }
+
+    .col-right {
+        overflow: hidden;
+    }
+
+    .col-right .board-card {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .col-right .board-canvas-container {
+        flex: 1;
+        height: 100%;
+        min-height: 0;
+    }
+
+    .layout-col::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .layout-col::-webkit-scrollbar-thumb {
+        background-color: rgba(181, 114, 46, 0.35);
+        border-radius: 3px;
+    }
+
+    .controls-wrapper {
+        overflow-y: hidden;
+    }
+}
+
+/* Mobile Compatibility Fallbacks */
+@media (max-width: 1023px) {
+    .app-bar-content {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+    }
+
+    .app-bar-brand {
+        justify-content: center;
+    }
+
+    .dashboard-workspace {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .telemetry-columns {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .layout-col {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .sensor-grid-stat {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .btn-compact {
+        max-width: none;
+        flex: 1;
+    }
+}
+
+@media (min-width: 480px) and (max-width: 1023px) {
+    .sensor-grid-stat {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }

@@ -1,182 +1,129 @@
-import { DEFAULT_COOKIES, DEFAULT_PLAYER_NAME, DEFAULT_WALL_THICKNESS_PX } from './constants.js';
-import { formatDuration, formatNumber, formatStatus, progressFraction } from './format.js';
-
-/** @typedef {import('./types.js').DashboardState} DashboardState */
+import { formatUptime, formatElapsedTime } from './format.js';
 
 /**
- * @param {DashboardState} state
+ * Handles DOM manipulation and real-time canvas updates.
  */
-export function render(state) {
-    renderConnection(state);
-    renderHero(state);
-    renderBoard(state);
-    renderSensors(state);
-    renderDevice(state);
-}
-
-/**
- * @param {DashboardState} state
- */
-function renderConnection(state) {
-    const badge = document.querySelector('#connection-status');
-    const counter = document.querySelector('#message-count');
-    const error = document.querySelector('#connection-error');
-
-    if (!(badge instanceof HTMLElement) || !(counter instanceof HTMLElement) || !(error instanceof HTMLElement)) {
-        return;
+export class TelemetryRenderer {
+    constructor() {
+        this.canvas = document.getElementById('physicsCanvas');
+        if (this.canvas) {
+            this.ctx = this.canvas.getContext('2d');
+        }
     }
 
-    badge.classList.remove('connected', 'connecting', 'disconnected');
-    badge.classList.add(state.connection);
+    /**
+     * Global execution pass updating dashboards based on telemetry.
+     */
+    update(telemetry, connectionState) {
+        if (!telemetry) return;
 
-    const label = {
-        connected: 'Connected',
-        connecting: 'Connecting',
-        disconnected: 'Disconnected',
-    }[state.connection];
-
-    badge.textContent = label;
-    counter.textContent = `${state.messageCount} updates`;
-    error.textContent = state.lastError || 'No connection errors.';
-}
-
-/**
- * @param {DashboardState} state
- */
-function renderHero(state) {
-    const telemetry = state.telemetry;
-    const fallbackTarget = DEFAULT_COOKIES;
-    const collected = telemetry?.state.cookies_collected ?? 0;
-    const target = telemetry?.config.target_cookies ?? fallbackTarget;
-
-    setText('#cookies-collected', String(collected));
-    setText('#cookies-target', String(target));
-    setText('#round-value', String(telemetry?.state.current_round ?? 0));
-    setText('#time-value', formatDuration(telemetry?.state.elapsed_time_sec ?? 0));
-    setText('#status-value', formatStatus(telemetry?.state.status ?? 'idle'));
-
-    const player = telemetry?.config.player_name || DEFAULT_PLAYER_NAME;
-    const remaining = telemetry?.state.cookies_remaining ?? target;
-    setText('#player-summary', `Player: ${player} · Remaining: ${remaining}`);
-
-    const ring = document.querySelector('#cookie-progress');
-    if (ring instanceof HTMLElement) {
-        const percent = Math.round(progressFraction(collected, target) * 100);
-        ring.style.setProperty('--progress', `${percent}%`);
-    }
-}
-
-/**
- * @param {DashboardState} state
- */
-function renderBoard(state) {
-    const telemetry = state.telemetry;
-    if (!telemetry) {
-        setText('#board-empty', 'Waiting for telemetry from the ESP32.');
-        setText('#board-pos-x', '0');
-        setText('#board-pos-y', '0');
-        setText('#board-vel-x', '0');
-        setText('#board-vel-y', '0');
-        setText('#board-acc-x', '0');
-        setText('#board-collision', 'No');
-        return;
+        this.updateDeviceSection(telemetry.device);
+        this.updateGameStateSection(telemetry.state);
+        this.updateSensorSection(telemetry.sensors);
+        this.drawPhysicsCanvas(telemetry);
     }
 
-    setText('#board-empty', '');
-
-    const width = Math.max(1, telemetry.config.screen_width || 240);
-    const height = Math.max(1, telemetry.config.screen_height || 280);
-    const x = clamp(telemetry.physics.ball_pos_x / width, 0, 1);
-    const y = clamp(telemetry.physics.ball_pos_y / height, 0, 1);
-
-    const ball = document.querySelector('#board-ball');
-    if (ball instanceof HTMLElement) {
-        ball.style.left = `${x * 100}%`;
-        ball.style.top = `${y * 100}%`;
-        ball.classList.toggle('collision', Boolean(telemetry.physics.collision_detected));
+    updateDeviceSection(device) {
+        this.setText('deviceClientId', device.clientId);
+        this.setText('deviceHardware', device.hardware);
+        this.setText('deviceFirmware', 'v' + device.firmwareVersion);
+        this.setText('deviceUptime', formatUptime(device.uptimeMs));
+        this.setText('deviceWifi', device.wifiSsid);
     }
 
-    setText('#board-pos-x', formatNumber(telemetry.physics.ball_pos_x, 0));
-    setText('#board-pos-y', formatNumber(telemetry.physics.ball_pos_y, 0));
-    setText('#board-vel-x', formatNumber(telemetry.physics.velocity_x, 2));
-    setText('#board-vel-y', formatNumber(telemetry.physics.velocity_y, 2));
-    setText('#board-acc-x', formatNumber(telemetry.physics.acc_x, 2));
-    setText('#board-collision', telemetry.physics.collision_detected ? 'Yes' : 'No');
-}
-
-/**
- * @param {DashboardState} state
- */
-function renderSensors(state) {
-    const telemetry = state.telemetry;
-
-    setText('#sensor-acc-x', formatNumber(telemetry?.sensors.accel_x ?? 0, 2));
-    setText('#sensor-acc-y', formatNumber(telemetry?.sensors.accel_y ?? 0, 2));
-    setText('#sensor-acc-z', formatNumber(telemetry?.sensors.accel_z ?? 0, 2));
-    setText('#sensor-gyro-x', formatNumber(telemetry?.sensors.gyro_x ?? 0, 3));
-    setText('#sensor-gyro-y', formatNumber(telemetry?.sensors.gyro_y ?? 0, 3));
-    setText('#sensor-gyro-z', formatNumber(telemetry?.sensors.gyro_z ?? 0, 3));
-    setText('#sensor-battery', formatNumber(telemetry?.sensors.battery_voltage ?? 0, 3));
-    setText('#sensor-button', telemetry?.sensors.button ? 'Pressed' : 'Released');
-}
-
-/**
- * @param {DashboardState} state
- */
-function renderDevice(state) {
-    const telemetry = state.telemetry;
-
-    setText('#device-client-id', telemetry?.device.client_id ?? '—');
-    setText('#device-hardware', telemetry?.device.hardware ?? '—');
-    setText('#device-firmware', telemetry?.device.firmware_version ?? '—');
-    setText('#device-wifi', telemetry?.device.wifi_ssid ?? '—');
-    setText('#device-uptime', formatDuration((telemetry?.device.uptime_ms ?? 0) / 1000));
-}
-
-/**
- * @param {string} selector
- * @param {string} value
- */
-function setText(selector, value) {
-    const element = document.querySelector(selector);
-    if (element instanceof HTMLElement) {
-        element.textContent = value;
+    updateGameStateSection(state) {
+        this.setText('stateRound', state.currentRound);
+        this.setText('stateElapsedTime', formatElapsedTime(state.elapsedTimeSec));
     }
-}
 
-/**
- * @param {number} value
- * @param {number} min
- * @param {number} max
- * @returns {number}
- */
-function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-}
+    updateSensorSection(sensors) {
+        this.setText('sensorAccelX', sensors.accelX.toFixed(3));
+        this.setText('sensorAccelY', sensors.accelY.toFixed(3));
+        this.setText('sensorAccelZ', sensors.accelZ.toFixed(3));
+        
+        this.setText('sensorGyroX', sensors.gyroX.toFixed(1));
+        this.setText('sensorGyroY', sensors.gyroY.toFixed(1));
+        this.setText('sensorGyroZ', sensors.gyroZ.toFixed(1));
 
-/**
- * Syncs controls to telemetry defaults unless the user has already typed.
- * @param {DashboardState} state
- */
-export function syncControlsWithTelemetry(state) {
-    const telemetry = state.telemetry;
-    if (!telemetry) return;
-
-    const player = document.querySelector('#player-name');
-    const cookies = document.querySelector('#cookies-count');
-    const gameId = document.querySelector('#game-id');
-    const wallThickness = document.querySelector('#wall-thickness');
-
-    if (player instanceof HTMLInputElement && !player.dataset.dirty) {
-        player.value = telemetry.config.player_name || DEFAULT_PLAYER_NAME;
+        // Display raw voltage output without percentage attributes
+        this.setText('sensorBattery', `${sensors.batteryVoltage.toFixed(2)} V`);
+        
+        // Render buttons like other standard sensor variables
+        this.setText('sensorButton', sensors.button ? 'Pressed' : 'Released');
     }
-    if (cookies instanceof HTMLInputElement && !cookies.dataset.dirty) {
-        cookies.value = String(telemetry.config.target_cookies || DEFAULT_COOKIES);
+
+    /**
+     * Renders a real-time recreation of the physical 2D simulator coordinates.
+     */
+    drawPhysicsCanvas(telemetry) {
+        if (!this.ctx || !this.canvas) return;
+
+        const ctx = this.ctx;
+        const canvas = this.canvas;
+        const physics = telemetry.physics;
+        const config = telemetry.config;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // The play arena is square (side = screen_width); ball_pos_x/y both
+        // range over it. Use one uniform scale so the ball reaches all four
+        // walls symmetrically instead of being stretched to the display's
+        // taller screen_height.
+        const arena = config.screenWidth || 240;
+        const scale = Math.min(canvas.width, canvas.height) / arena;
+
+        // Custom palette bindings
+        const styles = getComputedStyle(document.body);
+        const milkCream = styles.getPropertyValue('--milk-cream') || '#FFF8EC';
+        const caramelBrown = styles.getPropertyValue('--caramel-brown') || '#B5722E';
+        const berryRed = styles.getPropertyValue('--berry-red') || '#C0492F';
+        const chocolateChip = styles.getPropertyValue('--chocolate-chip') || '#5A3A22';
+        const honey = styles.getPropertyValue('--honey') || '#F2B84B';
+
+        // Draw background
+        ctx.fillStyle = milkCream;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw structural play boundaries (thinner wall)
+        const wt = Math.max(3, (config.wallThicknessPx || 10) * scale * 0.45);
+        ctx.strokeStyle = caramelBrown;
+        ctx.lineWidth = wt;
+        ctx.strokeRect(wt / 2, wt / 2, canvas.width - wt, canvas.height - wt);
+
+        // Render cherry/ball body.
+        // Keep the ball's full proportional position, but clamp its centre so
+        // the ball edge rests exactly against the inner wall — it travels all
+        // the way to each wall (touching it) without overlapping or sinking in.
+        const ballRadius = 8 * scale;
+        const minX = wt + ballRadius;
+        const minY = wt + ballRadius;
+        const maxX = canvas.width - wt - ballRadius;
+        const maxY = canvas.height - wt - ballRadius;
+
+        const ballX = Math.min(Math.max(physics.ballPosX * scale, minX), maxX);
+        const ballY = Math.min(Math.max(physics.ballPosY * scale, minY), maxY);
+
+        ctx.beginPath();
+        ctx.arc(ballX, ballY, ballRadius, 0, 2 * Math.PI);
+        ctx.fillStyle = berryRed;
+        ctx.fill();
+        ctx.closePath();
+
+        // Vector directional projection
+        ctx.beginPath();
+        ctx.moveTo(ballX, ballY);
+        ctx.lineTo(
+            ballX + (physics.velocityX * 0.1 * scale),
+            ballY + (physics.velocityY * 0.1 * scale)
+        );
+        ctx.strokeStyle = honey;
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        ctx.closePath();
     }
-    if (gameId instanceof HTMLInputElement && !gameId.dataset.dirty) {
-        gameId.value = String(telemetry.config.game_id || 1);
-    }
-    if (wallThickness instanceof HTMLInputElement && !wallThickness.dataset.dirty) {
-        wallThickness.value = String(telemetry.config.wall_thickness_px || DEFAULT_WALL_THICKNESS_PX);
+
+    setText(id, text) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
     }
 }

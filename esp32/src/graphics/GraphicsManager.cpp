@@ -1,4 +1,5 @@
 #include "GraphicsManager.h"
+#include "src/game/RunningStatus.h"
 
 GraphicsManager::GraphicsManager(int width, int height)
     : _width(width), _height(height), _gfx(nullptr), _needsFullRedraw(true), _prevCookieCount(0)
@@ -67,7 +68,7 @@ void GraphicsManager::drawUI(const GameState &state, bool forceDraw)
         return;
 
     // Prevent screen flicker by executing heavy character renders only when data shifts
-    bool statusChanged = strcmp(state.status, _prevGameState.status) != 0;
+    bool statusChanged = state.runningStatus != _prevGameState.runningStatus;
     bool scoreChanged = state.cookiesCollected != _prevGameState.cookiesCollected ||
                         state.cookiesRemaining != _prevGameState.cookiesRemaining;
     bool roundChanged = state.currentRound != _prevGameState.currentRound;
@@ -85,20 +86,38 @@ void GraphicsManager::drawUI(const GameState &state, bool forceDraw)
         _gfx->setCursor(30, 5);
         _gfx->print("Round:");
         _gfx->print(state.currentRound);
+        // Show collected / target. There's no target field in GameState, but
+        // remaining = target - collected, so collected + remaining = target.
         _gfx->print(" Cookies:");
         _gfx->print(state.cookiesCollected);
         _gfx->print("/");
-        _gfx->print(state.cookiesRemaining);
+        _gfx->print(state.cookiesCollected + state.cookiesRemaining);
 
         // Print stopwatch timer
         // _gfx->print(" Time:");
         // _gfx->print((int)state.elapsedTimeSec);
         // _gfx->print("s");
 
-        // Align status string
+        // Align runningStatus string
         // _gfx->setCursor(_width - 60, 5);
+        String runningStatusStr;
+        switch (state.runningStatus)
+        {
+        case RunningStatus::IDLE:
+            runningStatusStr = "idle";
+            break;
+        case RunningStatus::RUNNING:
+            runningStatusStr = "running";
+            break;
+        case RunningStatus::COMPLETED:
+            runningStatusStr = "completed";
+            break;
+        default:
+            runningStatusStr = "unknown";
+            break;
+        }
         _gfx->print(" ");
-        _gfx->print(state.status);
+        _gfx->print(runningStatusStr);
     }
 }
 
@@ -107,11 +126,14 @@ void GraphicsManager::eraseRegion(int cx, int cy, int radius, const uint8_t *maz
     if (!_gfx || !mazeGrid)
         return;
 
+    // Map play-area relative cy to screen coordinates
+    int sy = cy + ui_header_height;
+
     // Define localized bounding box surrounding the shape
     int minX = max(0, cx - radius - 1);
     int maxX = min(_width - 1, cx + radius + 1);
-    int minY = max(ui_header_height, cy - radius - 1);
-    int maxY = min(_height - 1, cy + radius + 1);
+    int minY = max(ui_header_height, sy - radius - 1);
+    int maxY = min(_height - 1, sy + radius + 1);
 
     for (int y = minY; y <= maxY; ++y)
     {
@@ -145,14 +167,57 @@ void GraphicsManager::drawCookie(const Cookie &cookie)
 {
     if (!_gfx || !cookie.active)
         return;
-    _gfx->fillCircle((int16_t)cookie.x, (int16_t)cookie.y, (int16_t)cookie.radius, color_cookie);
+    _gfx->fillCircle((int16_t)cookie.x, (int16_t)(cookie.y + ui_header_height), (int16_t)cookie.radius, color_cookie);
 }
 
 void GraphicsManager::drawSphere(const PhysicsBody &ball)
 {
     if (!_gfx)
         return;
-    _gfx->fillCircle((int16_t)ball.x, (int16_t)ball.y, (int16_t)ball.radius, color_sphere);
+    _gfx->fillCircle((int16_t)ball.x, (int16_t)(ball.y + ui_header_height), (int16_t)ball.radius, color_sphere);
+}
+
+void GraphicsManager::drawPauseOverlay()
+{
+    if (!_gfx)
+        return;
+
+    const int barWidth = 14;
+    const int barHeight = 56;
+    const int gap = 16;
+
+    int centerX = _width / 2;
+    int centerY = ui_header_height + (_height - ui_header_height) / 2;
+    int top = centerY - barHeight / 2;
+
+    int leftX = centerX - gap / 2 - barWidth;
+    int rightX = centerX + gap / 2;
+
+    _gfx->fillRect(leftX, top, barWidth, barHeight, color_frosting_white);
+    _gfx->fillRect(rightX, top, barWidth, barHeight, color_frosting_white);
+}
+
+void GraphicsManager::drawCompletedOverlay()
+{
+    if (!_gfx)
+        return;
+
+    // A small banner in the middle of the play area announcing the finished round.
+    const int boxW = 150;
+    const int boxH = 38;
+    int centerX = _width / 2;
+    int centerY = ui_header_height + (_height - ui_header_height) / 2;
+    int boxX = centerX - boxW / 2;
+    int boxY = centerY - boxH / 2;
+
+    _gfx->fillRect(boxX, boxY, boxW, boxH, color_dark_cocoa);
+    _gfx->drawRect(boxX, boxY, boxW, boxH, color_honey);
+
+    _gfx->setTextColor(color_honey);
+    _gfx->setTextSize(2);
+    // "ROUND DONE" is 10 chars; size-2 glyphs are ~12px wide -> ~120px total.
+    _gfx->setCursor(centerX - 60, centerY - 7);
+    _gfx->print("ROUND DONE");
 }
 
 void GraphicsManager::update(
@@ -168,12 +233,25 @@ void GraphicsManager::update(
         return;
 
     // Detect structural system shifts requiring a complete redraw
-    bool statusChanged = strcmp(state.status, _prevGameState.status) != 0;
+    bool statusChanged = state.runningStatus != _prevGameState.runningStatus;
     bool roundChanged = state.currentRound != _prevGameState.currentRound;
 
     if (statusChanged || roundChanged)
     {
         _needsFullRedraw = true;
+    }
+
+    // While paused (idle) the ball is frozen. Draw one full frame with the pause
+    // bars on top, then leave the screen untouched on later ticks so the partial
+    // update path doesn't erase the overlay.
+    bool paused = (state.runningStatus == RunningStatus::IDLE);
+    bool completed = (state.runningStatus == RunningStatus::COMPLETED);
+    // Both paused and completed freeze the ball; draw one full frame with the
+    // matching overlay, then leave the screen alone on later ticks so the partial
+    // update path doesn't erase it.
+    if ((paused || completed) && !_needsFullRedraw)
+    {
+        return;
     }
 
     if (_needsFullRedraw)
@@ -186,11 +264,22 @@ void GraphicsManager::update(
         {
             drawCookie(cookies[i]);
             _prevCookieActiveStates[i] = cookies[i].active;
+            _prevCookies[i] = cookies[i];
         }
         _prevCookieCount = min(cookieCount, max_rendered_cookies);
 
         drawSphere(ball);
         drawUI(state, true);
+
+        // Lay the pause bars / round-complete banner over everything else.
+        if (paused)
+        {
+            drawPauseOverlay();
+        }
+        else if (completed)
+        {
+            drawCompletedOverlay();
+        }
 
         // Store structures
         _prevBall = ball;
@@ -220,21 +309,31 @@ void GraphicsManager::update(
             }
         }
 
-        // 3. Process changes in cookie states (erase newly collected, render respawned)
+        // 3. Process cookie changes: erase eaten ones and (re)draw new or respawned
+        // ones. A respawn keeps the cookie active but moves it to a new spot, so we
+        // also have to treat a position change as "needs redraw" - that case was
+        // missing before, which is why respawned cookies never showed up.
         for (int i = 0; i < cookieCount && i < max_rendered_cookies; ++i)
         {
+            const Cookie &cur = cookies[i];
+            const Cookie &prev = _prevCookies[i];
             bool wasActive = (i < _prevCookieCount) ? _prevCookieActiveStates[i] : false;
-            bool isActive = cookies[i].active;
+            bool isActive = cur.active;
+            bool moved = ((int)prev.x != (int)cur.x) || ((int)prev.y != (int)cur.y);
 
-            if (wasActive && !isActive)
+            // Erase the old drawing if the cookie was visible and has now gone or moved.
+            if (wasActive && (!isActive || moved))
             {
-                eraseRegion((int)cookies[i].x, (int)cookies[i].y, (int)cookies[i].radius, mazeGrid, gridWidth, gridHeight);
+                eraseRegion((int)prev.x, (int)prev.y, (int)prev.radius, mazeGrid, gridWidth, gridHeight);
             }
-            else if (!wasActive && isActive)
+            // Draw at the current spot if it is visible and just appeared or moved.
+            if (isActive && (!wasActive || moved))
             {
-                drawCookie(cookies[i]);
+                drawCookie(cur);
             }
+
             _prevCookieActiveStates[i] = isActive;
+            _prevCookies[i] = cur;
         }
         _prevCookieCount = min(cookieCount, max_rendered_cookies);
 

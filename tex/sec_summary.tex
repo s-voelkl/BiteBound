@@ -1,7 +1,12 @@
-\section{Summary}
-\label{sec:summary}
+\section{Summary and Future Work}
+\label{sec:summary-future-work}
 
-\subsection{Summary \& Future Work}
-\label{subsec:summary_future_work}
-% TODO: write Summary & Future Work
-% Summarize the project and outline ideas for future improvements.
+The BiteBound project demonstrates a practical approach to addressing the primary objectives established in~\Cref{sec:introduction}, specifically managing low-latency gameplay execution alongside secure, asynchronous network communication on resource-constrained hardware.
+By partitioning the timing-sensitive physics engine and rendering pipeline onto the Game Core and the communication onto the Network Core (Core 0), the system maintains a stable frame rate.
+This separation of concerns prevents network latency from interrupting physical gameplay while maintaining bidirectional synchronization with the Android and Node-RED companion interfaces, validating the multi-platform user experience proposed in the mission statement.
+
+Future developments will focus on expanding the platform's physical interactivity, sensory feedback, and academic dissemination.
+To enrich the gameplay mechanics, upcoming iterations can incorporate onboard physical button inputs to trigger special, context-dependent actions during active play.
+Integrating a vibration motor or haptic sensor would further ground the physical interaction by providing physical feedback when the virtual ball collides with maze boundaries.
+Auditory feedback can also be expanded by implementing driver routines for the onboard buzzer, generating custom startup sequences, loading music, and distinctive alerts for coin-collection events.
+Finally, this technical report will be formatted into a scientific paper suitable for public submission to relevant mobile and ubiquitous computing venues, allowing for broader academic evaluation of the architecture.

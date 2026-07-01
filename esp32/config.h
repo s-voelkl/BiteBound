@@ -39,9 +39,26 @@ const int mqtt_qos = 1;
 /** Retain flag for MQTT messages. */
 const bool mqtt_retain = false;
 
+/** MQTT Retry interval in milliseconds. */
+const int mqtt_retry_interval_ms = 2000;
+
+/** MQTT Retry Attempts per connection setup. */
+const int mqtt_retry_attempts = 2;
+
 /** ----- Game settings ----- */
+
+/** Game ID for the maze game. */
+const int game_id_maze = 1;
+/** Game ID for the plane game. */
+const int game_id_plane = 2;
+/** Default game id. */
+const int default_game_id = game_id_maze;
+
 /** Default game duration in seconds. */
-const int default_game_duration_sec = 120;
+// const int default_game_duration_sec = 120;
+
+/** Default player name. */
+const char *const default_player_name = "Cookie-Monster";
 
 /** Default maximum number of cookies in the game. */
 const int default_cookies_count = 10;
@@ -49,8 +66,28 @@ const int default_cookies_count = 10;
 /** Default maximum number of visible cookies in the game. */
 const int default_max_visible_cookies = 4;
 
+/** How long the "completed" state is shown before the next round auto-starts [ms]. */
+const uint32_t round_complete_hold_ms = 2000;
+
 /** Default cookie radius in pixels. */
-const float default_cookie_radius = 3.0f;
+const float default_cookie_radius = 5.0f;
+
+/** Default physics body (sphere/ball) radius in pixels. Only a fallback before a
+ *  level is built - the actual ball size is derived from the wall thickness below. */
+const float default_physics_body_radius = 5.0f;
+
+/** Ball diameter as a fraction of the wall thickness, so the ball always fits the
+ *  corridor no matter which wall thickness is chosen. radius = wall * ratio / 2. */
+const float ball_diameter_wall_ratio = 0.7f;
+
+/** Maze cookie diameter as a fraction of the wall thickness, so cookies scale with
+ *  the corridor like the ball (a bit smaller so they stay distinguishable). */
+const float cookie_diameter_wall_ratio = 0.6f;
+
+/** Game 2 (open field) has no corridor to scale to, so its ball and cookies use
+ *  fixed sizes - picked to be clearly visible without dominating the field. */
+const float default_flatland_ball_radius = 8.0f;
+const float default_flatland_cookie_radius = 6.0f;
 
 /** ----- Display settings ----- */
 /** Display width in pixels. */
@@ -91,7 +128,7 @@ const uint16_t color_ui_text = color_milk_cream;       // Warm milk HUD text
 
 /** ----- Physics settings ----- */
 /** IMU sensitivity multiplier (IMU = Inertial Measurement Units) */
-const float default_imu_sensitivity_multiplier = 1.25f;
+const float default_imu_sensitivity_multiplier = 100.0f;
 
 /** Bounce restitution coefficient.
  * This coefficient determines how much energy is conserved in a collision.
@@ -101,14 +138,15 @@ const float default_imu_sensitivity_multiplier = 1.25f;
  * which results in a realistic bounce effect for the ball in the game.
  * This value can be adjusted based on the desired game feel and physics behavior.
  */
-const float default_bounce_restitution = 0.75f;
+const float default_bounce_restitution = 0.3f;
 
 /** Exponential moving average alpha.
  * This is the smoothing factor for the exponential moving average filter applied to the sensor data.
  * A higher alpha gives more weight to recent data points, while a lower alpha gives more weight to older data points.
  * new_value = alpha * new_measurement + (1 - alpha) * old_value
+ * So, having a low alpha reduces the need for sudden movements in order to move the ball.
  */
-const float default_ema_alpha = 0.25f;
+const float default_ema_alpha = 0.5f;
 
 /** Deadzone threshold for sensor measurements.
  * This threshold defines the minimum change in sensor readings that will be considered significant.
@@ -116,10 +154,10 @@ const float default_ema_alpha = 0.25f;
  * This helps to create a more stable and enjoyable gaming experience by filtering out small, insignificant
  * movements of the device, e.g. when the player is holding the device still or making very slight movements.
  */
-const float default_deadzone_threshold = 0.05f;
+const float default_deadzone_threshold = 0.04f;
 
 /** Maximum speed for the ball [px/s] to travel per second.*/
-const float default_max_speed = 400.0f;
+const float default_max_speed = 300.0f;
 
 /** Continuous drag [1/s].
  * Default 0 means NO permanent damping, so the ball
@@ -186,5 +224,19 @@ const float battery_voltage_multiplier = 2.0f;
 const float battery_min_voltage_mock = 3.0f;
 /** Maximal simulated battery voltage. */
 const float battery_max_voltage_mock = 4.2f;
+
+/** ----- Concurrency and Multithreading Settings ----- */
+/** Network core ID. */
+#define core_network 0
+/** Game core ID. */
+#define core_game 1
+/** Game loop tick rate in milliseconds. Equals 50Hz. */
+#define game_tick_rate_ms 20
+/** Telemetry publishing rate in milliseconds. Equals 2Hz. */
+#define telemetry_rate_ms 500
+/** FreeRTOS queue length. */
+#define cmd_queue_length 10
+/** FreeRTOS queue item size. */
+#define cmd_queue_item_size sizeof(CommandMsg)
 
 #endif // CONFIG_H

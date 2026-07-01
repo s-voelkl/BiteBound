@@ -1,13 +1,42 @@
 \section{Node-RED}
 \label{sec:nodered}
-\cite{nodeRED}
+
+Node-RED~\cite{nodeRED} serves as a desktop-accessible companion to the Android application~\cite{nodeRED}, providing alternative telemetry processing.
+
+This system utilizes the code-first UIBUILDER package~\cite{Knight_node-red-contrib-uibuilder} rather than the officially deprecated dashboard~\cite{node-red-dashboard-deprecated} as the latter introduces potential security and support liabilities in modern Node.js runtimes. Additionally, UI Builder supports high-frequency telemetry streams by decoupling the client-side representation from the Node-RED backend using optimized WebSockets~\cite{websockets2026}.
+
+% TODO: Update figures for nodered!
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\linewidth]{../assets/nodered-workflow.png}
+    \caption[Node-RED Workflow]{Node-RED backend flow orchestrating MQTT communication and dashboard integration.}
+    \label{fig:nodered-workflow}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=1\linewidth]{../assets/nodered-dashboard.png}
+    \caption[Node-RED UI Builder Dashboard]{Web-based operator dashboard rendered via uibuilder.}
+    \label{fig:nodered-dashboard}
+\end{figure}
 
 \subsection{Workflow}
 \label{subsec:workflow}
-% TODO: write Workflow
-% Explain the Node-RED workflow and add a screenshot.
+
+The backend flow orchestrates MQTT setup, topic routing, debug logging, and state initialization, as depicted in \Cref{fig:nodered-workflow}.
+Incoming telemetry is pipelined directly into the \texttt{BiteBound Dashboard} uibuilder instance, while a parallel logging branch uses a filtering delay node to limit outputs.
+Manual command injections are available to bypass the UI for debugging purposes.
 
 \subsection{Dashboard \& User Input}
 \label{subsec:dashboard_nodered}
-% TODO: write Dashboard & User Input
-% Detail the Node-RED dashboard logic and forms with a screenshot.
+
+The uibuilder interface, as illustrated in \Cref{fig:nodered-dashboard}, offers a responsive, desktop-optimized web console that mirrors the style, capabilities and functionality of the Android app.
+The interface is modularized within the local web directory, separating markup, styling, and application logic:
+
+\begin{itemize}
+    \item \texttt{index.html}: Establishes the DOM structure, dividing the workspace into cards.
+    \item  \texttt{index.css}: Implements a uniform, cookie-themed color palette using CSS variables to maintain styling coherence.
+    \item \texttt{index.js}: Acts as the script entry point, initializing the client-side uibuilder library and listening for active WebSocket~\cite{uibuilderv7} updates from the flow.
+\end{itemize}
+
+The core logic processes telemetry inputs into standardized JavaScript objects, validates them against JSON specifications, and constructs device commands for WebSocket transmission. DOM rendering dynamically updates the HTML content based on the current state, though no data persistence is implemented.
