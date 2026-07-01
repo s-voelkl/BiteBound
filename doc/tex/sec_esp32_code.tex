@@ -10,7 +10,6 @@ the code listings are included here for reference.
 % The cpp files are omitted, as they would be too long to include in the appendix and
 % are not necessary for understanding the main logic of the project.
 
-% TODO: uncomment.
 \subsection{\texttt{esp32.ino}}
 Path: \texttt{esp32/esp32.ino}
 \lstinputlisting[language=C++, breaklines=true]{../esp32/esp32.ino}
@@ -18,9 +17,6 @@ Path: \texttt{esp32/esp32.ino}
 \subsection{Headers}
 The following listings contain all header files from the \texttt{esp32/} project root and source tree.
 Note that \texttt{wifi\_mqtt\_secrets\_template.txt} is included instead of the actual secrets file for security reasons.
-
-% TODO: Update the list of header files by using the following command:
-% (Get-ChildItem -Path esp32 -Filter *.h -Recurse | Where-Object { $_.Name -ne "wifi_mqtt_secrets.h" } | ForEach-Object { ($_.FullName -replace [regex]::Escape("$PWD\esp32\"), "").Replace("\", "/") }) -join ",`n`t"
 
 \foreach \f in {
         config.h,

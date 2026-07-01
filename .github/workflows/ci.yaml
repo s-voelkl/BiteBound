@@ -28,8 +28,8 @@ jobs:
       # the credentials are not set up
       - name: Provide WiFi/MQTT secrets header
         run: |
-          if [ ! -f esp32/wifi_mqtt_secrets.h ]; then
-            cp esp32/wifi_mqtt_secrets_template.txt esp32/wifi_mqtt_secrets.h
+          if [ ! -f src/esp32/wifi_mqtt_secrets.h ]; then
+            cp src/esp32/wifi_mqtt_secrets_template.txt src/esp32/wifi_mqtt_secrets.h
           fi
 
       - name: Compile Arduino Sketch (${{ matrix.name }})
@@ -58,7 +58,7 @@ jobs:
               source-path: examples/Arduino/libraries/lvgl
               name: lvgl
           sketch-paths: |
-            - esp32/esp32.ino
+            - src/esp32/esp32.ino
           cli-compile-flags: |
             - --build-property
             - compiler.cpp.extra_flags=${{ matrix.compile-flags }}
