@@ -54,7 +54,7 @@ See: [Running Node-RED locally](https://nodered.org/docs/getting-started/local)
 - Change directory: ``cd nodered``
 - NPM install: ``npm install`` (``sudo`` might be needed. Installs packages from `package.json`)
 - Verify `node-red-contrib-uibuilder` is installed as a dependency in the NodeRED installed nodes (see [UI Builder documentation](https://totallyinformation.github.io/node-red-contrib-uibuilder/#/)).
-- Run: ``node-red --settings settings.js flows.json``
+- Run: ``npm run run``
 - Import project flow from `nodered/flow.json` into the Node-RED editor to set up the dashboard and MQTT communication.
 - Workflow: [http://localhost:1880](http://localhost:1880)
 - UI Builder Dashboard: [http://localhost:1880/dashboard/](http://localhost:1880/dashboard/)
@@ -87,7 +87,7 @@ The documentation is written in LaTeX and can be found in the `tex/` directory.
 
 ### Prompts
 
-Used AI Prompts are given in the `prompts/` directory as latex files. Follow the markdown template file `PROMPT_TEMPLATE.md` to create new prompts, so these can be automatically gathered and compiled into the documentation.
+Used AI Prompts are given in the `doc/prompts/` directory as latex files. Follow the markdown template file `PROMPT_TEMPLATE.md` to create new prompts, so these can be automatically gathered and compiled into the documentation.
 
 ### Automatic prompt and source file gathering
 
