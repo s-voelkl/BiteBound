@@ -87,7 +87,7 @@ The documentation is written in LaTeX and can be found in the `tex/` directory.
 
 ### Prompts
 
-Used AI Prompts are given in the `prompts/` directory as latex files. Follow the markdown template file `PROMPT_TEMPLATE.md` to create new prompts, so these can be automatically gathered and compiled into the documentation.
+Used AI Prompts are given in the `doc/prompts/` directory as latex files. Follow the markdown template file `PROMPT_TEMPLATE.md` to create new prompts, so these can be automatically gathered and compiled into the documentation.
 
 ### Automatic prompt and source file gathering
 
