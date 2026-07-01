@@ -58,7 +58,7 @@ jobs:
               source-path: examples/Arduino/libraries/lvgl
               name: lvgl
           sketch-paths: |
-            - esp32/esp32.ino
+            - src/esp32/esp32.ino
           cli-compile-flags: |
             - --build-property
             - compiler.cpp.extra_flags=${{ matrix.compile-flags }}
