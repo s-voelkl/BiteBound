@@ -18,15 +18,6 @@ This readme was developed during the project but is not the single source of tru
 
 **For setup and usage instructions, see [USAGE.md](USAGE.md).**
 
-<!-- TODO: Remove -->
-<!-- ## Before making this repo public
-
-Before making this repository public, the following steps have to be done:
-
-- Delete examples folder, as we dont have the rights to use or publish this information.
-- Restructure folders and files: Make ``src`` with each Subproject and ``docs`` with extensive documentation and tex-files.
-- Delete prompts folder -->
-
 ## License
 
 The MIT License (MIT) applies to this project, as stated in [LICENSE](LICENSE). The documentation and diagrams are licensed under the Creative Commons Attribution 4.0 International Public License (CC BY 4.0) in accordance with the [LICENSE](tex/LICENSE) file.
@@ -564,7 +555,7 @@ Invoke the `update()` method on every 20ms tick. The manager automatically deter
 
 ### Maze Generation (Procedural DFS)
 
-A procedural 2D maze generator has been integrated to build the game-board using an iterative, randomized Depth-First Search (DFS) algorithm (see AI prompt in [prompts/prompts.md](prompts/prompts.md)).
+A procedural 2D maze generator has been integrated to build the game-board using an iterative, randomized Depth-First Search (DFS) algorithm (see AI prompt in [doc/prompts/prompts.md](doc/prompts/prompts.md)).
 
 #### Implementation Summary
 
