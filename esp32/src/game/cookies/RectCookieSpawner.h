@@ -24,7 +24,6 @@ public:
             c.x = m + (random(1001) / 1000.0f) * (_w - 2.0f * m);
             c.y = m + (random(1001) / 1000.0f) * (_h - 2.0f * m);
 
-            // TODO: Check if the usage of the default value is fine here. Changed 3.0f to constant.
             const float dx = c.x - avoid.x;
             const float dy = c.y - avoid.y;
             const float minD = avoid.radius + _r + default_cookie_radius;
