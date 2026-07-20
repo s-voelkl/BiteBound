@@ -1,0 +1,244 @@
+%!TEX TS-program = pdflatex
+% LaTeX-Vorlage zur Erstellung einer Projektarbeit (Dokumentation eines Projekts)
+% auf Basis der Vorlage für eine
+% Abschlussarbeit in der Fakultät Elektrotechnik, Medien und Informatik an der OTH Amberg-Weiden
+% Diese Vorlage entstand im Rahmen des Kurses "LaTeX fürs Studium"
+% Aktuelle Version: v0.01
+% Stand: 03.06.2023
+%
+% Changelog:
+%
+% v0.01: 03.06.2023, Anpassung der Vorlage für Projektarbeiten (article statt report, keine Titelblätter)
+%
+\documentclass[12pt,oneside]{article}
+\usepackage[T1]{fontenc}		% Einstellungen fuer Umlaute usw.
+% \usepackage[utf8x]{inputenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+
+\usepackage{parskip}			% Einstellungen fuer Absaetze: Abstand statt Einrueckung
+
+\usepackage[a4paper,			% Papierformat A4
+	    left=2.5cm,				% linker Rand
+	    right=2.5cm,			% rechter Rand
+	    top=1.5cm,				% oberer Rand
+	    bottom=1.5cm,			% unter Rand
+	    marginparsep=5mm,		% Abstand der Randnotizen
+	    marginparwidth=10mm, 	% Breite der Randnotizen
+	    headheight=7mm,			% Hoehe der Kopfzeile
+	    headsep=1.2cm,			% Abstand der Kopfzeile
+	    footskip=1.5cm,			% Abstand der Fusszeile
+	    includeheadfoot]{geometry}
+
+\usepackage{fancyhdr}						% Konfiguration von Kopf- und Fusszeilen
+\pagestyle{fancy}							% Seitenstil 'fancy'
+\fancyhf{}									% vorhandene Einstellungen loeschen
+\setlength{\headwidth}{\textwidth}			% Kopf- und Fusszeile so breit wie der Haupttext
+\fancyfoot[R]{\thepage} 					% Festlegung des Seitenstils: Seitenzahlen in der Fusszeile rechts
+\fancyfoot[L]{\IhreArbeit}					% Kapitelnr. und -Bezeichnung in der Fusszeile links
+\fancyhead[L]{\IhreGruppe: \IhrVornameEins\ \IhrNachnameEins\ \& \IhrVornameZwei\ \IhrNachnameZwei}	% Vorname und Name in der Kopfzeile links
+\renewcommand{\sectionmark}[1]{	    		% Definition der Ausgabe des Kapitels
+  \markboth{Abschnitt \thesection. #1}{}}
+\renewcommand{\headrulewidth}{0.5pt}		% Trennlinie zwischen Kopfzeile und Haupttext
+\renewcommand{\footrulewidth}{0.5pt}		% Trennlinie zwischen Haupttext und Fusszeile
+\fancypagestyle{plain}{				     	% Anpassung des Seitenstils 'plain' bei Beginn neuer Kapitel
+  \fancyhf{}								% Vorbelegung loeschen
+  \fancyfoot[C]{\thepage}					% Seitenzeilen in der Fusszeile mittig
+}
+
+\usepackage{amsmath}			% Pakete fuer den Mathematikmodus
+\usepackage{amssymb}
+\usepackage{amsfonts}
+%\usepackage[intlimits]{empheq}
+
+\usepackage[sc]{mathpazo}		% Schriftart Palatino fuer Haupttext und Mathematikmodus
+\usepackage{pifont}				% zusaetzliche Symbole
+
+% \usepackage[format=hang,		% Einstellung fuer Bildunterschriften
+            % font={footnotesize},
+            % labelfont={bf},
+            % margin=1cm,
+            % aboveskip=5pt,
+            % position=bottom]{caption}
+
+\usepackage{graphicx}							% Einbinden von Graphiken
+\usepackage[svgnames,cmyk,table,hyperref]{xcolor} 	% Verwendung von Farben
+\usepackage{pgffor} % Loops for the prompts section
+
+\definecolor{aoenglish}{rgb}{0.0, 0.5, 0.0}
+\definecolor{battleshipgrey}{rgb}{0.52, 0.52, 0.51}
+\definecolor{cardinal}{rgb}{0.77, 0.12, 0.23}
+
+%\usepackage{tikz}								% Erstellen von Grafiken
+%\usetikzlibrary{positioning,arrows,plotmarks} % TikZ-Bibliotheken
+%\usepackage{pgfplots}                           % Darstellung von Plots, Funktionen, Graphen usw.
+
+%
+% Weitere Pakete
+%
+\usepackage{listings}			% Darstellung von Quellcode
+\lstloadlanguages{[ISO]C++,Java,XML,[LaTeX]TeX}
+\lstset{language=C++,
+	numbers = none,
+	basicstyle = \small\ttfamily,
+	keywordstyle = \color{blue},
+	commentstyle = \color{battleshipgrey},
+	stringstyle = \color{cardinal},
+	columns = flexible,
+	showstringspaces = false
+}
+%
+\usepackage[square,numbers,sort]{natbib} % Zitationsstil mit Attribut lastchecked
+%
+%\usepackage[european, siunitx]{circuitikz}	% Darstellung von Schaltungen
+%
+%\usepackage{enumerate}			% Formatierung nummerierter Listen
+
+\usepackage{rotating} % Required for sidewaysfigure
+
+% 
+% Persoenliche Angaben
+% 
+\newcommand*{\IhrVornameEins}{Simon}
+\newcommand*{\IhrNachnameEins}{Völkl}
+\newcommand*{\IhrVornameZwei}{Johannes}
+\newcommand*{\IhrNachnameZwei}{Schieder}
+\newcommand*{\IhreGruppe}{Group 03}
+\newcommand*{\IhrStudiengang}{Artificial Intelligence, Industry-4.0-Informatics}
+\newcommand*{\IhreArbeit}{Project Mobile \& Ubiquitous Computing Summer Semester 2026: BiteBound}
+\newcommand*{\IhreSchluesselwoerter}{ESP32-S3, Android, Node-RED, Arduino, IoT Game, MQTT, FreeRTOS, IMU}
+\newcommand*{\IhrErstpruefer}{Prof. Dr. Ulrich Schäfer}
+
+\usepackage[bookmarks, raiselinks, pageanchor, % PDF-Einstellungen
+            hyperindex, colorlinks,
+            citecolor=black, linkcolor=black,
+            urlcolor=black, filecolor=black,
+            menucolor=black]{hyperref}
+\hypersetup{pdftitle={\IhreArbeit},%
+            pdfauthor={\IhrVornameEins\ \IhrNachnameEins{} \& \IhrVornameZwei\ \IhrNachnameZwei},%
+            pdfsubject={\IhreGruppe},%
+            pdfkeywords={\IhreSchluesselwoerter}}
+
+% These packages were proposed by Tobias Bauer in the lecture "LaTeX fürs Studium" in 2026.
+% Many adjustments were made to the template for fitting a potential publication of the technical report with Prof. Neumann.
+\usepackage[shortlabels]{enumitem} % Verbesserte Einstellungsmöglichkeiten von Listen. Nicht bei Beamer anwendbar
+\usepackage[capitalise,nameinlink,noabbrev]{cleveref} % Referenzen besser machen. z.B. mit \cref{}. needs hyperref defined before it.
+\usepackage{multirow} % Mehrere Zeilen in eine zusammenfassen. für Spalten einfach \multicolumn benutzen
+\usepackage{booktabs} % Hübschere Tabellen mit \top/mid/cmid/bottomrule
+\usepackage{minted} % Neuere Bibliothek für Code-Blöcke, mit \begin{listing oder minted}
+\usepackage{float}
+\usepackage{siunitx}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{csquotes} % Korrekte Anführungszeichen setzen. Sprachspezifisch möglich. mit \setquotestyle{style} und \enquote{}.
+
+
+\begin{document}
+\thispagestyle{empty}
+%\originalTeX
+\begin{center}
+    \Large
+    Ostbayerische Technische Hochschule Amberg\-/Weiden\\
+    Department of Electrical Engineering, Media, and Computer Science\\[.8cm]
+    \large \IhrErstpruefer\\[.8cm]
+    \Large \IhreArbeit\\[.8cm]
+    \large \IhreGruppe: \IhrVornameEins\ \IhrNachnameEins\ \&
+    \IhrVornameZwei\ \IhrNachnameZwei\\[.8cm]
+    \large Courses of study: \IhrStudiengang\\[.8cm]
+    \today\\[2.5cm]
+\end{center}
+
+% logo of the project and device picture
+\begin{figure}[h]
+    \centering
+    \begin{minipage}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{../assets/logo/logo.png}
+        \caption[BiteBound Project Logo]{Project Logo of the BiteBound Game. Designed by Simon Völkl.}
+        \label{fig:bitebound_logo}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{../assets/esp32-s3-display.png}
+        \caption[Waveshare ESP32-S3]{Waveshare ESP32-S3 1.69inch Touch Display. Source: waveshare.com}
+        \label{fig:esp32_s3_display}
+    \end{minipage}
+\end{figure}
+\clearpage
+
+\tableofcontents
+
+\clearpage
+% \input{sec_abstract}
+\input{sec_introduction}
+% \input{sec_related_work}
+\input{sec_technical_concept}
+\input{sec_hardware}
+\input{sec_android_app}
+\input{sec_nodered}
+\input{sec_project_management}
+\input{sec_discussion}
+\input{sec_summary}
+
+% \clearpage
+% \appendix
+% \input{sec_prompts}
+% \input{sec_esp32_code}
+
+% -------------------------
+% \begin{figure}[h]
+% 	\centering
+% 	\includegraphics[width=0.3\linewidth]{imgFirstPage.png}
+% 	\caption[Waveshare ESP32-S3]{Waveshare ESP32-S3 1.69inch Touch Display Development Board, 240×280 Pixels (Quelle: waveshare.com)}
+% 	\label{fig:waveshare}
+% \end{figure}
+% 
+% \begin{lstlisting}[language=C++]
+% void setup() {
+%   Serial.begin(115200);
+%   // gibt etwas aus ueber die serielle Leitung:
+%   Serial.println("Hallo ESP");
+% }
+% \end{lstlisting}
+% 
+% \begin{lstlisting}[language=Java]
+% /**
+% * Ein Hallo-Welt-Programm in Java.
+% * Dies ist ein Javadoc-Kommentar.
+% *
+% * @author Ulrich Schaefer
+% * @version 1.0
+% */
+% public class HalloWelt {
+% /**
+% * Main-Methode
+% *
+% * @param args Kommandozeilenparameter
+% * @return Rueckgabewert
+% */
+%   public static int main(String[] args) {
+%     System.out.println("Hallo Welt!");
+%   }
+% } // Ende der Java-Klasse HalloWelt
+% \end{lstlisting}
+% 
+% \begin{lstlisting}[language=XML]
+% <spitze>
+%   <!-- Kommentar in XML -->
+%   <klammer wert="auf"/>
+% </spitze>
+% \end{lstlisting}
+% -------------------------
+
+% - bei Bedarf diesen Seitenumbruch entfernen
+% \clearpage
+
+\phantomsection
+\addcontentsline{toc}{section}{References}
+\bibliographystyle{natdin}
+\bibliography{references} % in case of reference error, run "bibtex main" first, then "pdflatex main" twice
+
+%\include{anhang} % zum Beispiel hier die ChatGPT-Chatprotokolle einbinden (oder als extra-Datei)
+
+\end{document}

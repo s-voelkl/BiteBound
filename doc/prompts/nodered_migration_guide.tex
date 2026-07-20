@@ -1,0 +1,90 @@
+\subsection*{Android to Node-RED Migration Guide}
+
+\textbf{Prompt:}
+\begin{lstlisting}[language={}, breaklines=true]
+I need a technical guide on migrating an IoT companion app's frontend from Android (Kotlin/Jetpack Compose) to a Node-RED UI Builder web interface (HTML/CSS/Vanilla JS).
+
+Using the provided context (parts of our Android codebase and the current project README), please outline:
+
+1. A mapping of Android concepts to Web/Node-RED equivalents.
+2. Architectural guidelines for structuring the HTML, CSS, and JS files modularly.
+3. Simple code templates demonstrating how to parse incoming telemetry JSON cleanly and dispatch structured commands back via `uibuilder.send()` over WebSockets.
+
+Focus on the general patterns rather than our game's business logic, and explain the key differences in state management between Jetpack Compose and modern Vanilla JavaScript.
+\end{lstlisting}
+
+\textbf{Context:}
+\begin{lstlisting}[language={}, breaklines=true]
+Relevant parts of the Android Source Code, including basic styling, constants, modelview, JSON commands, MQTT handling, and the README describing the current architecture and design patterns.
+\end{lstlisting}
+
+\textbf{Answer:}
+\begin{lstlisting}[language={Java}, breaklines=true]
+Migrating an IoT companion interface from a native Android application to a Node-RED UI Builder web dashboard involves moving from a statically typed, declarative JVM environment to a dynamic, event-driven web runtime.
+
+1. CONCEPT MAPPING
++-------------------------+---------------------------------+
+| Android (JVM / Kotlin)  | Web / UI Builder Equivalent     |
++-------------------------+---------------------------------+
+| SharedPreferences       | LocalStorage API                |
+| Jetpack Compose State   | Stateful JS Object + DOM Binder |
+| MqttAsyncClient         | uibuilder WebSocket connection  |
+| Coroutine Delay/Timeout | setTimeout() / clearTimeout()   |
++-------------------------+---------------------------------+
+
+2. ARCHITECTURAL STRUCTURING
+
+UI Builder uses a modular directory structure under 'src/'. To mirror Android's separation of concerns, split the codebase as follows:
+- index.html: Declarative markup structure (the layouts).
+- index.css: Visual properties and CSS Custom Properties (the theme).
+- index.js: Entry point coordinating events and state changes.
+- app/types.js: Holds factories and default configurations for fallback handling.
+- app/command.js: Assembles and dispatches commands over WebSockets.
+- app/render.js: Dynamic rendering engine updating the DOM tree.
+
+3. BASIC GENERIC PATTERNS
+
+A. Saving and Loading Connection Profiles (LocalStorage):
+
+// Saving
+const credentials = { host: "localhost", port: 1883 };
+localStorage.setItem('my_app_creds', JSON.stringify(credentials));
+
+// Loading
+const stored = localStorage.getItem('my_app_creds');
+const myCreds = stored ? JSON.parse(stored) : { host: "default", port: 1883 };
+
+B. Parsing Telemetry securely with Fallbacks:
+
+function parseTelemetry(rawPayload) {
+    let json = {};
+    try {
+        json = (typeof rawPayload === 'string') ? JSON.parse(rawPayload) : rawPayload;
+    } catch (e) {
+        console.error("Payload error", e);
+    }
+    return {
+        status: json.status || "unknown",
+        value: typeof json.value === 'number' ? json.value : 0.0
+    };
+}
+
+C. Dispatching Outbound Commands via UI Builder:
+
+function sendCommand(uibuilder, action, parameters) {
+    const payload = {
+        command: action,
+        timestamp: new Date().toISOString(),
+        payload: parameters
+    };
+    uibuilder.send({
+        payload: payload,
+        topic: "my_app/command"
+    });
+}
+
+4. STATE MANAGEMENT DIFFERENCES
+
+- Jetpack Compose uses a compiler plugin to automatically track reads/writes to mutable states (e.g. mutableStateOf) and trigger micro-recompositions of corresponding UI trees.
+- In Vanilla JS, state updates do not automatically re-render elements. To manage state, store parameters inside a plain JavaScript object and call explicit render/update functions whenever a mutating event occurs.
+\end{lstlisting}

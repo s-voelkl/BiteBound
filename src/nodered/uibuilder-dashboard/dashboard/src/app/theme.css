@@ -1,0 +1,38 @@
+/* BiteBound Theme Palette Variables */
+:root {
+    --cookie-dough: #E0B978;
+    --cookie-golden: #D9A24A;
+    --caramel-brown: #B5722E;
+    --chocolate-chip: #5A3A22;
+    --dark-cocoa: #3B2317;
+    --milk-cream: #FFF8EC;
+    --frosting-white: #FFFDF8;
+    --cinnamon: #8C5A2B;
+    --berry-red: #C0492F;
+    --mint-green: #4C8C5A;
+    --honey: #F2B84B;
+
+    --bg-primary: var(--milk-cream);
+    --bg-surface: var(--frosting-white);
+    --text-primary: var(--dark-cocoa);
+    --text-muted: var(--cinnamon);
+    --border-color: var(--caramel-brown);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --night-dough: #E9C188;
+        --night-caramel: #D89B53;
+        --night-chip: #F0D8A8;
+        --night-background: #241710;
+        --night-surface: #2F2017;
+        --night-cream: #F1E2CC;
+
+        --bg-primary: var(--night-background);
+        --bg-surface: var(--night-surface);
+        --text-primary: var(--night-cream);
+        --text-muted: var(--night-dough);
+        --border-color: var(--night-caramel);
+        --chocolate-chip: var(--night-chip);
+    }
+}

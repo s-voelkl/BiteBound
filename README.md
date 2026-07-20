@@ -1,39 +1,105 @@
 # BiteBound
 
 <div align="center">
-  <img src="assets/logo/logo.png" alt="BiteBound Logo" width="150">
+  <img src="doc/assets/logo/logo.png" alt="BiteBound Logo" width="150">
 </div>
 
-A tilt-controlled IoT game for the ESP32-S3, featuring real-time physics and dual-dashboard synchronization via MQTT on an Android app and Node-RED flow. The game is designed to be played on a Waveshare ESP32-S3 1.69" Touch LCD, with a ball navigating through procedurally generated mazes or flat arenas, collecting cookies while beating the clock.
+A tilt-controlled **IoT** game for the **ESP32-S3**, featuring real-time **physics** and dual-dashboard synchronization via MQTT on an **Android app** and **Node-RED** flow. The game is designed to be played on a ``Waveshare ESP32-S3 1.69" Touch LCD``, with a ball navigating through mazes or flatland, collecting cookies while beating the clock.
 
-<!-- TODO: Remove -->
-## Before making this repo public
-
-Before making this repository public, the following steps have to be done:
-
-- Delete examples folder, as we dont have the rights to use or publish this information.
-- Restructure folders and files: Make ``src`` with each Subproject and ``docs`` with extensive documentation and tex-files.
-- Delete prompts folder
+The **bakery-themed game** is controlled by tilting the device, with the ball's movement influenced by a 6-axis **IMU** (accelerometer + gyroscope). The ESP32-S3 runs a dual-core **FreeRTOS** system, separating the game loop from network operations for smooth gameplay.
 
 ## GitHub Repository
 
-The GitHub repository for this project is located at: [https://github.com/s-voelkl/BiteBound](https://github.com/s-voelkl/BiteBound).
+The **GitHub repository and PM tool** for this project is located at: [github.com/s-voelkl/BiteBound](https://github.com/s-voelkl/BiteBound).
+
+## Important Note on this Readme
+
+This readme was developed during the project but is not the single source of truth for the project; *some parts could be outdated*. The most up-to-date version is contained in the **LaTeX documentation** in the `tex/` folder, which is compiled into a **PDF report**. Though, this readme contains the most important information for developers.
+
+**For setup and usage instructions, see [USAGE.md](USAGE.md).**
 
 ## License
 
 The MIT License (MIT) applies to this project, as stated in [LICENSE](LICENSE). The documentation and diagrams are licensed under the Creative Commons Attribution 4.0 International Public License (CC BY 4.0) in accordance with the [LICENSE](tex/LICENSE) file.
 
-## Usage
+## Folder Structure
 
-See [Usage Guide](USAGE.md) for detailed instructions on how to set up and run the project.
+```text
+BiteBound/
+├── README.md                       # This documentation
+├── USAGE.md                        # Setup & run instructions
+├── src/
+│   ├── android/                    # Android Studio project (Kotlin app)
+│   ├── esp32/                      # Arduino firmware
+│   │   ├── esp32.ino               # Main sketch (setup/loop, Core 1 orchestration)
+│   │   ├── config.h                # Central config: network, game, display, physics, pins
+│   │   ├── wifi_mqtt_secrets.h     # Network/broker credentials (git-ignored during dev)
+│   │   └── src/
+│   │       ├── sensors/            # SensorManager, SensorData
+│   │       ├── physics/            # PhysicsEngine, PhysicsBody, ICollider, BorderCollider, Vec2
+│   │       ├── game/               # GameState    
+│   │       │   ├── cookies/        # Cookie, CookieField, RectCookieSpawner, MazeCookieSpawner
+│   │       │   └── mode/           # BaseGame, IGame, Game1Labyrinth, Game2Flatland
+│   │       ├── engine/             # GameEngine, GameConfig
+│   │       ├── maze/               # MazeManager (procedural DFS)
+│   │       ├── graphics/           # GraphicsManager (ST7789 rendering)
+│   │       └── network/            # WifiManager, TimeManager, MqttManager, JsonBuilder
+│   └── nodered/                    # Node-RED dashboard flow
+├── doc/
+│   ├── assets/                     # UI / app assets
+│   ├── diagrams/                   # PlantUML architecture diagrams
+│   │   └── src/architecture.puml
+│   ├── prompts/                    # LLM chat transcripts (removed before publishing)
+│   └── screenshots/                # Dashboard / flow screenshots
+└── tex/                            # LaTeX report sources
+```
 
 ## Architecture Overview
 
-The ESP32 firmware is split into self-contained, unit-tested modules under `esp32/src/`, orchestrated from the main sketch `esp32/esp32.ino`. All tunable values and hardware pins are centralized in `esp32/config.h`.
+The ESP32 firmware is split into self-contained, unit-tested modules under `src/esp32/src/`, orchestrated from the main sketch `src/esp32/esp32.ino`. All tunable values and hardware pins are centralized in `src/esp32/config.h`.
 
-See the component diagram in [diagrams/src/architecture.puml](diagrams/src/architecture.puml).
+The android app is implemented in Kotlin under `src/android/` and communicates with the ESP32 via MQTT over WiFi. The Node-RED dashboard is implemented under `src/nodered/` and provides a web-based interface for game control and telemetry visualization.
 
-![Architecture Diagram](diagrams/out/architecture/architecture.png)
+### Architecture Diagrams
+
+See the relevant diagrams in `diagrams/out/`. System Architecture Diagram:
+
+![System Architecture Diagram](doc/diagrams/out/system-architecture/system-architecture.png)
+
+Hardware Architecture Diagram:
+![Hardware Architecture Diagram](doc/diagrams/out/hardware-architecture/hardware-architecture.png)
+
+### ESP32 Screens
+
+ESP32 screen examples:
+
+<div align="left">
+  <img src="doc/assets/esp32-loading.png" alt="BiteBound ESP32 Loading Screen" width="200">
+  <img src="doc/assets/esp32-labyrinth.png" alt="BiteBound ESP32 Game Screen" width="200">
+</div>
+
+### Node-RED Dashboard
+
+Node-RED workflow:
+
+<div align="left">
+  <img src="doc/assets/nodered-workflow.png" alt="BiteBound Node-RED Workflow Screenshot" width="600">
+</div>
+
+Node-RED web dashboard example:
+
+<div align="left">
+  <img src="doc/assets/nodered-dashboard.png" alt="BiteBound Node-RED Dashboard Screenshot" width="700">
+</div>
+
+### Android App
+
+Android App examples:
+
+<div align="left">
+  <img src="doc/assets/android-app-1.png" alt="BiteBound Android App Screenshot 1" width="250">
+  <img src="doc/assets/android-app-2.png" alt="BiteBound Android App Screenshot 2" width="250">
+</div>
 
 ### Concurrency Model (ESP32-S3 Dual Core)
 
@@ -53,141 +119,6 @@ Shared state (ball position, game state, runtime config received over MQTT) is p
 5. **Publish telemetry** — every ~0.5s the current snapshot is serialized via `buildTelemetryJson()` and published over MQTT (asynchronously on Core 0).
 
 > Note: MQTT messages are sent with **QoS 1** and **retain = false** by default. Topic details and the full telemetry payload are documented in the [MQTT Communication](#mqtt-communication) and [Telemetry JSON Builder](#telemetry-json-builder) sections.
-
-## Folder Structure
-
-```text
-BiteBound/
-├── README.md                 # This documentation
-├── USAGE.md                  # Setup & run instructions
-├── android/                  # Android Studio project (Kotlin app)
-├── diagrams/                 # PlantUML architecture diagrams
-│   └── src/architecture.puml
-├── esp32/                    # Arduino firmware
-│   ├── esp32.ino             # Main sketch (setup/loop, Core 1 orchestration)
-│   ├── config.h              # Central config: network, game, display, physics, pins
-│   ├── wifi_mqtt_secrets.h   # Network/broker credentials (git-ignored during dev)
-│   └── src/
-│       ├── sensors/          # SensorManager, SensorData
-│       ├── physics/          # PhysicsEngine, PhysicsBody, ICollider, BorderCollider, Vec2
-│       ├── game/             # GameState    
-│       │   ├── cookies/      # Cookie, CookieField, RectCookieSpawner, MazeCookieSpawner
-│       │   └── mode/         # BaseGame, IGame, Game1Labyrinth, Game2Flatland
-│       ├── engine/           # GameEngine, GameConfig
-│       ├── maze/             # MazeManager (procedural DFS)
-│       ├── graphics/         # GraphicsManager (ST7789 rendering)
-│       └── network/          # WifiManager, TimeManager, MqttManager, JsonBuilder
-├── nodered/                  # Node-RED dashboard flow
-├── prompts/                  # LLM chat transcripts (removed before publishing)
-├── screenshots/              # UI / dashboard / flow screenshots
-└── tex/                      # LaTeX report sources
-```
-
-<!-- TODO: Remove -->
-## Projectmanagement
-
-Spiel 1 & 2:
-Benutzen beide selbe Grundlage (Sensorwerte, MQTT, WiFi, Cookies, Display)
-
-### Erweiterungen
-
-Spiel 1:
-
-- Ghost Enemy (A-Star Algorithm)
-
-Spiel 2:
-
-- Hindernisse, Löcher, ...
-
-Beide Spiele:
-
-- Vibrationsbuzzer
-- Sound spielen (tricky!!!)
-
-<!-- update? -->
-
-### Aufgaben
-
-#### Hardware
-
-- ESP32 Setup
-- MQTT + WiFi Verbindung, JSON-Parsing (In + Out)
-- Sensorwerte lesen, glätten, usw.
-- Physiksimulation (Geschwindigkeit, Beschleunigung, Kollision, Cookie-Kollision, ...)
-- Maze Generation
-- Cookies generieren
-- Displaylogik mit GFX-Bibliothek
-- Spiel 1: Labyrinth
-- Spiel 2: Kugel auf Bildschirm
-- Threads aufsetzen, Safety testen
-- AUnit Unit Tests
-
-#### Nodered
-
-- MQTT Signale lesen
-- Dashboard für Anzeige von Punkten, Name, Runden, Zeit, Physikdaten, Sensorwerte, ...
-- Eingabemaske für Spielername, Keksanzahl, Wandstärke, Buttons für Start/Stop
-
-#### Android: Android-App in Kotlin
-
-- Repo aufsetzen
-- Credentials file
-- HiveMQ-Bibliothek für MQTT benutzen
-- Subscribe: Live-Anzeige der Daten
-- Publish: Senden von Befehlen (+Eingabemaske für Inputs)
-
-#### TechRep
-
-### TechRep Specs
-
-- 10 Seiten, 3-4 Screenshots
-- Node-Red-Workflow (Screenshot)
-- ESP32-Code in Anhang
-
-Struktur:
-
-- Introduction:
-  - Intro
-  - Mission Statement
-  - Motivation
-  - Document Structure
-- Related Work:
-  - tbd
-- Projektmanagement:
-  - SMART
-  - User Stories (Anforderungen)
-  - MVP
-  - Erweiterungen
-  - Aufgabenverteilung (Guidelines/Standards, PRs, Code Coverage, Git, ...)
- -Technical Concept:
-  - Grobarchitektur (+Bild)
-  - Komponenten (Hardware, Nodered, Android)
-- Hardware:
-  - Komponenten (ESP32) im Detail
-  - Sensorerfassung
-  - Physiksimulation (+Formeln)
-  - Display (+Screenshots)
-  - MQTT Topics + Payloads (+listing JSON)
-- Nodered:
-  - Workflow (+Screenshot)
-  - Dashboard + Userinput (+Screenshot)
-- Android App:
-  - Softwarekomponenten, Klassen, Views
-  - Dashboard + UserInput (+Screenshot)
-- Evaluation:
-  - Probleme + Lösungen
-  - Code Coverage
-  - (Cost Estimation)
-- Summary:
-  - Summary + Future Work
-- Anhang:
-  - Prompts
-  - ESP32 Code
-
-### Guidelines
-
-- Test Coverage: ESP32 ohne Display 80%, Android 40% max., NodeRed nichts.
-- main Branch Protection, mit PRs
 
 ## Documentation
 
@@ -225,7 +156,7 @@ Gyroscope measurements
 
 ### Configuration (config.h)
 
-All tunable parameters and hardware constants live in `esp32/config.h`, so behavior can be adjusted in one place without touching the module code. The values are grouped into the following categories:
+All tunable parameters and hardware constants live in `src/esp32/config.h`, so behavior can be adjusted in one place without touching the module code. The values are grouped into the following categories:
 
 - **Network & device identity** — device ID, hardware/firmware strings.
 - **MQTT** — port, keep-alive, topics (command / telemetry / test), QoS and retain defaults.
@@ -240,17 +171,17 @@ Many physics values (e.g. sensitivity, restitution) are mirrored in `PhysicsPara
 
 ### Secrets (wifi_mqtt_secrets.h)
 
-The `esp32/wifi_mqtt_secrets.h` file is git-ignored and contains the following sensitive values:
+The `src/esp32/wifi_mqtt_secrets.h` file is git-ignored and contains the following sensitive values:
 
 - WiFi SSID and password
 - HiveMQ Cloud broker hostname, port, username and password
 - HiveMQ Cloud CA certificate (PEM format)
 
-A template file `esp32/wifi_mqtt_secrets.h.template` is provided to show the expected structure.
+A template file `src/esp32/wifi_mqtt_secrets.h.template` is provided to show the expected structure.
 
 ### Sensor Handling
 
-Implemented in `esp32/src/sensors/SensorManager.h` and `esp32/src/sensors/SensorManager.cpp`.
+Implemented in `src/esp32/src/sensors/SensorManager.h` and `src/esp32/src/sensors/SensorManager.cpp`.
 
 - Sources: QMI8658 IMU (I2C), battery ADC, power button GPIO
 - `SensorData` fields: `timestamp`, `accelerometerX/Y/Z`, `gyroscopeX/Y/Z`, `batteryVoltage`, `button`
@@ -258,7 +189,7 @@ Implemented in `esp32/src/sensors/SensorManager.h` and `esp32/src/sensors/Sensor
 - `begin()` is safe to call once; `read()` keeps last IMU values if no fresh IMU data is available
 - `readMock()` returns bounded test values (battery within configured mock min/max)
 
-`esp32/src/sensors/TestSensorManager.cpp` covers init state, valid `read()` output, and `readMock()` range checks.
+`src/esp32/src/sensors/TestSensorManager.cpp` covers init state, valid `read()` output, and `readMock()` range checks.
 
 #### Basic Usage
 
@@ -278,7 +209,7 @@ if (sensorManager.isInitialized()) {
 
 ### Network Managers (WiFi, Time, MQTT)
 
-Network connectivity is split into three single-responsibility managers under `esp32/src/network/`, each configured from `config.h` / `wifi_mqtt_secrets.h` and exposed as a shared global instance.
+Network connectivity is split into three single-responsibility managers under `src/esp32/src/network/`, each configured from `config.h` / `wifi_mqtt_secrets.h` and exposed as a shared global instance.
 
 #### WiFi (`wifi-connection/WifiManager`)
 
@@ -325,7 +256,7 @@ On game start or change: game round resets to 1.
 
 The JSON builder compiles comprehensive telemetry data from sensors, game state, physics simulation, and device information into a structured JSON payload suitable for MQTT transmission.
 
-Implemented in `esp32/src/network/json-builder/JsonBuilder.h` and `esp32/src/network/json-builder/JsonBuilder.cpp`.
+Implemented in `src/esp32/src/network/json-builder/JsonBuilder.h` and `src/esp32/src/network/json-builder/JsonBuilder.cpp`.
 
 - **Input**: `TelemetryData` struct containing device info, game config, game state, physics state, and sensor readings
 - **Output**: Formatted JSON string ready for MQTT publication
@@ -433,7 +364,7 @@ Commands received on the `mauc2026/group_03/game/command` topic are decoded by t
 
 #### Basic Usage
 
-Command parsing is managed by the static `CommandParser::parse` utility located in `src/network/json-parser/CommandParser.h`. This utility handles the conversion of flat character payloads into typed `CommandMsg` structures.
+Command parsing is managed by the static `CommandParser::parse` utility located in `src/esp32/src/network/json-parser/CommandParser.h`. This utility handles the conversion of flat character payloads into typed `CommandMsg` structures.
 
 To parse a payload from your MQTT subscription callback and pass it safely into the command queue by using the `MqttManager.onMessage()` callback.
 
@@ -491,7 +422,7 @@ The ESP32-S3 contains a dual-core SoC, enabling isolation of timing-sensitive di
 
 #### Shared Data Management Usage
 
-To protect data accessed concurrently by both cores, shared variables are consolidated into a thread-safe structure (`SharedStateData`) and protected via an RAII-style mutex guard (`MutexLock`). The shared files are split modularly under `esp32/src/network/shared/`:
+To protect data accessed concurrently by both cores, shared variables are consolidated into a thread-safe structure (`SharedStateData`) and protected via an RAII-style mutex guard (`MutexLock`). The shared files are split modularly under `src/esp32/src/network/shared/`:
 
 - **`CommandType.h`**: Defines the `CommandType` enum class (`START`, `STOP`, `PARAM_CHANGE`, `UNKNOWN`).
 - **`CommandMsg.h`**: Represents incoming execution actions with variable settings.
@@ -624,7 +555,7 @@ Invoke the `update()` method on every 20ms tick. The manager automatically deter
 
 ### Maze Generation (Procedural DFS)
 
-A procedural 2D maze generator has been integrated to build the game-board using an iterative, randomized Depth-First Search (DFS) algorithm (see AI prompt in [prompts/prompts.md](prompts/prompts.md)).
+A procedural 2D maze generator has been integrated to build the game-board using an iterative, randomized Depth-First Search (DFS) algorithm (see AI prompt in [doc/prompts/](doc/prompts/)).
 
 #### Implementation Summary
 
@@ -687,7 +618,7 @@ if (success) {
 
 ### Physics Engine
 
-The physics is a shared, game-agnostic 2D simulation under `esp32/src/physics/`. The same `PhysicsEngine` drives both games; each game owns its own `PhysicsBody` (the ball) and supplies a collision environment via the `ICollider` interface.
+The physics is a shared, game-agnostic 2D simulation under `src/esp32/src/physics/`. The same `PhysicsEngine` drives both games; each game owns its own `PhysicsBody` (the ball) and supplies a collision environment via the `ICollider` interface.
 
 #### Components
 
@@ -726,7 +657,7 @@ bool collided = engine.step(ball, accel, 0.02f, world);
 
 ### Game Logic & Cookies
 
-The collectible/score logic under `esp32/src/game/` is shared between both games and depends only on the physics `PhysicsBody`, keeping it reusable and unit-testable.
+The collectible/score logic under `src/esp32/src/game/` is shared between both games and depends only on the physics `PhysicsBody`, keeping it reusable and unit-testable.
 
 - **`Cookie`** — a single collectible: position, `radius` and an `active` flag (false once eaten until it respawns).
 - **`GameState`** — volatile HUD metadata: `status` (`idle` / `running` / `completed`), `cookiesCollected`, `cookiesRemaining`, `currentRound`, `elapsedTimeSec`.
@@ -752,7 +683,7 @@ if (field.finished()) { /* round complete */ }
 
 ### Game Engine
 
-The `GameEngine` (`esp32/src/engine/`) runs both games through a single loop. It owns the shared `PhysicsEngine` and the active `GameConfig`, holds both games as members, and points at whichever one is active. The per-frame work — read the tilt, step the physics, collect cookies, update the telemetry state — lives in the engine, so the games themselves stay small.
+The `GameEngine` (`src/esp32/src/engine/`) runs both games through a single loop. It owns the shared `PhysicsEngine` and the active `GameConfig`, holds both games as members, and points at whichever one is active. The per-frame work — read the tilt, step the physics, collect cookies, update the telemetry state — lives in the engine, so the games themselves stay small.
 
 Each game implements `IGame` and inherits the common parts from `BaseGame` (the ball, the cookie field, the pickup and win checks). A game only provides what actually differs between modes:
 
@@ -819,9 +750,9 @@ MazeCookieSpawner spawner(&mazeGenerator.getFreeCells(), /* cookieRadius */ defa
 // 3. Initialize and start the cookie field, see same above.
 ```
 
-### Main Orchestration (`esp32.ino`)
+### Main Orchestration (`src/esp32/esp32.ino`)
 
-The main entry point `esp32/esp32.ino` orchestrates the system's execution across both cores of the ESP32-S3 SoC using FreeRTOS (see above).
+The main entry point `src/esp32/esp32.ino` orchestrates the system's execution across both cores of the ESP32-S3 SoC using FreeRTOS (see above).
 
 #### Execution Topology
 

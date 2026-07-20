@@ -1,0 +1,777 @@
+/* Import Theme Palette variables */
+@import url('./app/theme.css');
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap');
+
+/* Root layout reset and configuration */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Quicksand", "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.2s, color 0.2s;
+    line-height: 1.5;
+}
+
+.screen-view {
+    width: 100%;
+    min-height: 100vh;
+    padding: 0 16px 16px;
+    box-sizing: border-box;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Status Banner styling with added margin and padding padding towards components */
+.banner-section {
+    padding: 0 4px;
+}
+
+.status-banner {
+    background-color: var(--bg-surface);
+    border: 2px solid var(--border-color);
+    border-radius: 14px;
+    padding: 8px 16px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.status-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    margin-right: 12px;
+    background-color: var(--text-muted);
+}
+
+/* Horizontal Score Layout with circular SVGs on the Left */
+.cookie-score-layout {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    justify-content: flex-start;
+    padding: 8px 0;
+}
+
+.cookie-progress-left {
+    flex: 0 0 auto;
+}
+
+.cookie-progress-wrapper {
+    position: relative;
+    width: 180px;
+    height: 180px;
+}
+
+.progress-ring {
+    transform: rotate(-90deg);
+}
+
+.progress-ring__bg {
+    fill: var(--chocolate-chip);
+}
+
+.progress-ring__track {
+    fill: none;
+    stroke: var(--caramel-brown);
+    stroke-opacity: 0.35;
+    stroke-width: 8px;
+}
+
+.progress-ring__circle {
+    fill: none;
+    stroke: var(--cookie-dough);
+    stroke-width: 8px;
+    stroke-linecap: round;
+    stroke-dasharray: 490.08;
+    stroke-dashoffset: 490.08;
+    transition: stroke-dashoffset 0.6s ease-in-out;
+}
+
+.progress-text-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+}
+
+.collected-count {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #ffffff;
+    line-height: 1;
+}
+
+.target-count {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.percent-count {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 2px;
+}
+
+.cookie-stats-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cookie-stat-item {
+    display: flex;
+    align-items: center;
+}
+
+/* Stat Elements */
+.stat-highlight {
+    font-size: 1.35rem;
+    font-weight: bold;
+}
+
+.text-honey {
+    color: var(--honey);
+}
+
+.text-mint {
+    color: var(--mint-green);
+}
+
+.announcement {
+    background-color: rgba(76, 140, 90, 0.15);
+    color: var(--mint-green);
+    border-radius: 12px;
+    padding: 8px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.85rem;
+}
+
+.subline {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 4px 0 0 0;
+}
+
+/* Board Canvas wrapper styling */
+.board-canvas-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 0;
+}
+
+#physicsCanvas {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+}
+
+/* Structured Device table rows restricting width expansion */
+.device-table-container {
+    max-width: 320px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.detail-rows {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px dashed rgba(181, 114, 46, 0.2);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    color: var(--text-muted);
+}
+
+.info-val {
+    font-weight: 500;
+}
+
+/* Sensors grid metrics layout */
+.sensor-grid-stat {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    /* More horizontal breathing room between the two tile columns;
+       modest vertical gap. Rows still share the card height evenly. */
+    column-gap: 20px;
+    row-gap: 10px;
+    flex: 1;
+    min-height: 0;
+    grid-auto-rows: 1fr;
+}
+
+.stat-tile {
+    background-color: rgba(224, 185, 120, 0.2);
+    border-radius: 12px;
+    /* Roomier horizontal padding inside each tile */
+    padding: 8px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-tile-val {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+/* Input elements styling in Game Controls */
+.form-control {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 1rem;
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+#ctrlPlayerName {
+    width: 50;
+}
+
+.form-control:focus {
+    border-color: var(--cookie-golden);
+    box-shadow: 0 0 0 3px rgba(217, 162, 74, 0.2);
+}
+
+.form-control:disabled {
+    background-color: rgba(90, 58, 34, 0.1);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    border-color: rgba(181, 114, 46, 0.3);
+    opacity: 0.65;
+}
+
+/* Base button rounding */
+.btn {
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+/* Toggle Preset selection buttons */
+.btn-toggle {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+    /* Roomier hit area — the preset labels were cramped against the edges */
+    padding: 11px 14px;
+    line-height: 1.45;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-toggle.active {
+    background-color: var(--caramel-brown);
+    color: var(--milk-cream);
+}
+
+/* Aligned side button group rules */
+.action-row-container {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn-compact {
+    max-width: 140px;
+    width: 100%;
+    height: 42px;
+    padding: 8px 16px;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+#btnNewGame {
+    background-color: var(--mint-green);
+    border-color: var(--mint-green);
+    color: white;
+}
+
+#btnNewGame:hover {
+    filter: brightness(1.1);
+}
+
+.btn-danger {
+    background-color: var(--berry-red);
+    border-color: var(--berry-red);
+    color: white;
+}
+
+.btn-warning {
+    background-color: var(--honey);
+    border-color: var(--honey);
+    color: white;
+}
+
+/* Confirmation modal card styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-box {
+    background-color: var(--bg-surface);
+    border: 3px solid var(--border-color);
+    max-width: 420px;
+    width: 90%;
+    border-radius: 22px;
+    text-align: center;
+    padding: 28px 26px;
+    box-shadow: 0 18px 40px rgba(59, 35, 23, 0.28);
+    animation: modal-pop 0.18s ease-out;
+}
+
+@keyframes modal-pop {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-box h2 {
+    font-family: "Baloo 2", "Quicksand", sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--caramel-brown);
+    margin: 0 0 10px 0;
+}
+
+.modal-box p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 24px;
+    gap: 14px;
+}
+
+/* Modal buttons carried no padding/size of their own, so they rendered
+   as tiny cramped pills. Give them a comfortable, consistent shape. */
+.modal-actions .btn {
+    flex: 1;
+    max-width: 160px;
+    padding: 12px 18px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background-color: rgba(181, 114, 46, 0.12);
+}
+
+.btn-success {
+    background-color: var(--mint-green);
+    border: 2px solid var(--mint-green);
+    color: white;
+}
+
+.btn-success:hover {
+    filter: brightness(1.08);
+}
+
+/* Top App Bar configuration */
+.top-app-bar {
+    width: 100%;
+    background-color: var(--bg-surface);
+    border-bottom: 2px solid var(--border-color);
+    padding: 2px 2px;
+    margin-bottom: 8px;
+    /* margin-top: 2px; */
+    position: sticky;
+    top: 0;
+    z-index: 500;
+}
+
+.app-bar-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    /* Three equal tracks keep the centre brand fixed even when the
+       left status text or right credits change width. */
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+}
+
+.app-bar-left {
+    display: flex;
+    justify-content: flex-start;
+    min-width: 0;
+}
+
+.app-bar-brand-container {
+    display: flex;
+    justify-content: center;
+}
+
+.app-bar-right {
+    display: flex;
+    justify-content: flex-end;
+    min-width: 0;
+}
+
+.app-bar-brand {
+    display: flex;
+    align-items: center;
+}
+
+.brand-logo-small {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+}
+
+.app-bar-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1;
+    font-family: "Baloo 2", "Quicksand", cursive, sans-serif;
+    color: var(--caramel-brown);
+    margin-left: 12px;
+    white-space: nowrap;
+}
+
+.app-credits {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.app-credits a {
+    color: var(--caramel-brown);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.app-credits a:hover {
+    text-decoration: underline;
+}
+
+/* Compact utility grid layouts */
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.margin-top-sm {
+    margin-top: 6px;
+}
+
+.margin-top-md {
+    margin-top: 10px;
+}
+
+/* Base Card structure */
+.card {
+    background-color: var(--bg-surface);
+    border: 2px solid var(--border-color);
+    border-radius: 18px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-title {
+    font-family: "Baloo 2", "Quicksand", sans-serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    color: var(--caramel-brown);
+    border-bottom: 2px dashed rgba(181, 114, 46, 0.2);
+    padding-bottom: 6px;
+}
+
+#physicsCanvas {
+    /* Scale up to fill the board card while preserving aspect ratio
+       (bounded by whichever of width/height runs out first). */
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid rgba(181, 114, 46, 0.3);
+}
+
+.board-card {
+    padding: 6px;
+}
+
+/* "Warming up the oven" waiting card */
+.placeholder-section {
+    width: 100%;
+    justify-content: center;
+}
+
+/* Placeholder only appears in the waiting state. */
+#placeholderOven {
+    display: none;
+}
+
+.dashboard-workspace.is-waiting #placeholderOven {
+    display: flex;
+}
+
+/* While waiting, show only the placeholder + Game Controls; hide the
+   telemetry-only cards so the screen stays clean. */
+.dashboard-workspace.is-waiting .col-left,
+.dashboard-workspace.is-waiting .col-right {
+    display: none;
+}
+
+.dashboard-workspace.is-waiting .col-center .card:last-child {
+    display: none;
+}
+
+.card-alert {
+    width: 100%;
+    max-width: 520px;
+    text-align: center;
+    align-items: center;
+    padding: 28px 26px;
+    gap: 6px;
+}
+
+.card-alert .card-title {
+    font-size: 1.4rem;
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 4px;
+}
+
+.card-alert p {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.board-card .card-title {
+    margin-left: 6px;
+    margin-right: 6px;
+}
+
+.dashboard-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+@media (min-width: 1024px) {
+    body {
+        overflow: hidden;
+        /* Lock viewport scrolling on desktop */
+    }
+
+    .screen-view {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        /* Flush header on top; breathing room on the sides/bottom */
+        padding: 0 12px 12px;
+    }
+
+    .dashboard-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .dashboard-workspace {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1.15fr 1fr 1.1fr;
+        gap: 16px;
+        overflow: hidden;
+        min-height: 0;
+    }
+
+    .dashboard-workspace.is-waiting {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+    }
+
+    .dashboard-workspace.is-waiting .col-center {
+        height: auto;
+        width: 440px;
+        max-width: 100%;
+        overflow: visible;
+    }
+
+    .telemetry-columns {
+        display: contents !important;
+    }
+
+    .layout-col {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        height: 100%;
+        min-height: 0;
+        overflow-y: auto;
+        /* Contain any overflow to side columns */
+    }
+
+    .col-left {
+        overflow: hidden;
+    }
+
+    .col-left .card:last-child {
+        flex: 1;
+        min-height: 0;
+    }
+
+    /* Centre column: size everything to fit the viewport — no scrollbar. */
+    .col-center {
+        overflow: hidden;
+    }
+
+    .col-center .card:last-child {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .col-center .device-table-container {
+        flex: 1;
+        min-height: 0;
+        justify-content: space-between;
+    }
+
+    .col-right {
+        overflow: hidden;
+    }
+
+    .col-right .board-card {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .col-right .board-canvas-container {
+        flex: 1;
+        height: 100%;
+        min-height: 0;
+    }
+
+    .layout-col::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .layout-col::-webkit-scrollbar-thumb {
+        background-color: rgba(181, 114, 46, 0.35);
+        border-radius: 3px;
+    }
+
+    .controls-wrapper {
+        overflow-y: hidden;
+    }
+}
+
+/* Mobile Compatibility Fallbacks */
+@media (max-width: 1023px) {
+    .app-bar-content {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+    }
+
+    .app-bar-brand {
+        justify-content: center;
+    }
+
+    .dashboard-workspace {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .telemetry-columns {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .layout-col {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .sensor-grid-stat {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .btn-compact {
+        max-width: none;
+        flex: 1;
+    }
+}
+
+@media (min-width: 480px) and (max-width: 1023px) {
+    .sensor-grid-stat {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
