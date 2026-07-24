@@ -44,8 +44,7 @@
 
 \begin{document}
 
-% TODO: edit title
-\title{BiteBound} 
+\title{BiteBound: A Dual-Core ESP32-S3 Architecture for a Real-Time Tilt-Controlled IoT Game} 
 
 % TODO FOR PUBLICATION: Add ORCID links for all authors if available?
 \author{Simon Völkl\,\orcidlink{0009-0005-5334-9673}, 
@@ -56,7 +55,7 @@
 
 % TODO FOR PUBLICATION: Update date, title
 \markboth{TECHNICAL REPORT, JULY 2026}
-{Völkl \MakeLowercase{\textit{et al.}}: BiteBound}
+{Völkl \MakeLowercase{\textit{et al.}}: BiteBound: A Dual-Core ESP32-S3 Architecture for a Real-Time Tilt-Controlled IoT Game}
 
 \maketitle
 
@@ -64,17 +63,18 @@
     % \textbf{Background:} 
     Designing responsive, cross-device IoT games on resource-constrained microcontrollers requires balancing low-latency local execution with secure, asynchronous network communication.
     % \textbf{Objective:} 
-    This project presents BiteBound, a physical, tilt-controlled labyrinth game built on a Waveshare ESP32-S3-Touch-LCD-1.69 featuring real-time communication with two remote dashboards.
+    This project presents BiteBound, a physical, tilt-controlled labyrinth and open-field game built on a Waveshare ESP32-S3-Touch-LCD-1.69 featuring real-time communication with two remote dashboards.
     % \textbf{Methods:} 
     The system utilizes a dual-core ESP32-S3 microcontroller to handle network communication, sensor inputs, physics simulation, game logic and display rendering, while a Kotlin-based Android app and a Node-RED interface provide bidirectional control via telemetry and command messages over the Message Queuing Telemetry Transport (MQTT) protocol.
     % \textbf{Results:} 
-    The firmware, running on a network and game logic core, achieves a stable 50\,Hz frame rate. A bakery-themed frontend provides a playful user experience, while the companion interfaces successfully allow for remote monitoring and control of the game state during gameplay.
+    The firmware, partitioned across dedicated network and game-logic cores, achieves a stable \SI{50}{\hertz} frame rate. A bakery-themed frontend provides a playful user experience, while the companion interfaces successfully allow for remote monitoring and control of the game state during gameplay.
     % \textbf{Conclusion:} 
-    BiteBound demonstrates a robust, responsive end-to-end architecture bridging physical embedded interactions with digital companion interfaces.
+    BiteBound demonstrates a robust, responsive end-to-end architecture bridging physical embedded interactions with digital companion interfaces, while future work targets a quantitative performance evaluation under high network load, a comparison against a single-core baseline and enriched gameplay features.
 \end{abstract}
 
 \begin{IEEEkeywords}
-    Android, Arduino, ESP32-S3, FreeRTOS, IMU, IoT Game, MQTT, Node-RED
+    % Android, Arduino, ESP32-S3, FreeRTOS, IMU, IoT Game, MQTT, Node-RED
+    Android, Embedded Systems, ESP32-S3, Inertial Measurement Unit (IMU), MQTT, Node-RED, Real-Time Rendering, Internet of Things (IoT)
 \end{IEEEkeywords}
 
 
@@ -83,25 +83,24 @@
 \section{Introduction}
 \label{sec:introduction}
 
-% TODO: write introduction
-
 \IEEEPARstart{E}{mbedded} Internet of Things (IoT) devices increasingly combine latency-sensitive local interaction with networked communication, forcing developers to reconcile deterministic real-time execution with asynchronous, potentially blocking network operations on limited hardware. Modern microcontrollers such as the ESP32-S3 address this tension by pairing dual-core processing with integrated wireless connectivity~\cite{wavesharedoku2026}, enabling responsive interactive applications that remain observable and controllable over the network. Realizing such systems, however, requires careful task partitioning, thread-safe state sharing, and a lightweight publish-subscribe transport such as the Message Queuing Telemetry Transport (MQTT) protocol~\cite{mqtt2026} to keep local and remote representations synchronized.
 
-Tilt-controlled games are a compelling demonstrator for these constraints, as they couple a high-frequency sensor, physics, and rendering loop with continuous bidirectional data exchange. BiteBound instantiates this scenario on a Waveshare ESP32-S3-Touch-LCD-1.69 board, running a dual-core FreeRTOS firmware~\cite{freertos2026esp32} that isolates the \SI{50}{\hertz} game loop from the MQTT network stack~\cite{hivemq2026}. Two companion interfaces, a native Kotlin Android application~\cite{kotlin2026} and a Node-RED dashboard~\cite{nodeRED}, provide remote monitoring and control, together forming a complete end-to-end embedded IoT system.
+Tilt-controlled games are a compelling demonstrator for these constraints, as they couple a high-frequency sensor, physics, and rendering loop with continuous bidirectional data exchange. BiteBound instantiates this scenario on a Waveshare ESP32-S3-Touch-LCD-1.69 board, running a dual-core FreeRTOS firmware~\cite{freertos2026esp32} that isolates the \SI{50}{\hertz} game loop from the MQTT network stack~\cite{hivemq2026}. Two companion interfaces, a native Kotlin Android application~\cite{kotlin2026} and a Node-RED dashboard~\cite{nodeRED}, provide remote monitoring and control, together forming a complete end-to-end embedded IoT system. 
+The source code and documentation for the BiteBound project are publicly available on GitHub~\cite{bitebound2026github}.
 
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.6\linewidth]{../assets/logo/logo_cut.png}
     \caption{BiteBound Project Logo in a bakery theme. Designed by Simon Völkl.}
-    \label{fig:lumentrace-setup}
+    \label{fig:logo}
 \end{figure}
 
-% \subsection{Mission Statement}
-% \label{subsec:mission_statement}
-The objective of the BiteBound project is to implement a highly responsive, low-latency gaming platform demonstrating efficient multi-core task scheduling on resource-constrained hardware. Centered on a playful, bakery-themed aesthetic, the system requires navigating a virtual cherry (ball) through procedural mazes. The main technical challenge is maintaining a stable, high-frame-rate rendering pipeline alongside bi-directional MQTT communication, supported by native Android and Node-RED dashboards to deliver a unified, multi-platform user experience.
+\subsection{Mission Statement}
+\label{subsec:mission_statement}
+The objective of the BiteBound project is to implement a highly responsive, low-latency gaming platform demonstrating efficient multi-core task scheduling on resource-constrained hardware. Centered on a playful, bakery-themed aesthetic and visual identity (see~\Cref{fig:logo}), the system requires navigating a virtual cherry (ball) through procedural mazes. The main technical challenge is maintaining a stable, high-frame-rate rendering pipeline alongside bi-directional MQTT communication, supported by native Android and Node-RED dashboards to deliver a unified, multi-platform user experience.
 
-% \subsection{Document Structure}
-% \label{subsec:document_structure}
+\subsection{Document Structure}
+\label{subsec:document_structure}
 The remainder of this report is organized as follows:
 \Cref{sec:technical_concept} outlines the high-level system architecture.
 \Cref{sec:hardware} details the firmware, sensor integration, physics, game logic, and display optimizations.
@@ -120,7 +119,7 @@ The architecture relies on an asynchronous, event-driven design. The ESP32-S3 ru
 
 Communication between the embedded hardware and the external control interfaces is bridged through the centralized MQTT broker HiveMQ~\cite{hivemq2026,mqtt2026}. External clients communicate bidirectionally with the device. They send game-related commands to a dedicated topic, while subscribing to a telemetry topic to monitor real-time variables.
 
-The system architecture is depicted in Figure~\ref{fig:system-architecture}, illustrating the interactions between the ESP32-S3 and the frontend dashboards.
+The system architecture is depicted in \Cref{fig:system-architecture}, illustrating the interactions between the ESP32-S3 and the frontend dashboards.
 
 \begin{figure}[htb]
     \centering
@@ -165,8 +164,8 @@ Dedicated hardware pins and interface buses, like Inter-Integrated Circuit (I2C)
 Execution is distributed across both processor cores using FreeRTOS tasks to maintain stable game loop execution rates~\cite{freertos2026esp32}:
 
 \begin{itemize}
-    \item Core 1 (Game Core): Runs the main application thread executing the game loop at approximately 50\,Hz (20\,ms loop budget). This core is responsible for sensor readings, physics steps, collision resolution, game engine updates, and display rendering. It is designed to be non-blocking and deterministic to ensure smooth gameplay.
-    \item Core 0 (Network Core): Executes the background network task (\texttt{vNetworkTask}) at approximately 2\,Hz. This core handles secure TLS handshakes, manages the MQTT client connection, and serializes and publishes telemetry data.
+    \item Core 1 (Game Core): Runs the main application thread executing the game loop at approximately \SI{50}{\hertz} (\SI{20}{\milli\second} loop budget). This core is responsible for sensor readings, physics steps, collision resolution, game engine updates, and display rendering. It is designed to be non-blocking and deterministic to ensure smooth gameplay.
+    \item Core 0 (Network Core): Executes the background network task (\texttt{vNetworkTask}) at approximately \SI{2}{\hertz}. This core handles secure TLS handshakes, manages the MQTT client connection, and serializes and publishes telemetry data.
 \end{itemize}
 
 Inter-process communication (IPC) between cores utilizes two distinct mechanisms to ensure thread safety and avoid race conditions~\cite{ipc2026}:
@@ -270,7 +269,7 @@ The device establishes two main communication paths:
           Receives control payloads from external dashboards, as illustrated in~\Cref{fig:json-command}.
           The incoming JSON content is processed by the static \texttt{CommandParser} class to adjust gameplay states or update physical and visual parameters on the fly~\cite{json2026}. A Universally Unique Identifier (UUID)~\cite{uuid2026} is used for tracking the origin of commands.
     \item Telemetry Topic (\texttt{game/telemetry}):
-          Published telemetry data to dashboards at a 2\,Hz rate, as shown in~\Cref{fig:json-telemetry}.
+          Published telemetry data to dashboards at a \SI{2}{\hertz} rate, as shown in~\Cref{fig:json-telemetry}.
           The \texttt{JsonBuilder} class structures the combined hardware information, game progress, configuration records, physics parameters, and raw sensor readings into a unified JSON format.
 \end{itemize}
 
@@ -327,7 +326,7 @@ The BiteBound Android application acts as a remote controller and telemetry dash
 
 Node-RED~\cite{nodeRED} serves as a desktop-accessible companion to the Android application, providing alternative telemetry processing.
 
-This system utilizes the code-first UIBUILDER package~\cite{Knight_node-red-contrib-uibuilder} rather than the officially deprecated dashboard~\cite{node-red-dashboard-deprecated} as the latter introduces potential security and support liabilities in modern Node.js runtimes. Additionally, UI Builder supports high-frequency telemetry streams by decoupling the client-side representation from the Node-RED backend using optimized WebSockets~\cite{websockets2026}.
+This system utilizes the code-first uibuilder package~\cite{Knight_node-red-contrib-uibuilder} rather than the officially deprecated dashboard~\cite{node-red-dashboard-deprecated} as the latter introduces potential security and support liabilities in modern Node.js runtimes. Additionally, UI Builder supports high-frequency telemetry streams by decoupling the client-side representation from the Node-RED backend using optimized WebSockets~\cite{websockets2026}.
 
 % \begin{figure}[ht]
 %     \centering
@@ -416,7 +415,7 @@ Transparency note: The unit test writing and docstring generation were partly as
 
 During the development of BiteBound, several technical challenges were encountered, each requiring specific solutions to meet the set requirements.
 
-As already mentioned in~\Cref{subsec:display}, the SPI transmission overhead posed a significant challenge to maintaining a stable 50 Hz frame rate. By implementing a hybrid rendering system using the dirty rectangles technique, a substantial reduction in payload size was achieved, allowing for faster transmission times.
+As already mentioned in~\Cref{subsec:display}, the SPI transmission overhead posed a significant challenge to maintaining a stable \SI{50}{\hertz} frame rate. By implementing a hybrid rendering system using the dirty rectangles technique, a substantial reduction in payload size was achieved, allowing for faster transmission times.
 
 Recursive algorithmic approaches could lead to stack overflow errors without setting maze size limits. Therefore, the iterative DFS implementation for maze generation was a necessary design choice to generate arbitrary maze sizes without limiting the system to an upper bound.
 
@@ -424,23 +423,24 @@ Sensor value noise and drift were expected at the beginning of the project. Impl
 
 Testing the physics engine after implementation revealed that at high tilt angles, the ball could tunnel through maze walls due to its accelerated velocity. The implementation of sub-stepping during collision detection effectively mitigated this issue, ensuring that boundaries were respected even at high velocities, as described in~\Cref{subsec:physics_simulation_game_logic}.
 
-During the architecture phase, the assumption was made that handling incoming dashboard commands and running the game loop on one core could cause significant frame drops. Early in development, the two-core possibility was explored, included in the initial design, and later implemented (see ~\Cref{sec:technical_concept}). This decision proved crucial for the modular system design and, consequently, the testability, maintainability, and scalability of the system; the dual-core synchronization strategy worked as expected.
+During the architecture phase, the assumption was made that handling incoming dashboard commands and running the game loop on one core could cause significant frame drops. Early in development, the two-core possibility was explored, included in the initial design, and later implemented (see~\Cref{sec:technical_concept}). This decision proved crucial for the modular system design and, consequently, the testability, maintainability, and scalability of the system; the dual-core synchronization strategy worked as expected. However, further evaluation of the system's performance under high network load is recommended, while also comparisons with a single-core implementation could provide additional insights into the benefits of the dual-core architecture.
 
 As only one LCD display was available, the other team member had to acquire a separate ESP32-S3 board to test and run the hardware code. Though, the other board only had one core, which limited the ability to test the dual-core synchronization strategy.
 
-The HiveMQ broker was found to be inconsistent when handling multiple subscriptions simultaneously, leading to lags and disconnects. Still, no other broker was chosen for further development, as this issue only appeared sporadically.
+The HiveMQ broker was found to be inconsistent when handling multiple subscriptions simultaneously, leading to lags and disconnects. Still, no other broker was chosen for further development, as this issue only appeared sporadically. In future work, these issues should be further investigated, to determine possible causes and solutions.
 
 \section{Summary and Future Work}
 \label{sec:summary-future-work}
 
 The BiteBound project demonstrates a practical approach to addressing the primary objectives established in~\Cref{sec:introduction}, specifically managing low-latency gameplay execution alongside secure, asynchronous network communication on resource-constrained hardware.
 By partitioning the timing-sensitive physics engine and rendering pipeline onto the Game Core and the communication onto the Network Core (Core 0), the system maintains a stable frame rate.
-This separation of concerns prevents network latency from interrupting physical gameplay while maintaining bidirectional synchronization with the Android and Node-RED companion interfaces, validating the multi-platform user experience proposed in the mission statement.
+This separation of concerns prevents network latency from interrupting physical gameplay while maintaining bidirectional synchronization with the Android and Node-RED companion interfaces, validating the multi-platform user experience.
 
-Future developments will focus on expanding the platform's physical interactivity, sensory feedback, and academic dissemination.
+Future developments will focus on the systematic evaluation of the architecture, expanding the platform's physical interactivity, sensory feedback, and academic dissemination.
+Beyond the current qualitative validation, a systematic performance evaluation is planned. This includes quantifying frame-rate stability and command latency under high network load, as well as a comparative benchmark against a single-core implementation to isolate the measurable benefits of the dual-core partitioning. In addition, the sporadic broker instability observed under multiple concurrent subscriptions warrants a dedicated investigation into its root cause and an assessment of alternative MQTT brokers.
 To enrich the gameplay mechanics, upcoming iterations can incorporate onboard physical button inputs to trigger special, context-dependent actions during active play.
 Integrating a vibration motor or haptic sensor would further ground the physical interaction by providing physical feedback when the virtual ball collides with maze boundaries.
-Auditory feedback can also be expanded by implementing driver routines for the onboard buzzer, generating custom startup sequences, loading music, and distinctive alerts for coin-collection events.
+Auditory feedback can also be expanded by implementing driver routines for the onboard buzzer, generating custom startup sequences, loading music, and distinctive alerts for cookie-collection events.
 Finally, this technical report will be formatted into a scientific paper suitable for public submission to relevant mobile and ubiquitous computing venues, allowing for broader academic evaluation of the architecture.
 
 % --- References ---
