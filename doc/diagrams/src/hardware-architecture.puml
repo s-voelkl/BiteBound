@@ -1,8 +1,10 @@
 @startuml hardware-architecture
 top to bottom direction
 skinparam linetype ortho
-skinparam nodesep 12
-skinparam ranksep 12
+skinparam nodesep 15
+skinparam ranksep 15
+skinparam defaultFontSize 18
+hide members
 
 package "Entry & Config" as Layer1 {
     class "Main (esp32)" as Main
